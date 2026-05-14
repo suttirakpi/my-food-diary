@@ -1,35 +1,28 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios"; // อย่าลืมลง axios ก่อนนะ
 import styles from "./AddMeal.module.css";
 
-// โครงสร้างข้อมูลของ Option แต่ละอัน
 interface SideOption {
   id: number;
   value: string;
 }
 
 const AddMeal: React.FC = () => {
-  const navigate = useNavigate(); // ประกาศใช้งาน useNavigate แค่ครั้งเดียวตรงนี้
-
-  // State เก็บรายการอาหารหลัก
+  const navigate = useNavigate();
   const [mainDish, setMainDish] = useState("");
-
-  // State เก็บรายการ Option (เริ่มต้นให้มี 1 ช่อง)
   const [sideOptions, setSideOptions] = useState<SideOption[]>([
     { id: Date.now(), value: "" },
   ]);
 
-  // ฟังก์ชันเพิ่มช่องกรอก Option
   const handleAddSide = () => {
     setSideOptions([...sideOptions, { id: Date.now(), value: "" }]);
   };
 
-  // ฟังก์ชันลบช่องกรอก Option
   const handleRemoveSide = (id: number) => {
     setSideOptions(sideOptions.filter((side) => side.id !== id));
   };
 
-  // อัปเดตข้อความเวลาพิมพ์ในช่อง Option
   const handleSideChange = (id: number, newValue: string) => {
     setSideOptions(
       sideOptions.map((side) =>
@@ -38,26 +31,27 @@ const AddMeal: React.FC = () => {
     );
   };
 
-  // ฟังก์ชันเมื่อกดปุ่ม Save
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // กรองเอาเฉพาะช่องที่พิมพ์ข้อความแล้ว (ไม่เอาช่องว่าง)
+    // ระบุ Type ให้ s และ val เพื่อแก้ปัญหา implicit any
     const validOptions = sideOptions
-      .map((s) => s.value)
-      .filter((val) => val.trim() !== "");
+      .map((s: SideOption) => s.value)
+      .filter((val: string) => val.trim() !== "");
 
-    // ข้อมูลที่พร้อมส่งไป Backend
     const payload = {
       mainDish: mainDish,
       options: validOptions,
     };
 
-    console.log("ข้อมูลที่จะส่งไป Backend:", payload);
-    alert("บันทึกสำเร็จ! กำลังกลับไปหน้าแรก");
-
-    // พอบันทึกเสร็จ ให้เด้งกลับไปหน้าแรก (/)
-    navigate("/");
+    try {
+      await axios.post("http://localhost:3000/api/meals", payload);
+      alert("บันทึกมื้ออาหารลง Database เรียบร้อย!");
+      navigate("/");
+    } catch (error) {
+      console.error(error);
+      alert("บันทึกล้มเหลว ตรวจสอบว่าเปิด Backend หรือยัง?");
+    }
   };
 
   return (
@@ -66,10 +60,8 @@ const AddMeal: React.FC = () => {
         <h1>Mindful Entry</h1>
         <p>Take a moment to reflect on your nourishment.</p>
       </div>
-
       <div className={styles.formCard}>
         <form onSubmit={handleSubmit}>
-          {/* Main Dish */}
           <div className={styles.inputGroup}>
             <label>MAIN DISH</label>
             <input
@@ -81,7 +73,6 @@ const AddMeal: React.FC = () => {
             />
           </div>
 
-          {/* Side Options */}
           <div className={styles.optionsSection}>
             <div className={styles.optionsHeader}>
               <label>SIDE OPTIONS</label>
@@ -93,7 +84,6 @@ const AddMeal: React.FC = () => {
                 <span className="material-symbols-outlined">add</span> Add Side
               </button>
             </div>
-
             <div className={styles.optionsList}>
               {sideOptions.map((option) => (
                 <div key={option.id} className={styles.optionRow}>
@@ -117,12 +107,11 @@ const AddMeal: React.FC = () => {
             </div>
           </div>
 
-          {/* Footer Buttons */}
           <div className={styles.formFooter}>
             <button
               type="button"
               className={styles.cancelBtn}
-              onClick={() => navigate("/")} // กดปุ่ม Cancel แล้วให้กลับไปหน้าแรก
+              onClick={() => navigate("/")}
             >
               Cancel
             </button>
