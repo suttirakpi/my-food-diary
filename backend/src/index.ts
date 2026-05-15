@@ -65,8 +65,8 @@ app.get("/api/meals", async (req: Request, res: Response) => {
 // API 2: POST /api/meals
 // ----------------------------------------------------
 app.post("/api/meals", async (req: Request, res: Response) => {
-  // 1. รับค่า itemType เพิ่มเข้ามา
-  const { mainDish, options, category, itemType } = req.body;
+  // รับค่า calories เพิ่มมา
+  const { mainDish, options, category, itemType, calories } = req.body;
 
   const today = new Date();
   const mealDate = today.toISOString().split("T")[0];
@@ -77,10 +77,10 @@ app.post("/api/meals", async (req: Request, res: Response) => {
   try {
     await connection.beginTransaction();
 
-    // 2. เพิ่ม item_type ลงในคำสั่ง INSERT
+    // เพิ่ม calories ลงไปในคำสั่ง INSERT
     const [mealResult] = await connection.query(
-      "INSERT INTO meals (meal_date, meal_time, main_dish, category, item_type) VALUES (?, ?, ?, ?, ?)",
-      [mealDate, mealTime, mainDish, category, itemType],
+      "INSERT INTO meals (meal_date, meal_time, main_dish, category, item_type, calories) VALUES (?, ?, ?, ?, ?, ?)",
+      [mealDate, mealTime, mainDish, category, itemType, calories || 0],
     );
     const mealId = (mealResult as any).insertId;
 
@@ -102,7 +102,6 @@ app.post("/api/meals", async (req: Request, res: Response) => {
     connection.release();
   }
 });
-
 app.delete("/api/meals/:id", async (req: Request, res: Response) => {
   const { id } = req.params; // รับค่า ID ที่ส่งมาจาก Frontend
   const connection = await pool.getConnection();
@@ -168,33 +167,52 @@ app.post("/api/water", async (req: Request, res: Response) => {
 
 app.get("/api/trends", async (req: Request, res: Response) => {
   try {
-    // 1. สรุปสัดส่วนประเภทของกินทั้งหมด (Pie Chart)
+    // 1. สัดส่วนประเภทอาหาร (วงกลม)
     const [itemStats] = await pool.query(
       "SELECT item_type as name, COUNT(*) as value FROM meals GROUP BY item_type",
     );
 
-    // 2. ดึงข้อมูลน้ำดื่มย้อนหลัง 7 วัน (Bar Chart)
+    // 2. น้ำดื่ม 7 วันย้อนหลัง (กราฟแท่ง)
     const [waterStats] = await pool.query(
       "SELECT log_date as date, glasses FROM water_logs ORDER BY log_date DESC LIMIT 7",
     );
 
-    // ปรับฟอร์แมตวันที่ให้สวยงาม (เช่น "ศ. 15") และเรียงจากเก่าไปใหม่
-    const formattedWaterStats = (waterStats as any[])
-      .map((w) => {
-        const d = new Date(w.date);
-        const shortDay = d.toLocaleDateString("th-TH", { weekday: "short" });
-        const dayNum = d.getDate();
-        return {
-          date: `${shortDay} ${dayNum}`,
-          glasses: w.glasses,
-          oz: w.glasses * 22, // แปลงเป็นออนซ์ให้ด้วยเลย
-        };
-      })
-      .reverse();
+    // 3. แคลอรี่ย้อนหลัง 7 วัน (กราฟเส้น)
+    const [calorieTrend] = await pool.query(`
+      SELECT meal_date as date, SUM(calories) as total_cal 
+      FROM meals 
+      GROUP BY meal_date 
+      ORDER BY meal_date DESC 
+      LIMIT 7
+    `);
+
+    // 4. สรุปแคลอรี่รวม (วันนี้, เดือนนี้, ปีนี้)
+    const [summaryStats] = await pool.query(`
+      SELECT 
+        SUM(CASE WHEN DATE(meal_date) = CURDATE() THEN calories ELSE 0 END) as cal_today,
+        SUM(CASE WHEN MONTH(meal_date) = MONTH(CURDATE()) AND YEAR(meal_date) = YEAR(CURDATE()) THEN calories ELSE 0 END) as cal_month,
+        SUM(CASE WHEN YEAR(meal_date) = YEAR(CURDATE()) THEN calories ELSE 0 END) as cal_year
+      FROM meals
+    `);
+
+    // ปรับ Format วันที่ให้กราฟดูสวยๆ (เช่น "ศ. 15")
+    const formatData = (data: any[], valueKey: string) => {
+      return data
+        .map((item) => {
+          const d = new Date(item.date);
+          return {
+            date: `${d.toLocaleDateString("th-TH", { weekday: "short" })} ${d.getDate()}`,
+            [valueKey]: item[valueKey],
+          };
+        })
+        .reverse(); // กลับด้านให้จากเก่าไปใหม่
+    };
 
     res.json({
       itemStats,
-      waterStats: formattedWaterStats,
+      waterStats: formatData(waterStats as any[], "glasses"),
+      calorieTrend: formatData(calorieTrend as any[], "total_cal"),
+      summary: (summaryStats as any[])[0], // ส่งก้อนสรุปไปให้ด้วย
     });
   } catch (error) {
     console.error(error);
@@ -204,22 +222,21 @@ app.get("/api/trends", async (req: Request, res: Response) => {
 
 app.put("/api/meals/:id", async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { mainDish, category, itemType, options } = req.body;
+  // รับค่า calories เข้ามาแก้ไขด้วย
+  const { mainDish, category, itemType, options, calories } = req.body;
   const connection = await pool.getConnection();
 
   try {
     await connection.beginTransaction();
 
-    // 1. อัปเดตข้อมูลหลัก (ชื่อเมนู, หมวดหมู่, ประเภท)
+    // เพิ่ม calories ลงไปในคำสั่ง UPDATE
     await connection.query(
-      "UPDATE meals SET main_dish = ?, category = ?, item_type = ? WHERE id = ?",
-      [mainDish, category, itemType, id],
+      "UPDATE meals SET main_dish = ?, category = ?, item_type = ?, calories = ? WHERE id = ?",
+      [mainDish, category, itemType, calories || 0, id],
     );
 
-    // 2. ลบ Topping เดิมทิ้งให้หมดก่อน
     await connection.query("DELETE FROM meal_options WHERE meal_id = ?", [id]);
 
-    // 3. Insert Topping ใหม่ (ถ้ามี)
     if (options && options.length > 0) {
       const optionValues = options.map((opt: string) => [id, opt]);
       await connection.query(
@@ -236,6 +253,33 @@ app.put("/api/meals/:id", async (req: Request, res: Response) => {
     res.status(500).json({ error: "แก้ไขข้อมูลล้มเหลว" });
   } finally {
     connection.release();
+  }
+});
+
+app.get("/api/search", async (req: Request, res: Response) => {
+  const { q } = req.query;
+  if (!q) return res.json([]);
+
+  try {
+    // 1. ค้นหาเมนูที่มีคำที่พิมพ์มา (เรียงจากวันที่ใหม่ไปเก่า)
+    const [meals] = await pool.query(
+      "SELECT * FROM meals WHERE main_dish LIKE ? OR item_type LIKE ? ORDER BY meal_date DESC LIMIT 50",
+      [`%${q}%`, `%${q}%`],
+    );
+
+    // 2. ดึง Topping ของเมนูที่หาเจอมาประกอบร่าง
+    for (let meal of meals as any[]) {
+      const [options] = await pool.query(
+        "SELECT * FROM meal_options WHERE meal_id = ?",
+        [meal.id],
+      );
+      meal.options = options;
+    }
+
+    res.json(meals);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "ค้นหาล้มเหลว" });
   }
 });
 

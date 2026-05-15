@@ -681,9 +681,9 @@ const DailyLog: React.FC = () => {
       <footer className={styles.footer}>
         <div className={styles.footerContent}>
           <div className={styles.footerInfo}>
-            <div className={styles.footerLogo}>Vitality Food Diary</div>
+            <div className={styles.footerLogo}>Food Diary</div>
             <div className={styles.footerCopyright}>
-              © 2026 Vitality Food Diary. Mindful Eating, Better Living.
+              © 2026 Food Diary. Mindful Eating, Better Living.
             </div>
           </div>
         </div>
