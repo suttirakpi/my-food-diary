@@ -78,7 +78,7 @@
 .mealCard {
   background-color: var(--surface);
   border-radius: 12px;
-  border-left: 4px solid var(--primary);
+  border-left: none; /* เปลี่ยนเป็นแบบนี้ */
   padding: 24px;
   margin-bottom: 24px;
   box-shadow: 0 4px 12px rgba(0, 109, 59, 0.04);
