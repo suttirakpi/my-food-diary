@@ -20,20 +20,34 @@ const DailyLog: React.FC = () => {
   const navigate = useNavigate();
   const [meals, setMeals] = useState<MealEntry[]>([]);
 
-  // ฟังก์ชันดึงข้อมูลจาก Backend
+  // 1. สร้าง State เก็บวันที่ ค่าเริ่มต้นคือ "วันนี้" (รูปแบบ YYYY-MM-DD)
+  const [selectedDate, setSelectedDate] = useState<string>(
+    new Date().toISOString().split("T")[0],
+  );
+
+  // 2. ฟังก์ชันดึงข้อมูล แนบวันที่เข้าไปใน URL ด้วย
   const fetchMeals = async () => {
     try {
-      const response = await axios.get("http://localhost:3000/api/meals");
+      const response = await axios.get(
+        `http://localhost:3000/api/meals?date=${selectedDate}`,
+      );
       setMeals(response.data);
     } catch (error) {
       console.error("ดึงข้อมูลไม่สำเร็จ:", error);
     }
   };
 
-  // เรียกใช้ fetchMeals เมื่อหน้าเว็บโหลด
+  // 3. ใช้ useEffect สั่งให้ดึงข้อมูล "ทุกครั้งที่ selectedDate เปลี่ยนแปลง"
   useEffect(() => {
     fetchMeals();
-  }, []);
+  }, [selectedDate]);
+
+  // ฟังก์ชันแปลงวันที่สำหรับแสดงผลให้ดูสวยขึ้น (เช่น 14 พฤษภาคม 2026)
+  const formattedDate = new Date(selectedDate).toLocaleDateString("th-TH", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 
   return (
     <div className={styles.pageContainer}>
@@ -46,11 +60,32 @@ const DailyLog: React.FC = () => {
 
       <main className={styles.mainContent}>
         <div className={styles.sectionHeader}>
-          <h2>Meal Entries</h2>
-          <button className={styles.viewHistoryBtn}>
-            View Full History{" "}
-            <span className="material-symbols-outlined">arrow_forward</span>
-          </button>
+          {/* แสดงหัวข้อพร้อมวันที่ปัจจุบันที่เลือกอยู่ */}
+          <h2>รายการอาหาร ({formattedDate})</h2>
+
+          {/* 4. กล่องเลือกวันที่ (Date Picker) */}
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <label
+              htmlFor="datePicker"
+              style={{ fontWeight: 600, color: "var(--on-surface-variant)" }}
+            >
+              เลือกวันที่:
+            </label>
+            <input
+              type="date"
+              id="datePicker"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              style={{
+                padding: "8px 12px",
+                borderRadius: "8px",
+                border: "1px solid var(--tertiary-fixed)",
+                fontFamily: "var(--font-body)",
+                fontSize: "14px",
+                outline: "none",
+              }}
+            />
+          </div>
         </div>
 
         {meals.length > 0 ? (
@@ -87,9 +122,27 @@ const DailyLog: React.FC = () => {
             </div>
           ))
         ) : (
-          <p style={{ textAlign: "center", marginTop: "40px" }}>
-            ยังไม่มีข้อมูลมื้ออาหาร ลองเพิ่มดูสิ!
-          </p>
+          <div
+            style={{
+              textAlign: "center",
+              marginTop: "40px",
+              padding: "40px",
+              backgroundColor: "white",
+              borderRadius: "12px",
+            }}
+          >
+            <span
+              className="material-symbols-outlined"
+              style={{ fontSize: "48px", color: "var(--outline-variant)" }}
+            >
+              restaurant
+            </span>
+            <p
+              style={{ marginTop: "16px", color: "var(--on-surface-variant)" }}
+            >
+              ยังไม่มีการบันทึกอาหารในวันที่เลือก
+            </p>
+          </div>
         )}
       </main>
     </div>

@@ -29,9 +29,24 @@ const pool = mysql.createPool({
 // ----------------------------------------------------
 app.get("/api/meals", async (req: Request, res: Response) => {
   try {
-    const [meals] = await pool.query(
-      "SELECT * FROM meals ORDER BY meal_date DESC, meal_time DESC",
-    );
+    // 1. รับค่า date จาก Query Parameter (เช่น ?date=2026-05-14)
+    const { date } = req.query;
+
+    // 2. เตรียมคำสั่ง SQL พื้นฐาน
+    let query = "SELECT * FROM meals";
+    let queryParams: any[] = [];
+
+    // 3. ถ้ามีการส่ง date มา ให้เพิ่มเงื่อนไข WHERE เข้าไป
+    if (date) {
+      query += " WHERE meal_date = ?";
+      queryParams.push(date);
+    }
+
+    // 4. จัดเรียงข้อมูลจากใหม่ไปเก่า
+    query += " ORDER BY meal_date DESC, meal_time DESC";
+
+    // 5. ดึงข้อมูลจากฐานข้อมูล
+    const [meals] = await pool.query(query, queryParams);
     const [options] = await pool.query("SELECT * FROM meal_options");
 
     const result = (meals as any[]).map((meal) => ({
