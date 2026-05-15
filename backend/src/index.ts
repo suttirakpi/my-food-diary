@@ -166,6 +166,79 @@ app.post("/api/water", async (req: Request, res: Response) => {
   }
 });
 
+app.get("/api/trends", async (req: Request, res: Response) => {
+  try {
+    // 1. สรุปสัดส่วนประเภทของกินทั้งหมด (Pie Chart)
+    const [itemStats] = await pool.query(
+      "SELECT item_type as name, COUNT(*) as value FROM meals GROUP BY item_type",
+    );
+
+    // 2. ดึงข้อมูลน้ำดื่มย้อนหลัง 7 วัน (Bar Chart)
+    const [waterStats] = await pool.query(
+      "SELECT log_date as date, glasses FROM water_logs ORDER BY log_date DESC LIMIT 7",
+    );
+
+    // ปรับฟอร์แมตวันที่ให้สวยงาม (เช่น "ศ. 15") และเรียงจากเก่าไปใหม่
+    const formattedWaterStats = (waterStats as any[])
+      .map((w) => {
+        const d = new Date(w.date);
+        const shortDay = d.toLocaleDateString("th-TH", { weekday: "short" });
+        const dayNum = d.getDate();
+        return {
+          date: `${shortDay} ${dayNum}`,
+          glasses: w.glasses,
+          oz: w.glasses * 22, // แปลงเป็นออนซ์ให้ด้วยเลย
+        };
+      })
+      .reverse();
+
+    res.json({
+      itemStats,
+      waterStats: formattedWaterStats,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "ดึงข้อมูลสถิติล้มเหลว" });
+  }
+});
+
+app.put("/api/meals/:id", async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { mainDish, category, itemType, options } = req.body;
+  const connection = await pool.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    // 1. อัปเดตข้อมูลหลัก (ชื่อเมนู, หมวดหมู่, ประเภท)
+    await connection.query(
+      "UPDATE meals SET main_dish = ?, category = ?, item_type = ? WHERE id = ?",
+      [mainDish, category, itemType, id],
+    );
+
+    // 2. ลบ Topping เดิมทิ้งให้หมดก่อน
+    await connection.query("DELETE FROM meal_options WHERE meal_id = ?", [id]);
+
+    // 3. Insert Topping ใหม่ (ถ้ามี)
+    if (options && options.length > 0) {
+      const optionValues = options.map((opt: string) => [id, opt]);
+      await connection.query(
+        "INSERT INTO meal_options (meal_id, option_name) VALUES ?",
+        [optionValues],
+      );
+    }
+
+    await connection.commit();
+    res.json({ message: "แก้ไขข้อมูลสำเร็จ!" });
+  } catch (error) {
+    await connection.rollback();
+    console.error(error);
+    res.status(500).json({ error: "แก้ไขข้อมูลล้มเหลว" });
+  } finally {
+    connection.release();
+  }
+});
+
 app.listen(port, () => {
   console.log(`Backend Server is running on http://localhost:${port}`);
 });
