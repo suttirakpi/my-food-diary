@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios"; // อย่าลืมลง axios ก่อนนะ
+import axios from "axios";
 import styles from "./AddMeal.module.css";
 
 interface SideOption {
@@ -11,6 +11,8 @@ interface SideOption {
 const AddMeal: React.FC = () => {
   const navigate = useNavigate();
   const [mainDish, setMainDish] = useState("");
+  const [category, setCategory] = useState("มื้อเช้า");
+  const [itemType, setItemType] = useState("อาหาร"); // เพิ่ม State สำหรับประเภท
   const [sideOptions, setSideOptions] = useState<SideOption[]>([
     { id: Date.now(), value: "" },
   ]);
@@ -34,14 +36,16 @@ const AddMeal: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // ระบุ Type ให้ s และ val เพื่อแก้ปัญหา implicit any
     const validOptions = sideOptions
       .map((s: SideOption) => s.value)
       .filter((val: string) => val.trim() !== "");
 
+    // ส่ง itemType ไปด้วย!
     const payload = {
       mainDish: mainDish,
       options: validOptions,
+      category: category,
+      itemType: itemType,
     };
 
     try {
@@ -62,11 +66,87 @@ const AddMeal: React.FC = () => {
       </div>
       <div className={styles.formCard}>
         <form onSubmit={handleSubmit}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "16px",
+              marginBottom: "24px",
+            }}
+          >
+            {/* เลือกมื้ออาหาร (เวลา) */}
+            <div>
+              <label
+                style={{
+                  display: "block",
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  color: "var(--on-surface-variant)",
+                  marginBottom: "8px",
+                }}
+              >
+                MEAL TYPE (มื้ออาหาร)
+              </label>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "16px",
+                  borderRadius: "8px",
+                  border: "1px solid var(--tertiary-fixed)",
+                  fontSize: "16px",
+                  backgroundColor: "var(--background)",
+                  fontFamily: "var(--font-body)",
+                  outline: "none",
+                }}
+              >
+                <option value="มื้อเช้า">🌅 มื้อเช้า</option>
+                <option value="มื้อกลางวัน">☀️ มื้อกลางวัน</option>
+                <option value="มื้อเย็น">🌙 มื้อเย็น</option>
+                <option value="ระหว่างวัน">⏱️ ระหว่างวัน</option>
+              </select>
+            </div>
+
+            {/* เลือกประเภท (ของกิน) */}
+            <div>
+              <label
+                style={{
+                  display: "block",
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  color: "var(--on-surface-variant)",
+                  marginBottom: "8px",
+                }}
+              >
+                ITEM TYPE (ประเภท)
+              </label>
+              <select
+                value={itemType}
+                onChange={(e) => setItemType(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "16px",
+                  borderRadius: "8px",
+                  border: "1px solid var(--tertiary-fixed)",
+                  fontSize: "16px",
+                  backgroundColor: "var(--background)",
+                  fontFamily: "var(--font-body)",
+                  outline: "none",
+                }}
+              >
+                <option value="อาหาร">🍛 อาหาร (Food)</option>
+                <option value="เครื่องดื่ม">🥤 เครื่องดื่ม (Beverage)</option>
+                <option value="ขนม">🍰 ขนม/ของหวาน (Snack)</option>
+              </select>
+            </div>
+          </div>
+
           <div className={styles.inputGroup}>
-            <label>MAIN DISH</label>
+            <label>MAIN DISH / DRINK NAME</label>
             <input
               type="text"
-              placeholder="e.g., Grilled Chicken Rice"
+              placeholder="e.g., ชาเขียวเย็น, ข้าวกะเพรา..."
               value={mainDish}
               onChange={(e) => setMainDish(e.target.value)}
               required
@@ -75,13 +155,13 @@ const AddMeal: React.FC = () => {
 
           <div className={styles.optionsSection}>
             <div className={styles.optionsHeader}>
-              <label>SIDE OPTIONS</label>
+              <label>SIDE OPTIONS / TOPPINGS</label>
               <button
                 type="button"
                 onClick={handleAddSide}
                 className={styles.addSideBtn}
               >
-                <span className="material-symbols-outlined">add</span> Add Side
+                <span className="material-symbols-outlined">add</span> Add Item
               </button>
             </div>
             <div className={styles.optionsList}>
@@ -89,7 +169,7 @@ const AddMeal: React.FC = () => {
                 <div key={option.id} className={styles.optionRow}>
                   <input
                     type="text"
-                    placeholder="e.g., Steamed Broccoli"
+                    placeholder="e.g., ไข่ดาว, หวานน้อย, เพิ่มวิปครีม"
                     value={option.value}
                     onChange={(e) =>
                       handleSideChange(option.id, e.target.value)

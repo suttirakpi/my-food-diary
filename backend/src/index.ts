@@ -64,12 +64,9 @@ app.get("/api/meals", async (req: Request, res: Response) => {
 // ----------------------------------------------------
 // API 2: POST /api/meals
 // ----------------------------------------------------
-// ----------------------------------------------------
-// API 2: POST /api/meals
-// ----------------------------------------------------
 app.post("/api/meals", async (req: Request, res: Response) => {
-  // 1. รับค่า category เพิ่มเข้ามาจาก Frontend
-  const { mainDish, options, category } = req.body;
+  // 1. รับค่า itemType เพิ่มเข้ามา
+  const { mainDish, options, category, itemType } = req.body;
 
   const today = new Date();
   const mealDate = today.toISOString().split("T")[0];
@@ -80,10 +77,10 @@ app.post("/api/meals", async (req: Request, res: Response) => {
   try {
     await connection.beginTransaction();
 
-    // 2. เพิ่ม category ลงในคำสั่ง INSERT
+    // 2. เพิ่ม item_type ลงในคำสั่ง INSERT
     const [mealResult] = await connection.query(
-      "INSERT INTO meals (meal_date, meal_time, main_dish, category) VALUES (?, ?, ?, ?)",
-      [mealDate, mealTime, mainDish, category],
+      "INSERT INTO meals (meal_date, meal_time, main_dish, category, item_type) VALUES (?, ?, ?, ?, ?)",
+      [mealDate, mealTime, mainDish, category, itemType],
     );
     const mealId = (mealResult as any).insertId;
 

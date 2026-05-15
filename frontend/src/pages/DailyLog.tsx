@@ -13,19 +13,18 @@ interface MealEntry {
   meal_date: string;
   meal_time: string;
   main_dish: string;
+  category: string;
+  item_type: string; // เพิ่มตัวแปรนี้มารับข้อมูลจาก DB
   options: MealOption[];
 }
 
 const DailyLog: React.FC = () => {
   const navigate = useNavigate();
   const [meals, setMeals] = useState<MealEntry[]>([]);
-
-  // 1. สร้าง State เก็บวันที่ ค่าเริ่มต้นคือ "วันนี้" (รูปแบบ YYYY-MM-DD)
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().split("T")[0],
   );
 
-  // 2. ฟังก์ชันดึงข้อมูล แนบวันที่เข้าไปใน URL ด้วย
   const fetchMeals = async () => {
     try {
       const response = await axios.get(
@@ -37,17 +36,22 @@ const DailyLog: React.FC = () => {
     }
   };
 
-  // 3. ใช้ useEffect สั่งให้ดึงข้อมูล "ทุกครั้งที่ selectedDate เปลี่ยนแปลง"
   useEffect(() => {
     fetchMeals();
   }, [selectedDate]);
 
-  // ฟังก์ชันแปลงวันที่สำหรับแสดงผลให้ดูสวยขึ้น (เช่น 14 พฤษภาคม 2026)
   const formattedDate = new Date(selectedDate).toLocaleDateString("th-TH", {
     year: "numeric",
     month: "long",
     day: "numeric",
   });
+
+  // ฟังก์ชันช่วยเลือก Emoji ตามประเภทที่กิน
+  const getItemIcon = (type: string) => {
+    if (type === "เครื่องดื่ม") return "🥤";
+    if (type === "ขนม") return "🍰";
+    return "🍛"; // อาหาร
+  };
 
   return (
     <div className={styles.pageContainer}>
@@ -60,10 +64,8 @@ const DailyLog: React.FC = () => {
 
       <main className={styles.mainContent}>
         <div className={styles.sectionHeader}>
-          {/* แสดงหัวข้อพร้อมวันที่ปัจจุบันที่เลือกอยู่ */}
           <h2>รายการอาหาร ({formattedDate})</h2>
 
-          {/* 4. กล่องเลือกวันที่ (Date Picker) */}
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <label
               htmlFor="datePicker"
@@ -94,18 +96,30 @@ const DailyLog: React.FC = () => {
               <div className={styles.cardHeader}>
                 <div>
                   <span className={styles.timeTag}>
-                    Time • {meal.meal_time}
+                    {meal.category} • {meal.meal_time}
                   </span>
-                  <h3 className={styles.dishTitle}>{meal.main_dish}</h3>
+                  <h3 className={styles.dishTitle}>
+                    {getItemIcon(meal.item_type)} {meal.main_dish}
+                    <span
+                      style={{
+                        fontSize: "14px",
+                        fontWeight: "normal",
+                        color: "var(--on-surface-variant)",
+                        marginLeft: "8px",
+                      }}
+                    >
+                      ({meal.item_type})
+                    </span>
+                  </h3>
                 </div>
               </div>
               <div className={styles.cardBody}>
                 <div className={styles.detailColumn}>
-                  <p className={styles.detailLabel}>Main Dish</p>
+                  <p className={styles.detailLabel}>รายละเอียด / Main Item</p>
                   <p>{meal.main_dish}</p>
                 </div>
                 <div className={styles.detailColumn}>
-                  <p className={styles.detailLabel}>Side Options</p>
+                  <p className={styles.detailLabel}>ตัวเลือกเสริม / Toppings</p>
                   {meal.options && meal.options.length > 0 ? (
                     <ul>
                       {meal.options.map((opt) => (
