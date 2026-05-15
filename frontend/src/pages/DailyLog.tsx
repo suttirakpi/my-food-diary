@@ -15,7 +15,7 @@ interface MealEntry {
   main_dish: string;
   category: string;
   item_type: string;
-  calories: number; // เพิ่มแคลอรี่เข้ามาใน Interface
+  calories: number;
   options: MealOption[];
 }
 
@@ -27,6 +27,10 @@ const DailyLog: React.FC = () => {
     new Date().toISOString().split("T")[0],
   );
   const [editingMeal, setEditingMeal] = useState<MealEntry | null>(null);
+
+  // --- State สำหรับค้นหา ---
+  const [searchQuery, setSearchQuery] = useState("");
+  const isSearching = searchQuery.trim() !== "";
 
   const fetchData = async () => {
     try {
@@ -43,9 +47,27 @@ const DailyLog: React.FC = () => {
     }
   };
 
+  // --- ระบบดักจับการพิมพ์ค้นหา (Debounce) ---
   useEffect(() => {
-    fetchData();
-  }, [selectedDate]);
+    if (!isSearching) {
+      fetchData(); // ถ้าช่องค้นหาว่าง ให้ดึงข้อมูลวันปัจจุบันปกติ
+      return;
+    }
+
+    // ตั้งเวลาหน่วง 0.5 วินาทีหลังพิมพ์เสร็จ ค่อยยิง API ไปหา
+    const searchTimer = setTimeout(async () => {
+      try {
+        const res = await axios.get(
+          `http://localhost:3000/api/search?q=${searchQuery}`,
+        );
+        setMeals(res.data);
+      } catch (error) {
+        console.error("ค้นหาล้มเหลว", error);
+      }
+    }, 500);
+
+    return () => clearTimeout(searchTimer);
+  }, [searchQuery, selectedDate]);
 
   const handleUpdateWater = async (newAmount: number) => {
     if (newAmount < 0) return;
@@ -124,28 +146,37 @@ const DailyLog: React.FC = () => {
     });
   };
 
-  const formattedDate = new Date(selectedDate).toLocaleDateString("th-TH", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  // --- Logic การจัดกลุ่มข้อมูล: ค้นหาโชว์เป็นวันที่ / ปกติโชว์เป็นมื้อ ---
   const groupedMeals = meals.reduce(
     (acc, meal) => {
-      const cat = meal.category || "อื่นๆ";
-      if (!acc[cat]) acc[cat] = [];
-      acc[cat].push(meal);
+      const groupKey = isSearching
+        ? meal.meal_date.split("T")[0]
+        : meal.category || "อื่นๆ";
+      if (!acc[groupKey]) acc[groupKey] = [];
+      acc[groupKey].push(meal);
       return acc;
     },
     {} as Record<string, MealEntry[]>,
   );
 
-  const categoryOrder = ["มื้อเช้า", "มื้อกลางวัน", "มื้อเย็น", "ระหว่างวัน"];
+  const groupsToRender = isSearching
+    ? Object.keys(groupedMeals).sort(
+        (a, b) => new Date(b).getTime() - new Date(a).getTime(),
+      ) // เรียงวันที่ล่าสุดขึ้นก่อน
+    : ["มื้อเช้า", "มื้อกลางวัน", "มื้อเย็น", "ระหว่างวัน"];
+
   const getCategoryTheme = (cat: string) => {
     if (cat === "มื้อเช้า") return styles.themeOrange;
     if (cat === "มื้อกลางวัน") return styles.themeRed;
     if (cat === "มื้อเย็น") return styles.themeYellow;
     return styles.themeBlue;
   };
+
+  const formattedDate = new Date(selectedDate).toLocaleDateString("th-TH", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 
   // --- คำนวณสถิติของวันนี้ ---
   const totalCalories = meals.reduce(
@@ -156,16 +187,14 @@ const DailyLog: React.FC = () => {
   const snackCount = meals.filter((m) => m.item_type === "ขนม").length;
 
   // --- Logic สำหรับหลอดพลัง (Daily Goal) ---
-  const DAILY_CALORIE_GOAL = 1600; // ตั้งเป้าไว้ที่ 2000 kcal
+  const DAILY_CALORIE_GOAL = 1600;
   const isOverGoal = totalCalories > DAILY_CALORIE_GOAL;
-  // คำนวณ % (ห้ามเกิน 100% เพื่อไม่ให้หลอดทะลุขอบ)
   const calPercentage = Math.min(
     (totalCalories / DAILY_CALORIE_GOAL) * 100,
     100,
   );
 
-  // กำหนดสีของหลอดพลังตามปริมาณการกิน
-  let barColor = "#4caf50"; // สีเขียว (ปลอดภัย)
+  let barColor = "#4caf50";
   let messageColor = "var(--on-surface-variant)";
   let motivationMessage = "เริ่มต้นวันใหม่! ทานอาหารที่มีประโยชน์นะ";
 
@@ -175,11 +204,11 @@ const DailyLog: React.FC = () => {
     totalCalories > DAILY_CALORIE_GOAL * 0.8 &&
     totalCalories <= DAILY_CALORIE_GOAL
   ) {
-    barColor = "#ff9800"; // สีส้ม (เตือนว่าใกล้เต็มแล้ว)
+    barColor = "#ff9800";
     messageColor = "#f57c00";
     motivationMessage = "ใกล้ถึงเป้าหมายแล้ว ระวังแคลอรี่เกินนะ!";
   } else if (isOverGoal) {
-    barColor = "#f44336"; // สีแดง (ทะลุเป้า)
+    barColor = "#f44336";
     messageColor = "#d32f2f";
     motivationMessage = "แคลอรี่เกินเป้าหมายแล้ว!";
   }
@@ -216,121 +245,170 @@ const DailyLog: React.FC = () => {
       </header>
 
       <main className={styles.mainContent}>
-        <div className={styles.sectionHeader}>
-          <h2>รายการอาหาร ({formattedDate})</h2>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <label
-              htmlFor="datePicker"
-              style={{ fontWeight: 600, color: "var(--on-surface-variant)" }}
-            >
-              เลือกวันที่:
-            </label>
-            <input
-              type="date"
-              id="datePicker"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              style={{
-                padding: "8px 12px",
-                borderRadius: "8px",
-                border: "1px solid var(--tertiary-fixed)",
-                outline: "none",
-              }}
-            />
-          </div>
+        {/* --- ช่องค้นหา (Search Bar) --- */}
+        <div className={styles.searchContainer}>
+          <span className={`material-symbols-outlined ${styles.searchIcon}`}>
+            search
+          </span>
+          <input
+            type="text"
+            className={styles.searchInput}
+            placeholder="ค้นหาเมนูอาหาร, หมวดหมู่ เช่น ชานม, ขนม..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </div>
 
-        {/* --- Top Dashboard --- */}
-        <div className={styles.topSummary}>
-          <div className={styles.summaryCard}>
-            <span className={styles.summaryValue}>{totalCalories}</span>
-            <span className={styles.summaryLabel}>แคลอรี่รวม (kcal)</span>
-          </div>
-          <div className={styles.summaryCard}>
-            <span className={styles.summaryValue}>{waterGlasses * 22} oz</span>
-            <span className={styles.summaryLabel}>
-              น้ำที่ดื่มไป (~{((waterGlasses * 650) / 1000).toFixed(1)} L)
-            </span>
-          </div>
-          <div className={styles.summaryCard}>
-            <span
-              className={styles.summaryValue}
-              style={{ color: snackCount > 0 ? "#ff4d4f" : "inherit" }}
-            >
-              {snackCount}
-            </span>
-            <span className={styles.summaryLabel}>จำนวนขนมวันนี้</span>
-          </div>
-        </div>
-
-        <div className={styles.goalContainer}>
-          <div className={styles.goalHeader}>
-            <div className={styles.goalTitle}>
-              <span
-                className="material-symbols-outlined"
-                style={{ color: barColor }}
+        {/* --- Header วันที่ (ซ่อนตอนกำลังค้นหา) --- */}
+        {!isSearching && (
+          <div className={styles.sectionHeader}>
+            <h2>รายการอาหาร ({formattedDate})</h2>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <label
+                htmlFor="datePicker"
+                style={{ fontWeight: 600, color: "var(--on-surface-variant)" }}
               >
-                speed
-              </span>
-              เป้าหมายแคลอรี่รายวัน
-            </div>
-            <div className={styles.goalText}>
-              {/* ถ้าแคลอรี่เกิน (isOverGoal เป็นจริง) ให้ใช้สีแดง ถ้าไม่เกินให้ใช้สีน้ำเงินเดิม */}
-              <span
-                style={{ color: isOverGoal ? "#f44336" : "var(--primary)" }}
-              >
-                {totalCalories}
-              </span>{" "}
-              / {DAILY_CALORIE_GOAL} kcal
+                เลือกวันที่:
+              </label>
+              <input
+                type="date"
+                id="datePicker"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                style={{
+                  padding: "8px 12px",
+                  borderRadius: "8px",
+                  border: "1px solid var(--tertiary-fixed)",
+                  outline: "none",
+                }}
+              />
             </div>
           </div>
-          <div className={styles.progressBarBg}>
-            <div
-              className={styles.progressBarFill}
-              style={{ width: `${calPercentage}%`, backgroundColor: barColor }}
-            ></div>
-          </div>
-          <div className={styles.goalMessage} style={{ color: messageColor }}>
-            {motivationMessage}
-          </div>
-        </div>
+        )}
 
-        <div className={styles.waterWidget}>
-          <div className={styles.waterInfo}>
-            <h3>
-              <span className="material-symbols-outlined">water_drop</span>{" "}
-              ติดตามการดื่มน้ำ
-            </h3>
-            <p>ดื่มน้ำไปแล้ว {waterGlasses} แก้ว</p>
-          </div>
-          <div className={styles.waterControls}>
-            <button
-              className={styles.waterBtn}
-              onClick={() => handleUpdateWater(waterGlasses - 1)}
-            >
-              <span className="material-symbols-outlined">remove</span>
-            </button>
-            <div className={styles.waterCount}>{waterGlasses}</div>
-            <button
-              className={styles.waterBtn}
-              onClick={() => handleUpdateWater(waterGlasses + 1)}
-            >
-              <span className="material-symbols-outlined">add</span>
-            </button>
-          </div>
-        </div>
+        {/* โชว์หัวข้อค้นหาถ้ากำลังพิมพ์ */}
+        {isSearching && (
+          <h2 style={{ marginBottom: "24px" }}>
+            ผลการค้นหา: "{searchQuery}"
+            <span className={styles.searchBadge}>
+              เจอ {meals.length} รายการ
+            </span>
+          </h2>
+        )}
 
+        {/* --- ซ่อน Dashboard และน้ำดื่ม เมื่อกำลังค้นหา เพื่อไม่ให้ตัวเลขตีกัน --- */}
+        {!isSearching && (
+          <>
+            <div className={styles.topSummary}>
+              <div className={styles.summaryCard}>
+                <span className={styles.summaryValue}>{totalCalories}</span>
+                <span className={styles.summaryLabel}>แคลอรี่รวม (kcal)</span>
+              </div>
+              <div className={styles.summaryCard}>
+                <span className={styles.summaryValue}>
+                  {waterGlasses * 22} oz
+                </span>
+                <span className={styles.summaryLabel}>
+                  น้ำที่ดื่มไป (~{((waterGlasses * 650) / 1000).toFixed(1)} L)
+                </span>
+              </div>
+              <div className={styles.summaryCard}>
+                <span
+                  className={styles.summaryValue}
+                  style={{ color: snackCount > 0 ? "#ff4d4f" : "inherit" }}
+                >
+                  {snackCount}
+                </span>
+                <span className={styles.summaryLabel}>จำนวนขนมวันนี้</span>
+              </div>
+            </div>
+
+            <div className={styles.goalContainer}>
+              <div className={styles.goalHeader}>
+                <div className={styles.goalTitle}>
+                  <span
+                    className="material-symbols-outlined"
+                    style={{ color: barColor }}
+                  >
+                    speed
+                  </span>
+                  เป้าหมายแคลอรี่รายวัน
+                </div>
+                <div className={styles.goalText}>
+                  <span
+                    style={{ color: isOverGoal ? "#f44336" : "var(--primary)" }}
+                  >
+                    {totalCalories}
+                  </span>{" "}
+                  / {DAILY_CALORIE_GOAL} kcal
+                </div>
+              </div>
+              <div className={styles.progressBarBg}>
+                <div
+                  className={styles.progressBarFill}
+                  style={{
+                    width: `${calPercentage}%`,
+                    backgroundColor: barColor,
+                  }}
+                ></div>
+              </div>
+              <div
+                className={styles.goalMessage}
+                style={{ color: messageColor }}
+              >
+                {motivationMessage}
+              </div>
+            </div>
+
+            <div className={styles.waterWidget}>
+              <div className={styles.waterInfo}>
+                <h3>
+                  <span className="material-symbols-outlined">water_drop</span>{" "}
+                  ติดตามการดื่มน้ำ
+                </h3>
+                <p>ดื่มน้ำไปแล้ว {waterGlasses} แก้ว</p>
+              </div>
+              <div className={styles.waterControls}>
+                <button
+                  className={styles.waterBtn}
+                  onClick={() => handleUpdateWater(waterGlasses - 1)}
+                >
+                  <span className="material-symbols-outlined">remove</span>
+                </button>
+                <div className={styles.waterCount}>{waterGlasses}</div>
+                <button
+                  className={styles.waterBtn}
+                  onClick={() => handleUpdateWater(waterGlasses + 1)}
+                >
+                  <span className="material-symbols-outlined">add</span>
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* --- รายการอาหาร --- */}
         {meals.length > 0 ? (
-          categoryOrder.map((cat) => {
+          groupsToRender.map((cat) => {
             const mealsInCat = groupedMeals[cat];
             if (!mealsInCat || mealsInCat.length === 0) return null;
 
             return (
               <section
                 key={cat}
-                className={`${styles.categorySection} ${getCategoryTheme(cat)}`}
+                className={`${styles.categorySection} ${
+                  isSearching ? styles.themeOrange : getCategoryTheme(cat)
+                }`}
               >
-                <h3 className={styles.categoryTitle}>{cat}</h3>
+                <h3 className={styles.categoryTitle}>
+                  {isSearching
+                    ? `📅 วันที่ ${new Date(cat).toLocaleDateString("th-TH", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}`
+                    : cat}
+                </h3>
                 <div className={styles.mealGrid}>
                   {mealsInCat.map((meal) => (
                     <div key={meal.id} className={styles.mealCard}>
@@ -344,21 +422,19 @@ const DailyLog: React.FC = () => {
                       >
                         <div>
                           <span className={styles.timeTag}>
-                            เวลา • {meal.meal_time}
+                            {meal.category} • {meal.meal_time}
                           </span>
                           <h3 className={styles.dishTitle}>
-                            {meal.main_dish}
+                            {meal.main_dish}{" "}
                             <span
                               style={{
                                 fontSize: "14px",
                                 fontWeight: "normal",
                                 color: "var(--on-surface-variant)",
-                                marginLeft: "8px",
                               }}
                             >
                               ({meal.item_type})
                             </span>
-                            {/* โชว์แคลอรี่ตรงหัวการ์ด */}
                             {meal.calories > 0 && (
                               <span
                                 style={{
@@ -416,12 +492,7 @@ const DailyLog: React.FC = () => {
                           </button>
                         </div>
                       </div>
-
                       <div className={styles.cardBody}>
-                        <div className={styles.detailColumn}>
-                          <p className={styles.detailLabel}>Main Item</p>
-                          <p>{meal.main_dish}</p>
-                        </div>
                         <div className={styles.detailColumn}>
                           <p className={styles.detailLabel}>Toppings</p>
                           {meal.options && meal.options.length > 0 ? (
@@ -457,17 +528,20 @@ const DailyLog: React.FC = () => {
               className="material-symbols-outlined"
               style={{ fontSize: "48px", color: "var(--outline-variant)" }}
             >
-              restaurant
+              {isSearching ? "search_off" : "restaurant"}
             </span>
             <p
               style={{ marginTop: "16px", color: "var(--on-surface-variant)" }}
             >
-              ยังไม่มีการบันทึกอาหารในวันที่เลือก
+              {isSearching
+                ? `ไม่พบประวัติการกินคำว่า "${searchQuery}"`
+                : "ยังไม่มีการบันทึกอาหารในวันที่เลือก"}
             </p>
           </div>
         )}
       </main>
 
+      {/* --- Edit Modal --- */}
       {editingMeal && (
         <div className={styles.modalOverlay}>
           <div className={styles.modalContent}>
@@ -522,7 +596,6 @@ const DailyLog: React.FC = () => {
               />
             </div>
 
-            {/* เพิ่มช่องแก้แคลอรี่ใน Edit Modal */}
             <div className={styles.modalInputGroup}>
               <label>แคลอรี่ (kcal)</label>
               <input
@@ -603,6 +676,18 @@ const DailyLog: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* --- Footer --- */}
+      <footer className={styles.footer}>
+        <div className={styles.footerContent}>
+          <div className={styles.footerInfo}>
+            <div className={styles.footerLogo}>Vitality Food Diary</div>
+            <div className={styles.footerCopyright}>
+              © 2026 Vitality Food Diary. Mindful Eating, Better Living.
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };

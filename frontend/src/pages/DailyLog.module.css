@@ -3,6 +3,7 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  background-color: var(--background);
 }
 
 /* --- Header --- */
@@ -15,6 +16,7 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   position: sticky;
   top: 0;
+  z-index: 10;
 }
 
 .logo {
@@ -44,9 +46,10 @@
 /* --- Main Content --- */
 .mainContent {
   max-width: 1000px;
-  margin: 0 auto; /* จัดให้อยู่กึ่งกลางจอ */
+  margin: 0 auto;
   padding: 40px 20px;
   width: 100%;
+  flex-grow: 1; /* ดัน Footer ให้อยู่ล่างสุดเสมอ */
 }
 
 .sectionHeader {
@@ -65,7 +68,7 @@
 .mealCard {
   background-color: var(--surface);
   border-radius: 12px;
-  border-left: none; /* เปลี่ยนเป็นแบบนี้ */
+  border-left: none;
   padding: 24px;
   margin-bottom: 24px;
   box-shadow: 0 4px 12px rgba(0, 109, 59, 0.04);
@@ -91,21 +94,6 @@
   margin: 4px 0 0 0;
 }
 
-/* Tags / Badges */
-.badgeGroup {
-  display: flex;
-  gap: 8px;
-}
-
-.badge {
-  background-color: var(--tertiary-fixed);
-  color: var(--on-tertiary-fixed);
-  padding: 4px 12px;
-  border-radius: 50px;
-  font-size: 12px;
-}
-
-/* Card Body (แบ่ง 2 คอลัมน์ด้วย Grid) */
 .cardBody {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -124,7 +112,7 @@
   padding-left: 20px;
 }
 
-/* กล่องครอบแต่ละมื้ออาหาร */
+/* --- กล่องครอบแต่ละมื้ออาหาร (Themes) --- */
 .categorySection {
   margin-bottom: 32px;
   padding: 24px;
@@ -132,7 +120,6 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
 }
 
-/* ธีมสีตามที่ตูนต้องการ (ส้ม, แดง, เหลือง, และแถมสีฟ้าให้ของว่างครับ) */
 .themeOrange {
   background-color: #fff4e6;
   border-left: 6px solid #ff9800;
@@ -150,7 +137,6 @@
   border-left: 6px solid #2196f3;
 }
 
-/* หัวข้อของแต่ละกลุ่ม (เช่น มื้อเช้า) */
 .categoryTitle {
   font-family: var(--font-heading);
   font-size: 22px;
@@ -162,93 +148,122 @@
   gap: 8px;
 }
 
-/* จัด Layout ให้เป็น Grid */
 .mealGrid {
   display: grid;
-  grid-template-columns: 1fr; /* หน้าจอมือถือแสดง 1 คอลัมน์ */
+  grid-template-columns: 1fr;
   gap: 16px;
 }
 
-/* ถ้าหน้าจอใหญ่กว่า 768px (แท็บเล็ต/คอม) ให้แบ่งเป็น 2 คอลัมน์ */
 @media (min-width: 768px) {
   .mealGrid {
     grid-template-columns: 1fr 1fr;
   }
 }
 
-/* ปรับ Card เดิมนิดหน่อยไม่ให้ขอบล่างมันดันกันใน Grid */
 .mealGrid .mealCard {
   margin-bottom: 0;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
 }
 
-.footer {
-  width: 100%;
-  padding: 48px 20px;
-  background-color: var(--surface); /* หรือใช้ขาวสะอาด */
-  border-top: 1px solid var(--tertiary-fixed);
-  margin-top: 64px; /* เว้นระยะจากเนื้อหาด้านบน */
+/* --- Top Summary Dashboard --- */
+.topSummary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
 }
 
-.footerContent {
-  max-width: 1000px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 24px;
-}
-
-/* ปรับให้เป็นแนวนอนเมื่อจอใหญ่ */
-@media (min-width: 768px) {
-  .footerContent {
-    flex-direction: row;
-    justify-content: space-between;
-  }
-}
-
-.footerInfo {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.summaryCard {
+  background: white;
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
   text-align: center;
+  border: 1px solid var(--tertiary-fixed);
 }
 
-@media (min-width: 768px) {
-  .footerInfo {
-    text-align: left;
-  }
-}
-
-.footerLogo {
-  font-family: var(--font-heading);
-  font-size: 20px;
+.summaryValue {
+  font-size: 24px;
   font-weight: 700;
   color: var(--primary);
+  display: block;
 }
 
-.footerCopyright {
-  font-size: 13px;
-  color: var(--on-surface-variant);
-}
-
-.footerLinks {
-  display: flex;
-  gap: 24px;
-}
-
-.footerLinks a {
-  text-decoration: none;
-  color: var(--on-surface-variant);
+.summaryLabel {
   font-size: 14px;
-  font-weight: 500;
-  transition: color 0.2s;
+  color: var(--on-surface-variant);
 }
 
-.footerLinks a:hover {
-  color: var(--primary);
+/* --- Daily Goal Progress Bar --- */
+.goalContainer {
+  background-color: white;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 32px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  border: 1px solid var(--tertiary-fixed);
 }
 
+.goalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.goalTitle {
+  font-family: var(--font-heading);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--on-surface);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.goalText {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--on-surface-variant);
+}
+
+.progressBarBg {
+  width: 100%;
+  height: 24px;
+  background-color: #f1f5f9;
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.progressBarFill {
+  height: 100%;
+  border-radius: 12px;
+  transition:
+    width 0.8s cubic-bezier(0.4, 0, 0.2, 1),
+    background-color 0.5s;
+  background-image: linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.15) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.15) 50%,
+    rgba(255, 255, 255, 0.15) 75%,
+    transparent 75%,
+    transparent
+  );
+  background-size: 1rem 1rem;
+}
+
+.goalMessage {
+  margin-top: 12px;
+  font-size: 14px;
+  text-align: right;
+  font-weight: 600;
+}
+
+/* --- Water Widget --- */
 .waterWidget {
   background-color: #e3f2fd;
   border-radius: 16px;
@@ -311,9 +326,52 @@
   text-align: center;
 }
 
-/* =========================================
-   Edit Modal (Popup)
-========================================= */
+/* --- Search Bar --- */
+.searchContainer {
+  position: relative;
+  margin-bottom: 24px;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 16px 20px 16px 52px;
+  border-radius: 12px;
+  border: 1px solid var(--tertiary-fixed);
+  font-family: var(--font-body);
+  font-size: 16px;
+  color: var(--on-surface);
+  outline: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+.searchInput:focus {
+  border-color: var(--primary);
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.15);
+}
+
+.searchIcon {
+  position: absolute;
+  left: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--on-surface-variant);
+  font-size: 24px;
+}
+
+.searchBadge {
+  background-color: var(--primary);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: bold;
+  margin-left: 12px;
+}
+
+/* --- Edit Modal (Popup) --- */
 .modalOverlay {
   position: fixed;
   top: 0;
@@ -350,7 +408,6 @@
 .modalInputGroup {
   margin-bottom: 16px;
 }
-
 .modalInputGroup label {
   display: block;
   margin-bottom: 8px;
@@ -358,7 +415,6 @@
   font-size: 14px;
   color: var(--on-surface-variant);
 }
-
 .modalInputGroup input,
 .modalInputGroup select {
   width: 100%;
@@ -391,108 +447,56 @@
   background-color: var(--primary);
   color: white;
 }
-
 .btnCancel {
   background-color: #f5f5f5;
   color: #333;
 }
 
-.topSummary {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
-  margin-bottom: 32px;
-}
-
-.summaryCard {
-  background: white;
-  padding: 20px;
-  border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-  text-align: center;
-  border: 1px solid var(--tertiary-fixed);
-}
-
-.summaryValue {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--primary);
-  display: block;
-}
-
-.summaryLabel {
-  font-size: 14px;
-  color: var(--on-surface-variant);
-}
-
-.goalContainer {
-  background-color: white;
-  border-radius: 16px;
-  padding: 24px;
-  margin-bottom: 32px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-  border: 1px solid var(--tertiary-fixed);
-}
-
-.goalHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.goalTitle {
-  font-family: var(--font-heading);
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--on-surface);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.goalText {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--on-surface-variant);
-}
-
-.goalText span {
-  color: var(--primary);
-}
-
-.progressBarBg {
+/* --- Footer --- */
+.footer {
   width: 100%;
-  height: 24px;
-  background-color: #f1f5f9;
-  border-radius: 12px;
-  overflow: hidden;
-  position: relative;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+  padding: 48px 20px;
+  background-color: var(--surface);
+  border-top: 1px solid var(--tertiary-fixed);
 }
 
-.progressBarFill {
-  height: 100%;
-  border-radius: 12px;
-  transition:
-    width 0.8s cubic-bezier(0.4, 0, 0.2, 1),
-    background-color 0.5s;
-  background-image: linear-gradient(
-    45deg,
-    rgba(255, 255, 255, 0.15) 25%,
-    transparent 25%,
-    transparent 50%,
-    rgba(255, 255, 255, 0.15) 50%,
-    rgba(255, 255, 255, 0.15) 75%,
-    transparent 75%,
-    transparent
-  );
-  background-size: 1rem 1rem;
+.footerContent {
+  max-width: 1000px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
 }
 
-.goalMessage {
-  margin-top: 12px;
-  font-size: 14px;
-  text-align: right;
-  font-weight: 600;
+@media (min-width: 768px) {
+  .footerContent {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+}
+
+.footerInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: center;
+}
+
+@media (min-width: 768px) {
+  .footerInfo {
+    text-align: left;
+  }
+}
+
+.footerLogo {
+  font-family: var(--font-heading);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.footerCopyright {
+  font-size: 13px;
+  color: var(--on-surface-variant);
 }
