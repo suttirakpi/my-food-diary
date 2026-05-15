@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import toast from "react-hot-toast";
 import styles from "./AddMeal.module.css";
 
 interface SideOption {
@@ -8,23 +9,20 @@ interface SideOption {
   value: string;
 }
 
-const AddMeal: React.FC = () => {
+const AddMeal = () => {
   const navigate = useNavigate();
   const [mainDish, setMainDish] = useState("");
   const [category, setCategory] = useState("มื้อเช้า");
   const [itemType, setItemType] = useState("อาหาร");
+  const [calories, setCalories] = useState<number | "">(""); // เพิ่ม State แคลอรี่
   const [sideOptions, setSideOptions] = useState<SideOption[]>([
     { id: Date.now(), value: "" },
   ]);
 
-  const handleAddSide = () => {
+  const handleAddSide = () =>
     setSideOptions([...sideOptions, { id: Date.now(), value: "" }]);
-  };
-
-  const handleRemoveSide = (id: number) => {
+  const handleRemoveSide = (id: number) =>
     setSideOptions(sideOptions.filter((side) => side.id !== id));
-  };
-
   const handleSideChange = (id: number, newValue: string) => {
     setSideOptions(
       sideOptions.map((side) =>
@@ -35,25 +33,26 @@ const AddMeal: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     const validOptions = sideOptions
-      .map((s: SideOption) => s.value)
-      .filter((val: string) => val.trim() !== "");
+      .map((s) => s.value)
+      .filter((val) => val.trim() !== "");
 
     const payload = {
-      mainDish: mainDish,
+      mainDish,
+      category,
+      itemType,
       options: validOptions,
-      category: category,
-      itemType: itemType,
+      calories: Number(calories) || 0, // ส่งค่าแคลอรี่ไป Backend
     };
 
     try {
+      const loadingToast = toast.loading("กำลังบันทึกข้อมูล...");
       await axios.post("http://localhost:3000/api/meals", payload);
-      alert("บันทึกมื้ออาหารลง Database เรียบร้อย!");
+      toast.success("บันทึกมื้ออาหารเรียบร้อย!", { id: loadingToast });
       navigate("/");
     } catch (error) {
       console.error(error);
-      alert("บันทึกล้มเหลว ตรวจสอบว่าเปิด Backend หรือยัง?");
+      toast.error("บันทึกล้มเหลว ตรวจสอบระบบ Backend");
     }
   };
 
@@ -73,7 +72,6 @@ const AddMeal: React.FC = () => {
               marginBottom: "24px",
             }}
           >
-            {/* เลือกมื้ออาหาร (เวลา) */}
             <div>
               <label
                 style={{
@@ -95,19 +93,15 @@ const AddMeal: React.FC = () => {
                   borderRadius: "8px",
                   border: "1px solid var(--tertiary-fixed)",
                   fontSize: "16px",
-                  backgroundColor: "var(--background)",
-                  fontFamily: "var(--font-body)",
                   outline: "none",
                 }}
               >
-                <option value="มื้อเช้า">มื้อเช้า (Breakfast)</option>
-                <option value="มื้อกลางวัน">มื้อกลางวัน (Lunch)</option>
-                <option value="มื้อเย็น">มื้อเย็น (Dinner)</option>
-                <option value="ระหว่างวัน">ระหว่างวัน (Snack)</option>
+                <option value="มื้อเช้า">มื้อเช้า</option>
+                <option value="มื้อกลางวัน">มื้อกลางวัน</option>
+                <option value="มื้อเย็น">มื้อเย็น</option>
+                <option value="ระหว่างวัน">ระหว่างวัน</option>
               </select>
             </div>
-
-            {/* เลือกประเภท (ของกิน) */}
             <div>
               <label
                 style={{
@@ -129,27 +123,47 @@ const AddMeal: React.FC = () => {
                   borderRadius: "8px",
                   border: "1px solid var(--tertiary-fixed)",
                   fontSize: "16px",
-                  backgroundColor: "var(--background)",
-                  fontFamily: "var(--font-body)",
                   outline: "none",
                 }}
               >
-                <option value="อาหาร">อาหาร (Food)</option>
-                <option value="เครื่องดื่ม">เครื่องดื่ม (Beverage)</option>
-                <option value="ขนม">ขนม/ของหวาน (Snack)</option>
+                <option value="อาหาร">อาหาร</option>
+                <option value="เครื่องดื่ม">เครื่องดื่ม</option>
+                <option value="ขนม">ขนม</option>
               </select>
             </div>
           </div>
 
-          <div className={styles.inputGroup}>
-            <label>MAIN DISH / DRINK NAME</label>
-            <input
-              type="text"
-              placeholder="e.g., ชาเขียวเย็น, ข้าวกะเพรา..."
-              value={mainDish}
-              onChange={(e) => setMainDish(e.target.value)}
-              required
-            />
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "2fr 1fr",
+              gap: "16px",
+              marginBottom: "24px",
+            }}
+          >
+            <div className={styles.inputGroup} style={{ marginBottom: 0 }}>
+              <label>MAIN DISH / DRINK NAME</label>
+              <input
+                type="text"
+                placeholder="e.g., ข้าวกะเพราไก่ไข่ดาว"
+                value={mainDish}
+                onChange={(e) => setMainDish(e.target.value)}
+                required
+              />
+            </div>
+            <div className={styles.inputGroup} style={{ marginBottom: 0 }}>
+              <label>CALORIES (kcal)</label>
+              <input
+                type="number"
+                placeholder="e.g., 450"
+                value={calories}
+                onChange={(e) =>
+                  setCalories(
+                    e.target.value === "" ? "" : Number(e.target.value),
+                  )
+                }
+              />
+            </div>
           </div>
 
           <div className={styles.optionsSection}>
@@ -168,7 +182,7 @@ const AddMeal: React.FC = () => {
                 <div key={option.id} className={styles.optionRow}>
                   <input
                     type="text"
-                    placeholder="e.g., ไข่ดาว, หวานน้อย, เพิ่มวิปครีม"
+                    placeholder="e.g., ไข่ดาว, หวานน้อย"
                     value={option.value}
                     onChange={(e) =>
                       handleSideChange(option.id, e.target.value)

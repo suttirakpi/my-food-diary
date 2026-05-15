@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import toast from "react-hot-toast";
 import styles from "./DailyLog.module.css";
 
 interface MealOption {
   id: number;
   option_name: string;
 }
-
 interface MealEntry {
   id: number;
   meal_date: string;
@@ -15,6 +15,7 @@ interface MealEntry {
   main_dish: string;
   category: string;
   item_type: string;
+  calories: number; // เพิ่มแคลอรี่เข้ามาใน Interface
   options: MealOption[];
 }
 
@@ -22,14 +23,9 @@ const DailyLog: React.FC = () => {
   const navigate = useNavigate();
   const [meals, setMeals] = useState<MealEntry[]>([]);
   const [waterGlasses, setWaterGlasses] = useState<number>(0);
-  const foodCount = meals.filter((m) => m.item_type === "อาหาร").length;
-  const snackCount = meals.filter((m) => m.item_type === "ขนม").length;
-  const waterOz = waterGlasses * 22;
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().split("T")[0],
   );
-
-  // State สำหรับเปิด-ปิด Popup และเก็บข้อมูลที่กำลังแก้
   const [editingMeal, setEditingMeal] = useState<MealEntry | null>(null);
 
   const fetchData = async () => {
@@ -38,7 +34,6 @@ const DailyLog: React.FC = () => {
         `http://localhost:3000/api/meals?date=${selectedDate}`,
       );
       setMeals(mealsRes.data);
-
       const waterRes = await axios.get(
         `http://localhost:3000/api/water?date=${selectedDate}`,
       );
@@ -68,36 +63,29 @@ const DailyLog: React.FC = () => {
   const handleDelete = async (id: number) => {
     const isConfirm = window.confirm("คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้?");
     if (!isConfirm) return;
-
     try {
       await axios.delete(`http://localhost:3000/api/meals/${id}`);
       setMeals((prevMeals) => prevMeals.filter((meal) => meal.id !== id));
+      toast.success("ลบรายการเรียบร้อย");
     } catch (error) {
       console.error("ลบข้อมูลไม่สำเร็จ:", error);
-      alert("เกิดข้อผิดพลาดในการลบข้อมูล");
+      toast.error("เกิดข้อผิดพลาดในการลบข้อมูล");
     }
   };
 
-  // ==========================================
-  // ฟังก์ชันสำหรับการแก้ไข (Edit)
-  // ==========================================
-  const handleOpenEdit = (meal: MealEntry) => {
-    // ก๊อปปี้ข้อมูลมาใส่ใน State (ป้องกันการแก้ข้อมูลหลักโดยไม่ได้ตั้งใจ)
+  const handleOpenEdit = (meal: MealEntry) =>
     setEditingMeal(JSON.parse(JSON.stringify(meal)));
-  };
 
   const handleSaveEdit = async () => {
     if (!editingMeal) return;
-
-    // กรองเอาเฉพาะชื่อ Topping ที่ไม่ว่างเปล่า
     const validOptions = editingMeal.options
       .map((o) => o.option_name)
       .filter((val) => val.trim() !== "");
-
     const payload = {
       mainDish: editingMeal.main_dish,
       category: editingMeal.category,
       itemType: editingMeal.item_type,
+      calories: Number(editingMeal.calories) || 0,
       options: validOptions,
     };
 
@@ -106,22 +94,21 @@ const DailyLog: React.FC = () => {
         `http://localhost:3000/api/meals/${editingMeal.id}`,
         payload,
       );
-      setEditingMeal(null); // ปิด Popup
-      fetchData(); // โหลดข้อมูลใหม่มาแสดง
+      setEditingMeal(null);
+      fetchData();
+      toast.success("อัปเดตข้อมูลสำเร็จ!");
     } catch (error) {
       console.error("แก้ไขไม่สำเร็จ", error);
-      alert("เกิดข้อผิดพลาดในการแก้ไขข้อมูล");
+      toast.error("เกิดข้อผิดพลาดในการแก้ไขข้อมูล");
     }
   };
 
-  // ฟังก์ชันจัดการ Topping ในหน้าต่าง Edit
   const handleEditOptionChange = (idx: number, val: string) => {
     if (!editingMeal) return;
     const newOptions = [...editingMeal.options];
     newOptions[idx].option_name = val;
     setEditingMeal({ ...editingMeal, options: newOptions });
   };
-
   const handleAddEditOption = () => {
     if (!editingMeal) return;
     setEditingMeal({
@@ -129,7 +116,6 @@ const DailyLog: React.FC = () => {
       options: [...editingMeal.options, { id: Date.now(), option_name: "" }],
     });
   };
-
   const handleRemoveEditOption = (idToRemove: number) => {
     if (!editingMeal) return;
     setEditingMeal({
@@ -143,7 +129,6 @@ const DailyLog: React.FC = () => {
     month: "long",
     day: "numeric",
   });
-
   const groupedMeals = meals.reduce(
     (acc, meal) => {
       const cat = meal.category || "อื่นๆ";
@@ -162,10 +147,47 @@ const DailyLog: React.FC = () => {
     return styles.themeBlue;
   };
 
+  // --- คำนวณสถิติของวันนี้ ---
+  const totalCalories = meals.reduce(
+    (sum, meal) => sum + (meal.calories || 0),
+    0,
+  );
+  const foodCount = meals.filter((m) => m.item_type === "อาหาร").length;
+  const snackCount = meals.filter((m) => m.item_type === "ขนม").length;
+
+  // --- Logic สำหรับหลอดพลัง (Daily Goal) ---
+  const DAILY_CALORIE_GOAL = 1600; // ตั้งเป้าไว้ที่ 2000 kcal
+  const isOverGoal = totalCalories > DAILY_CALORIE_GOAL;
+  // คำนวณ % (ห้ามเกิน 100% เพื่อไม่ให้หลอดทะลุขอบ)
+  const calPercentage = Math.min(
+    (totalCalories / DAILY_CALORIE_GOAL) * 100,
+    100,
+  );
+
+  // กำหนดสีของหลอดพลังตามปริมาณการกิน
+  let barColor = "#4caf50"; // สีเขียว (ปลอดภัย)
+  let messageColor = "var(--on-surface-variant)";
+  let motivationMessage = "เริ่มต้นวันใหม่! ทานอาหารที่มีประโยชน์นะ";
+
+  if (totalCalories > 0 && totalCalories <= DAILY_CALORIE_GOAL * 0.8) {
+    motivationMessage = "เยี่ยมมาก! ยังทานได้อีกเรื่อยๆ ตามเป้าหมาย";
+  } else if (
+    totalCalories > DAILY_CALORIE_GOAL * 0.8 &&
+    totalCalories <= DAILY_CALORIE_GOAL
+  ) {
+    barColor = "#ff9800"; // สีส้ม (เตือนว่าใกล้เต็มแล้ว)
+    messageColor = "#f57c00";
+    motivationMessage = "ใกล้ถึงเป้าหมายแล้ว ระวังแคลอรี่เกินนะ!";
+  } else if (isOverGoal) {
+    barColor = "#f44336"; // สีแดง (ทะลุเป้า)
+    messageColor = "#d32f2f";
+    motivationMessage = "แคลอรี่เกินเป้าหมายแล้ว!";
+  }
+
   return (
     <div className={styles.pageContainer}>
       <header className={styles.header}>
-        <div className={styles.logo}>Food Diary</div>
+        <div className={styles.logo}>Vitality Food Diary</div>
         <div style={{ display: "flex", gap: "12px" }}>
           <button
             onClick={() => navigate("/trends")}
@@ -218,18 +240,58 @@ const DailyLog: React.FC = () => {
           </div>
         </div>
 
+        {/* --- Top Dashboard --- */}
         <div className={styles.topSummary}>
           <div className={styles.summaryCard}>
-            <span className={styles.summaryValue}>{foodCount}</span>
-            <span className={styles.summaryLabel}>มื้ออาหารวันนี้</span>
+            <span className={styles.summaryValue}>{totalCalories}</span>
+            <span className={styles.summaryLabel}>แคลอรี่รวม (kcal)</span>
           </div>
           <div className={styles.summaryCard}>
-            <span className={styles.summaryValue}>{waterOz} oz</span>
-            <span className={styles.summaryLabel}>น้ำที่ดื่มไป</span>
+            <span className={styles.summaryValue}>{waterGlasses * 22} oz</span>
+            <span className={styles.summaryLabel}>
+              น้ำที่ดื่มไป (~{((waterGlasses * 650) / 1000).toFixed(1)} L)
+            </span>
           </div>
           <div className={styles.summaryCard}>
-            <span className={styles.summaryValue}>{snackCount}</span>
+            <span
+              className={styles.summaryValue}
+              style={{ color: snackCount > 0 ? "#ff4d4f" : "inherit" }}
+            >
+              {snackCount}
+            </span>
             <span className={styles.summaryLabel}>จำนวนขนมวันนี้</span>
+          </div>
+        </div>
+
+        <div className={styles.goalContainer}>
+          <div className={styles.goalHeader}>
+            <div className={styles.goalTitle}>
+              <span
+                className="material-symbols-outlined"
+                style={{ color: barColor }}
+              >
+                speed
+              </span>
+              เป้าหมายแคลอรี่รายวัน
+            </div>
+            <div className={styles.goalText}>
+              {/* ถ้าแคลอรี่เกิน (isOverGoal เป็นจริง) ให้ใช้สีแดง ถ้าไม่เกินให้ใช้สีน้ำเงินเดิม */}
+              <span
+                style={{ color: isOverGoal ? "#f44336" : "var(--primary)" }}
+              >
+                {totalCalories}
+              </span>{" "}
+              / {DAILY_CALORIE_GOAL} kcal
+            </div>
+          </div>
+          <div className={styles.progressBarBg}>
+            <div
+              className={styles.progressBarFill}
+              style={{ width: `${calPercentage}%`, backgroundColor: barColor }}
+            ></div>
+          </div>
+          <div className={styles.goalMessage} style={{ color: messageColor }}>
+            {motivationMessage}
           </div>
         </div>
 
@@ -239,10 +301,7 @@ const DailyLog: React.FC = () => {
               <span className="material-symbols-outlined">water_drop</span>{" "}
               ติดตามการดื่มน้ำ
             </h3>
-            <p>
-              วันนี้ดื่มไปแล้ว: {waterGlasses * 22} ออนซ์ (~
-              {((waterGlasses * 650) / 1000).toFixed(1)} ลิตร)
-            </p>
+            <p>ดื่มน้ำไปแล้ว {waterGlasses} แก้ว</p>
           </div>
           <div className={styles.waterControls}>
             <button
@@ -299,12 +358,25 @@ const DailyLog: React.FC = () => {
                             >
                               ({meal.item_type})
                             </span>
+                            {/* โชว์แคลอรี่ตรงหัวการ์ด */}
+                            {meal.calories > 0 && (
+                              <span
+                                style={{
+                                  display: "inline-block",
+                                  marginLeft: "12px",
+                                  padding: "4px 8px",
+                                  backgroundColor: "#fff3e0",
+                                  color: "#e65100",
+                                  borderRadius: "12px",
+                                  fontSize: "12px",
+                                  fontWeight: "bold",
+                                }}
+                              >
+                                🔥 {meal.calories} kcal
+                              </span>
+                            )}
                           </h3>
                         </div>
-
-                        {/* -------------------------------------- */}
-                        {/* ปุ่ม Edit และ Delete */}
-                        {/* -------------------------------------- */}
                         <div style={{ display: "flex", gap: "4px" }}>
                           <button
                             onClick={() => handleOpenEdit(meal)}
@@ -318,14 +390,6 @@ const DailyLog: React.FC = () => {
                               display: "flex",
                               alignItems: "center",
                             }}
-                            onMouseOver={(e) =>
-                              (e.currentTarget.style.backgroundColor =
-                                "#e3f2fd")
-                            }
-                            onMouseOut={(e) =>
-                              (e.currentTarget.style.backgroundColor =
-                                "transparent")
-                            }
                             title="แก้ไขรายการ"
                           >
                             <span className="material-symbols-outlined">
@@ -344,14 +408,6 @@ const DailyLog: React.FC = () => {
                               display: "flex",
                               alignItems: "center",
                             }}
-                            onMouseOver={(e) =>
-                              (e.currentTarget.style.backgroundColor =
-                                "#ffebee")
-                            }
-                            onMouseOut={(e) =>
-                              (e.currentTarget.style.backgroundColor =
-                                "transparent")
-                            }
                             title="ลบรายการนี้"
                           >
                             <span className="material-symbols-outlined">
@@ -412,41 +468,47 @@ const DailyLog: React.FC = () => {
         )}
       </main>
 
-      {/* ==========================================
-          Edit Modal Popup (เด้งขึ้นมาเมื่อกดปุ่มดินสอ)
-      ========================================== */}
       {editingMeal && (
         <div className={styles.modalOverlay}>
           <div className={styles.modalContent}>
             <h2 className={styles.modalTitle}>แก้ไขมื้ออาหาร</h2>
-
-            <div className={styles.modalInputGroup}>
-              <label>หมวดหมู่ (เวลา)</label>
-              <select
-                value={editingMeal.category}
-                onChange={(e) =>
-                  setEditingMeal({ ...editingMeal, category: e.target.value })
-                }
-              >
-                <option value="มื้อเช้า">มื้อเช้า</option>
-                <option value="มื้อกลางวัน">มื้อกลางวัน</option>
-                <option value="มื้อเย็น">มื้อเย็น</option>
-                <option value="ระหว่างวัน">ระหว่างวัน</option>
-              </select>
-            </div>
-
-            <div className={styles.modalInputGroup}>
-              <label>ประเภทของกิน</label>
-              <select
-                value={editingMeal.item_type}
-                onChange={(e) =>
-                  setEditingMeal({ ...editingMeal, item_type: e.target.value })
-                }
-              >
-                <option value="อาหาร">อาหาร</option>
-                <option value="เครื่องดื่ม">เครื่องดื่ม</option>
-                <option value="ขนม">ขนม</option>
-              </select>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: "12px",
+              }}
+            >
+              <div className={styles.modalInputGroup}>
+                <label>หมวดหมู่</label>
+                <select
+                  value={editingMeal.category}
+                  onChange={(e) =>
+                    setEditingMeal({ ...editingMeal, category: e.target.value })
+                  }
+                >
+                  <option value="มื้อเช้า">มื้อเช้า</option>
+                  <option value="มื้อกลางวัน">มื้อกลางวัน</option>
+                  <option value="มื้อเย็น">มื้อเย็น</option>
+                  <option value="ระหว่างวัน">ระหว่างวัน</option>
+                </select>
+              </div>
+              <div className={styles.modalInputGroup}>
+                <label>ประเภท</label>
+                <select
+                  value={editingMeal.item_type}
+                  onChange={(e) =>
+                    setEditingMeal({
+                      ...editingMeal,
+                      item_type: e.target.value,
+                    })
+                  }
+                >
+                  <option value="อาหาร">อาหาร</option>
+                  <option value="เครื่องดื่ม">เครื่องดื่ม</option>
+                  <option value="ขนม">ขนม</option>
+                </select>
+              </div>
             </div>
 
             <div className={styles.modalInputGroup}>
@@ -456,6 +518,21 @@ const DailyLog: React.FC = () => {
                 value={editingMeal.main_dish}
                 onChange={(e) =>
                   setEditingMeal({ ...editingMeal, main_dish: e.target.value })
+                }
+              />
+            </div>
+
+            {/* เพิ่มช่องแก้แคลอรี่ใน Edit Modal */}
+            <div className={styles.modalInputGroup}>
+              <label>แคลอรี่ (kcal)</label>
+              <input
+                type="number"
+                value={editingMeal.calories}
+                onChange={(e) =>
+                  setEditingMeal({
+                    ...editingMeal,
+                    calories: Number(e.target.value) || 0,
+                  })
                 }
               />
             </div>
@@ -526,17 +603,6 @@ const DailyLog: React.FC = () => {
           </div>
         </div>
       )}
-
-      <footer className={styles.footer}>
-        <div className={styles.footerContent}>
-          <div className={styles.footerInfo}>
-            <div className={styles.footerLogo}>Vitality Food Diary</div>
-            <div className={styles.footerCopyright}>
-              © 2026 Vitality Food Diary. Mindful Eating, Better Living.
-            </div>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 };

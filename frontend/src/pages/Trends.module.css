@@ -59,3 +59,54 @@
   color: var(--on-surface);
   text-align: center;
 }
+
+/* =========================================
+   Summary Dashboard Cards
+========================================= */
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.summaryCard {
+  background: linear-gradient(135deg, var(--surface), white);
+  border: 1px solid var(--tertiary-fixed);
+  border-radius: 16px;
+  padding: 24px;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+  transition: transform 0.2s;
+}
+
+.summaryCard:hover {
+  transform: translateY(-5px);
+}
+
+.summaryIcon {
+  font-size: 32px;
+  margin-bottom: 12px;
+}
+
+.summaryValue {
+  font-size: 36px;
+  font-weight: 700;
+  font-family: var(--font-heading);
+  color: var(--on-surface);
+  margin: 8px 0;
+}
+
+.summaryValue span {
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--on-surface-variant);
+}
+
+.summaryLabel {
+  font-size: 14px;
+  color: var(--on-surface-variant);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}

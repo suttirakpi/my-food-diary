@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react"; // เพิ่ม useMemo มาช่วย
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
@@ -12,22 +12,17 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
+  LineChart,
+  Line,
+  CartesianGrid, // นำเข้ากราฟเส้นเพิ่ม
 } from "recharts";
 import styles from "./Trends.module.css";
 
-// แยก Interface ออกมาให้ชัดเจน
-interface ItemStat {
-  name: string;
-  value: number;
-}
-interface WaterStat {
-  date: string;
-  glasses: number;
-  oz: number;
-}
 interface TrendData {
-  itemStats: ItemStat[];
-  waterStats: WaterStat[];
+  itemStats: { name: string; value: number }[];
+  waterStats: { date: string; glasses: number }[];
+  calorieTrend: { date: string; total_cal: number }[];
+  summary: { cal_today: number; cal_month: number; cal_year: number };
 }
 
 const Trends: React.FC = () => {
@@ -49,13 +44,8 @@ const Trends: React.FC = () => {
     fetchTrends();
   }, []);
 
-  // ใช้ useMemo เพื่อป้องกันการคำนวณสีใหม่ทุกครั้งที่ Render
   const PIE_COLORS = useMemo(
-    () => ({
-      อาหาร: "#ff9800",
-      เครื่องดื่ม: "#2196f3",
-      ขนม: "#e91e63",
-    }),
+    () => ({ อาหาร: "#ff9800", เครื่องดื่ม: "#2196f3", ขนม: "#e91e63" }),
     [],
   );
 
@@ -75,8 +65,57 @@ const Trends: React.FC = () => {
         <div style={{ width: "40px" }}></div>
       </header>
 
+      {/* ---------------- Section 1: ตัวเลขสรุป (Summary) ---------------- */}
+      <div className={styles.summaryGrid}>
+        <div className={styles.summaryCard}>
+          <div className={styles.summaryLabel}>แคลอรี่วันนี้</div>
+          <div className={styles.summaryValue}>
+            {data.summary.cal_today || 0} <span>kcal</span>
+          </div>
+        </div>
+        <div className={styles.summaryCard}>
+          <div className={styles.summaryLabel}>แคลอรี่เดือนนี้</div>
+          <div className={styles.summaryValue}>
+            {data.summary.cal_month || 0} <span>kcal</span>
+          </div>
+        </div>
+        <div className={styles.summaryCard}>
+          <div className={styles.summaryLabel}>แคลอรี่ปีนี้</div>
+          <div className={styles.summaryValue}>
+            {data.summary.cal_year || 0} <span>kcal</span>
+          </div>
+        </div>
+      </div>
+
+      {/* ---------------- Section 2: กราฟ (Charts) ---------------- */}
       <div className={styles.dashboardGrid}>
-        {/* กราฟวงกลม */}
+        {/* กราฟเส้น: แนวโน้มแคลอรี่ */}
+        <div
+          className={styles.chartCard}
+          style={{ gridColumn: "1 / -1", minHeight: "350px" }}
+        >
+          <h3 className={styles.chartTitle}>แนวโน้มแคลอรี่ 7 วันล่าสุด</h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={data.calorieTrend}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="date" />
+              <YAxis />
+              <Tooltip formatter={(value) => [`${value} kcal`, "แคลอรี่รวม"]} />
+              <Legend />
+              <Line
+                type="monotone"
+                dataKey="total_cal"
+                name="แคลอรี่"
+                stroke="#ff5722"
+                strokeWidth={3}
+                dot={{ r: 6 }}
+                activeDot={{ r: 8 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* กราฟวงกลม: สัดส่วน */}
         <div className={styles.chartCard} style={{ minHeight: "350px" }}>
           <h3 className={styles.chartTitle}>สัดส่วนประเภทอาหาร</h3>
           <ResponsiveContainer width="100%" height={300}>
@@ -89,6 +128,7 @@ const Trends: React.FC = () => {
                 outerRadius={80}
                 paddingAngle={5}
                 dataKey="value"
+                label
               >
                 {data.itemStats.map((entry, index) => (
                   <Cell
@@ -106,7 +146,7 @@ const Trends: React.FC = () => {
           </ResponsiveContainer>
         </div>
 
-        {/* กราฟแท่ง */}
+        {/* กราฟแท่ง: น้ำดื่ม */}
         <div className={styles.chartCard} style={{ minHeight: "350px" }}>
           <h3 className={styles.chartTitle}>น้ำดื่ม 7 วันย้อนหลัง</h3>
           <ResponsiveContainer width="100%" height={300}>
@@ -115,7 +155,12 @@ const Trends: React.FC = () => {
               <YAxis />
               <Tooltip />
               <Legend />
-              <Bar dataKey="glasses" name="จำนวนแก้ว" fill="#42a5f5" />
+              <Bar
+                dataKey="glasses"
+                name="จำนวนแก้ว"
+                fill="#42a5f5"
+                radius={[4, 4, 0, 0]}
+              />
             </BarChart>
           </ResponsiveContainer>
         </div>

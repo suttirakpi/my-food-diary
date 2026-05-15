@@ -424,3 +424,75 @@
   font-size: 14px;
   color: var(--on-surface-variant);
 }
+
+.goalContainer {
+  background-color: white;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 32px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  border: 1px solid var(--tertiary-fixed);
+}
+
+.goalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.goalTitle {
+  font-family: var(--font-heading);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--on-surface);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.goalText {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--on-surface-variant);
+}
+
+.goalText span {
+  color: var(--primary);
+}
+
+.progressBarBg {
+  width: 100%;
+  height: 24px;
+  background-color: #f1f5f9;
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.progressBarFill {
+  height: 100%;
+  border-radius: 12px;
+  transition:
+    width 0.8s cubic-bezier(0.4, 0, 0.2, 1),
+    background-color 0.5s;
+  background-image: linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.15) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.15) 50%,
+    rgba(255, 255, 255, 0.15) 75%,
+    transparent 75%,
+    transparent
+  );
+  background-size: 1rem 1rem;
+}
+
+.goalMessage {
+  margin-top: 12px;
+  font-size: 14px;
+  text-align: right;
+  font-weight: 600;
+}
