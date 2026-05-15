@@ -12,7 +12,7 @@ const AddMeal: React.FC = () => {
   const navigate = useNavigate();
   const [mainDish, setMainDish] = useState("");
   const [category, setCategory] = useState("มื้อเช้า");
-  const [itemType, setItemType] = useState("อาหาร"); // เพิ่ม State สำหรับประเภท
+  const [itemType, setItemType] = useState("อาหาร");
   const [sideOptions, setSideOptions] = useState<SideOption[]>([
     { id: Date.now(), value: "" },
   ]);
@@ -40,7 +40,6 @@ const AddMeal: React.FC = () => {
       .map((s: SideOption) => s.value)
       .filter((val: string) => val.trim() !== "");
 
-    // ส่ง itemType ไปด้วย!
     const payload = {
       mainDish: mainDish,
       options: validOptions,
@@ -101,10 +100,10 @@ const AddMeal: React.FC = () => {
                   outline: "none",
                 }}
               >
-                <option value="มื้อเช้า">🌅 มื้อเช้า</option>
-                <option value="มื้อกลางวัน">☀️ มื้อกลางวัน</option>
-                <option value="มื้อเย็น">🌙 มื้อเย็น</option>
-                <option value="ระหว่างวัน">⏱️ ระหว่างวัน</option>
+                <option value="มื้อเช้า">มื้อเช้า (Breakfast)</option>
+                <option value="มื้อกลางวัน">มื้อกลางวัน (Lunch)</option>
+                <option value="มื้อเย็น">มื้อเย็น (Dinner)</option>
+                <option value="ระหว่างวัน">ระหว่างวัน (Snack)</option>
               </select>
             </div>
 
@@ -135,9 +134,9 @@ const AddMeal: React.FC = () => {
                   outline: "none",
                 }}
               >
-                <option value="อาหาร">🍛 อาหาร (Food)</option>
-                <option value="เครื่องดื่ม">🥤 เครื่องดื่ม (Beverage)</option>
-                <option value="ขนม">🍰 ขนม/ของหวาน (Snack)</option>
+                <option value="อาหาร">อาหาร (Food)</option>
+                <option value="เครื่องดื่ม">เครื่องดื่ม (Beverage)</option>
+                <option value="ขนม">ขนม/ของหวาน (Snack)</option>
               </select>
             </div>
           </div>

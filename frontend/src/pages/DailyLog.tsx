@@ -40,21 +40,25 @@ const DailyLog: React.FC = () => {
     fetchMeals();
   }, [selectedDate]);
 
+  const handleDelete = async (id: number) => {
+    const isConfirm = window.confirm("คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้?");
+    if (!isConfirm) return;
+
+    try {
+      await axios.delete(`http://localhost:3000/api/meals/${id}`);
+      setMeals((prevMeals) => prevMeals.filter((meal) => meal.id !== id));
+    } catch (error) {
+      console.error("ลบข้อมูลไม่สำเร็จ:", error);
+      alert("เกิดข้อผิดพลาดในการลบข้อมูล");
+    }
+  };
+
   const formattedDate = new Date(selectedDate).toLocaleDateString("th-TH", {
     year: "numeric",
     month: "long",
     day: "numeric",
   });
 
-  const getItemIcon = (type: string) => {
-    if (type === "เครื่องดื่ม") return "🥤";
-    if (type === "ขนม") return "🍰";
-    return "🍛";
-  };
-
-  // ==========================================
-  // 1. นำข้อมูลมาจัดกลุ่ม (Group) ตามหมวดหมู่ (Category)
-  // ==========================================
   const groupedMeals = meals.reduce(
     (acc, meal) => {
       const cat = meal.category || "อื่นๆ";
@@ -67,21 +71,19 @@ const DailyLog: React.FC = () => {
     {} as Record<string, MealEntry[]>,
   );
 
-  // 2. กำหนดลำดับการแสดงผล (เช้า -> กลางวัน -> เย็น -> ว่าง)
   const categoryOrder = ["มื้อเช้า", "มื้อกลางวัน", "มื้อเย็น", "ระหว่างวัน"];
 
-  // 3. ฟังก์ชันช่วยเลือกสีของกล่องแต่ละมื้อ
   const getCategoryTheme = (cat: string) => {
-    if (cat === "มื้อเช้า") return styles.themeOrange; // สีส้ม
-    if (cat === "มื้อกลางวัน") return styles.themeRed; // สีแดง
-    if (cat === "มื้อเย็น") return styles.themeYellow; // สีเหลือง
-    return styles.themeBlue; // สีฟ้า (ระหว่างวัน/ของว่าง)
+    if (cat === "มื้อเช้า") return styles.themeOrange;
+    if (cat === "มื้อกลางวัน") return styles.themeRed;
+    if (cat === "มื้อเย็น") return styles.themeYellow;
+    return styles.themeBlue;
   };
 
   return (
     <div className={styles.pageContainer}>
       <header className={styles.header}>
-        <div className={styles.logo}>Suttirak : Food Diary</div>
+        <div className={styles.logo}>Vitality Food Diary</div>
         <button className={styles.addBtn} onClick={() => navigate("/add-meal")}>
           <span className="material-symbols-outlined">add</span> Add Meal
         </button>
@@ -115,14 +117,9 @@ const DailyLog: React.FC = () => {
           </div>
         </div>
 
-        {/* ==========================================
-            4. แสดงผลแยกตามกลุ่ม (Grid Category)
-        ========================================== */}
         {meals.length > 0 ? (
           categoryOrder.map((cat) => {
             const mealsInCat = groupedMeals[cat];
-
-            // ถ้ามื้อไหนไม่มีข้อมูลในวันนั้น ให้ข้ามไปไม่ต้องแสดงกล่อง
             if (!mealsInCat || mealsInCat.length === 0) return null;
 
             return (
@@ -130,31 +127,65 @@ const DailyLog: React.FC = () => {
                 key={cat}
                 className={`${styles.categorySection} ${getCategoryTheme(cat)}`}
               >
-                {/* หัวข้อของกลุ่ม */}
                 <h3 className={styles.categoryTitle}>{cat}</h3>
 
-                {/* เริ่ม Grid แบ่ง 2 คอลัมน์ (หรือ 1 ในมือถือ) */}
                 <div className={styles.mealGrid}>
                   {mealsInCat.map((meal) => (
                     <div key={meal.id} className={styles.mealCard}>
-                      <div className={styles.cardHeader}>
+                      <div
+                        className={styles.cardHeader}
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "flex-start",
+                        }}
+                      >
                         <div>
                           <span className={styles.timeTag}>
                             เวลา • {meal.meal_time}
                           </span>
                           <h3 className={styles.dishTitle}>
-                            {getItemIcon(meal.item_type)} {meal.main_dish}
+                            {meal.main_dish}
                             <span
                               style={{
                                 fontSize: "14px",
                                 fontWeight: "normal",
+                                color: "var(--on-surface-variant)",
+                                marginLeft: "8px",
                               }}
                             >
                               ({meal.item_type})
                             </span>
                           </h3>
                         </div>
+                        <button
+                          onClick={() => handleDelete(meal.id)}
+                          style={{
+                            background: "none",
+                            border: "none",
+                            color: "#ff4d4f",
+                            cursor: "pointer",
+                            padding: "8px",
+                            borderRadius: "50%",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                          onMouseOver={(e) =>
+                            (e.currentTarget.style.backgroundColor = "#ffebee")
+                          }
+                          onMouseOut={(e) =>
+                            (e.currentTarget.style.backgroundColor =
+                              "transparent")
+                          }
+                          title="ลบรายการนี้"
+                        >
+                          <span className="material-symbols-outlined">
+                            delete
+                          </span>
+                        </button>
                       </div>
+
                       <div className={styles.cardBody}>
                         <div className={styles.detailColumn}>
                           <p className={styles.detailLabel}>Main Item</p>

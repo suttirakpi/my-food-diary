@@ -103,6 +103,39 @@ app.post("/api/meals", async (req: Request, res: Response) => {
   }
 });
 
+app.delete("/api/meals/:id", async (req: Request, res: Response) => {
+  const { id } = req.params; // รับค่า ID ที่ส่งมาจาก Frontend
+  const connection = await pool.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    // 1. ลบ "ตัวเลือกเสริม (options)" ที่ผูกกับมื้อนี้ทิ้งก่อน (ถ้าไม่ลบตัวลูกก่อน ตัวแม่จะลบไม่ได้ครับ)
+    await connection.query("DELETE FROM meal_options WHERE meal_id = ?", [id]);
+
+    // 2. ลบ "มื้ออาหารหลัก (meals)"
+    const [result] = await connection.query("DELETE FROM meals WHERE id = ?", [
+      id,
+    ]);
+
+    await connection.commit();
+
+    // เช็คว่าลบสำเร็จไหม
+    if ((result as any).affectedRows === 0) {
+      res.status(404).json({ error: "ไม่พบข้อมูลที่ต้องการลบ" });
+      return;
+    }
+
+    res.json({ message: "ลบข้อมูลสำเร็จ!" });
+  } catch (error) {
+    await connection.rollback();
+    console.error(error);
+    res.status(500).json({ error: "ลบข้อมูลล้มเหลว" });
+  } finally {
+    connection.release();
+  }
+});
+
 app.listen(port, () => {
   console.log(`Backend Server is running on http://localhost:${port}`);
 });
