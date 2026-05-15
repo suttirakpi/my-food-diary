@@ -22,6 +22,9 @@ const DailyLog: React.FC = () => {
   const navigate = useNavigate();
   const [meals, setMeals] = useState<MealEntry[]>([]);
   const [waterGlasses, setWaterGlasses] = useState<number>(0);
+  const foodCount = meals.filter((m) => m.item_type === "อาหาร").length;
+  const snackCount = meals.filter((m) => m.item_type === "ขนม").length;
+  const waterOz = waterGlasses * 22;
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().split("T")[0],
   );
@@ -212,6 +215,21 @@ const DailyLog: React.FC = () => {
                 outline: "none",
               }}
             />
+          </div>
+        </div>
+
+        <div className={styles.topSummary}>
+          <div className={styles.summaryCard}>
+            <span className={styles.summaryValue}>{foodCount}</span>
+            <span className={styles.summaryLabel}>มื้ออาหารวันนี้</span>
+          </div>
+          <div className={styles.summaryCard}>
+            <span className={styles.summaryValue}>{waterOz} oz</span>
+            <span className={styles.summaryLabel}>น้ำที่ดื่มไป</span>
+          </div>
+          <div className={styles.summaryCard}>
+            <span className={styles.summaryValue}>{snackCount}</span>
+            <span className={styles.summaryLabel}>จำนวนขนมวันนี้</span>
           </div>
         </div>
 

@@ -1,6 +1,5 @@
-import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import DailyLog from "./pages/dailylog";
+import DailyLog from "./pages/DailyLog"; // เปลี่ยนเป็น D ตัวใหญ่
 import AddMeal from "./pages/AddMeal";
 import Trends from "./pages/Trends"; // 1. นำเข้าหน้า Trends
 
