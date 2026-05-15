@@ -21,24 +21,46 @@ interface MealEntry {
 const DailyLog: React.FC = () => {
   const navigate = useNavigate();
   const [meals, setMeals] = useState<MealEntry[]>([]);
+  const [waterGlasses, setWaterGlasses] = useState<number>(0);
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().split("T")[0],
   );
 
-  const fetchMeals = async () => {
+  const fetchData = async () => {
     try {
-      const response = await axios.get(
+      // ดึงข้อมูลอาหาร
+      const mealsRes = await axios.get(
         `http://localhost:3000/api/meals?date=${selectedDate}`,
       );
-      setMeals(response.data);
+      setMeals(mealsRes.data);
+
+      // ดึงข้อมูลน้ำดื่ม
+      const waterRes = await axios.get(
+        `http://localhost:3000/api/water?date=${selectedDate}`,
+      );
+      setWaterGlasses(waterRes.data.glasses);
     } catch (error) {
       console.error("ดึงข้อมูลไม่สำเร็จ:", error);
     }
   };
 
   useEffect(() => {
-    fetchMeals();
+    fetchData();
   }, [selectedDate]);
+
+  // ฟังก์ชันอัปเดตน้ำดื่ม
+  const handleUpdateWater = async (newAmount: number) => {
+    if (newAmount < 0) return; // ไม่ให้ติดลบ
+    setWaterGlasses(newAmount); // อัปเดตหน้าจอทันทีให้ดูไว
+    try {
+      await axios.post("http://localhost:3000/api/water", {
+        date: selectedDate,
+        glasses: newAmount,
+      });
+    } catch (error) {
+      console.error("อัปเดตน้ำไม่สำเร็จ", error);
+    }
+  };
 
   const handleDelete = async (id: number) => {
     const isConfirm = window.confirm("คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้?");
@@ -83,7 +105,7 @@ const DailyLog: React.FC = () => {
   return (
     <div className={styles.pageContainer}>
       <header className={styles.header}>
-        <div className={styles.logo}>Food Diary</div>
+        <div className={styles.logo}>Vitality Food Diary</div>
         <button className={styles.addBtn} onClick={() => navigate("/add-meal")}>
           <span className="material-symbols-outlined">add</span> Add Meal
         </button>
@@ -116,6 +138,41 @@ const DailyLog: React.FC = () => {
             />
           </div>
         </div>
+
+        {/* ==========================================
+            Water Tracker Widget 
+        ========================================== */}
+        <div className={styles.waterWidget}>
+          <div className={styles.waterInfo}>
+            <h3>
+              <span className="material-symbols-outlined">water_drop</span>{" "}
+              ติดตามการดื่มน้ำ
+            </h3>
+            <p>
+              วันนี้ดื่มไปแล้ว: {waterGlasses * 22} ออนซ์ (~
+              {((waterGlasses * 650) / 1000).toFixed(1)} ลิตร)
+            </p>
+            <p style={{ fontSize: "12px", opacity: 0.8, marginTop: "4px" }}>
+              *คำนวณจากแก้วส่วนตัวขนาด 22 oz
+            </p>
+          </div>
+          <div className={styles.waterControls}>
+            <button
+              className={styles.waterBtn}
+              onClick={() => handleUpdateWater(waterGlasses - 1)}
+            >
+              <span className="material-symbols-outlined">remove</span>
+            </button>
+            <div className={styles.waterCount}>{waterGlasses}</div>
+            <button
+              className={styles.waterBtn}
+              onClick={() => handleUpdateWater(waterGlasses + 1)}
+            >
+              <span className="material-symbols-outlined">add</span>
+            </button>
+          </div>
+        </div>
+        {/* ========================================== */}
 
         {meals.length > 0 ? (
           categoryOrder.map((cat) => {
@@ -236,6 +293,23 @@ const DailyLog: React.FC = () => {
           </div>
         )}
       </main>
+
+      <footer className={styles.footer}>
+        <div className={styles.footerContent}>
+          <div className={styles.footerInfo}>
+            <div className={styles.footerLogo}>Vitality Food Diary</div>
+            <div className={styles.footerCopyright}>
+              © 2026 Vitality Food Diary. Mindful Eating, Better Living.
+            </div>
+          </div>
+
+          <div className={styles.footerLinks}>
+            <a href="#">Privacy</a>
+            <a href="#">Terms</a>
+            <a href="#">Support</a>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };

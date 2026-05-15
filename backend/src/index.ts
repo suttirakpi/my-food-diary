@@ -136,6 +136,36 @@ app.delete("/api/meals/:id", async (req: Request, res: Response) => {
   }
 });
 
+app.get("/api/water", async (req: Request, res: Response) => {
+  const { date } = req.query;
+  try {
+    const [rows] = await pool.query(
+      "SELECT glasses FROM water_logs WHERE log_date = ?",
+      [date],
+    );
+    const glasses = (rows as any[])[0]?.glasses || 0;
+    res.json({ glasses });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "ดึงข้อมูลน้ำดื่มล้มเหลว" });
+  }
+});
+
+app.post("/api/water", async (req: Request, res: Response) => {
+  const { date, glasses } = req.body;
+  try {
+    // ถ้ามีวันที่นี้อยู่แล้วให้อัปเดตจำนวนแก้ว ถ้ายังไม่มีให้สร้างใหม่ (ON DUPLICATE KEY)
+    await pool.query(
+      "INSERT INTO water_logs (log_date, glasses) VALUES (?, ?) ON DUPLICATE KEY UPDATE glasses = ?",
+      [date, glasses, glasses],
+    );
+    res.json({ message: "อัปเดตน้ำดื่มสำเร็จ!" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "บันทึกน้ำดื่มล้มเหลว" });
+  }
+});
+
 app.listen(port, () => {
   console.log(`Backend Server is running on http://localhost:${port}`);
 });

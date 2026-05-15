@@ -181,3 +181,132 @@
   margin-bottom: 0;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
 }
+
+.footer {
+  width: 100%;
+  padding: 48px 20px;
+  background-color: var(--surface); /* หรือใช้ขาวสะอาด */
+  border-top: 1px solid var(--tertiary-fixed);
+  margin-top: 64px; /* เว้นระยะจากเนื้อหาด้านบน */
+}
+
+.footerContent {
+  max-width: 1000px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+/* ปรับให้เป็นแนวนอนเมื่อจอใหญ่ */
+@media (min-width: 768px) {
+  .footerContent {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+}
+
+.footerInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: center;
+}
+
+@media (min-width: 768px) {
+  .footerInfo {
+    text-align: left;
+  }
+}
+
+.footerLogo {
+  font-family: var(--font-heading);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.footerCopyright {
+  font-size: 13px;
+  color: var(--on-surface-variant);
+}
+
+.footerLinks {
+  display: flex;
+  gap: 24px;
+}
+
+.footerLinks a {
+  text-decoration: none;
+  color: var(--on-surface-variant);
+  font-size: 14px;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.footerLinks a:hover {
+  color: var(--primary);
+}
+
+.waterWidget {
+  background-color: #e3f2fd;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.1);
+  border-left: 6px solid #2196f3;
+}
+
+.waterInfo h3 {
+  margin: 0 0 8px 0;
+  color: #0d47a1;
+  font-family: var(--font-heading);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.waterInfo p {
+  margin: 0;
+  color: #1565c0;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.waterControls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.waterBtn {
+  background-color: white;
+  color: #2196f3;
+  border: 1px solid #90caf9;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.waterBtn:hover {
+  background-color: #2196f3;
+  color: white;
+}
+
+.waterCount {
+  font-size: 28px;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  color: #0d47a1;
+  min-width: 30px;
+  text-align: center;
+}
