@@ -1,22 +1,19 @@
 import React from "react";
-// นำเข้าตัวจัดการ Router
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import DailyLog from "./pages/dailylog";
 import AddMeal from "./pages/AddMeal";
+import Trends from "./pages/Trends"; // 1. นำเข้าหน้า Trends
 
-const App: React.FC = () => {
+function App() {
   return (
-    <Router>
+    <BrowserRouter>
       <Routes>
-        {/* หน้าแรก (Path: "/") ให้แสดง DailyLog */}
         <Route path="/" element={<DailyLog />} />
-
-        {/* หน้าเพิ่มอาหาร (Path: "/add-meal") ให้แสดง AddMeal */}
         <Route path="/add-meal" element={<AddMeal />} />
+        <Route path="/trends" element={<Trends />} /> {/* 2. เพิ่มบรรทัดนี้ */}
       </Routes>
-    </Router>
+    </BrowserRouter>
   );
-};
+}
 
 export default App;

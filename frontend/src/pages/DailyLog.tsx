@@ -26,15 +26,16 @@ const DailyLog: React.FC = () => {
     new Date().toISOString().split("T")[0],
   );
 
+  // State สำหรับเปิด-ปิด Popup และเก็บข้อมูลที่กำลังแก้
+  const [editingMeal, setEditingMeal] = useState<MealEntry | null>(null);
+
   const fetchData = async () => {
     try {
-      // ดึงข้อมูลอาหาร
       const mealsRes = await axios.get(
         `http://localhost:3000/api/meals?date=${selectedDate}`,
       );
       setMeals(mealsRes.data);
 
-      // ดึงข้อมูลน้ำดื่ม
       const waterRes = await axios.get(
         `http://localhost:3000/api/water?date=${selectedDate}`,
       );
@@ -48,10 +49,9 @@ const DailyLog: React.FC = () => {
     fetchData();
   }, [selectedDate]);
 
-  // ฟังก์ชันอัปเดตน้ำดื่ม
   const handleUpdateWater = async (newAmount: number) => {
-    if (newAmount < 0) return; // ไม่ให้ติดลบ
-    setWaterGlasses(newAmount); // อัปเดตหน้าจอทันทีให้ดูไว
+    if (newAmount < 0) return;
+    setWaterGlasses(newAmount);
     try {
       await axios.post("http://localhost:3000/api/water", {
         date: selectedDate,
@@ -75,6 +75,66 @@ const DailyLog: React.FC = () => {
     }
   };
 
+  // ==========================================
+  // ฟังก์ชันสำหรับการแก้ไข (Edit)
+  // ==========================================
+  const handleOpenEdit = (meal: MealEntry) => {
+    // ก๊อปปี้ข้อมูลมาใส่ใน State (ป้องกันการแก้ข้อมูลหลักโดยไม่ได้ตั้งใจ)
+    setEditingMeal(JSON.parse(JSON.stringify(meal)));
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingMeal) return;
+
+    // กรองเอาเฉพาะชื่อ Topping ที่ไม่ว่างเปล่า
+    const validOptions = editingMeal.options
+      .map((o) => o.option_name)
+      .filter((val) => val.trim() !== "");
+
+    const payload = {
+      mainDish: editingMeal.main_dish,
+      category: editingMeal.category,
+      itemType: editingMeal.item_type,
+      options: validOptions,
+    };
+
+    try {
+      await axios.put(
+        `http://localhost:3000/api/meals/${editingMeal.id}`,
+        payload,
+      );
+      setEditingMeal(null); // ปิด Popup
+      fetchData(); // โหลดข้อมูลใหม่มาแสดง
+    } catch (error) {
+      console.error("แก้ไขไม่สำเร็จ", error);
+      alert("เกิดข้อผิดพลาดในการแก้ไขข้อมูล");
+    }
+  };
+
+  // ฟังก์ชันจัดการ Topping ในหน้าต่าง Edit
+  const handleEditOptionChange = (idx: number, val: string) => {
+    if (!editingMeal) return;
+    const newOptions = [...editingMeal.options];
+    newOptions[idx].option_name = val;
+    setEditingMeal({ ...editingMeal, options: newOptions });
+  };
+
+  const handleAddEditOption = () => {
+    if (!editingMeal) return;
+    setEditingMeal({
+      ...editingMeal,
+      options: [...editingMeal.options, { id: Date.now(), option_name: "" }],
+    });
+  };
+
+  const handleRemoveEditOption = (idToRemove: number) => {
+    if (!editingMeal) return;
+    setEditingMeal({
+      ...editingMeal,
+      options: editingMeal.options.filter((opt) => opt.id !== idToRemove),
+    });
+  };
+
   const formattedDate = new Date(selectedDate).toLocaleDateString("th-TH", {
     year: "numeric",
     month: "long",
@@ -84,9 +144,7 @@ const DailyLog: React.FC = () => {
   const groupedMeals = meals.reduce(
     (acc, meal) => {
       const cat = meal.category || "อื่นๆ";
-      if (!acc[cat]) {
-        acc[cat] = [];
-      }
+      if (!acc[cat]) acc[cat] = [];
       acc[cat].push(meal);
       return acc;
     },
@@ -94,7 +152,6 @@ const DailyLog: React.FC = () => {
   );
 
   const categoryOrder = ["มื้อเช้า", "มื้อกลางวัน", "มื้อเย็น", "ระหว่างวัน"];
-
   const getCategoryTheme = (cat: string) => {
     if (cat === "มื้อเช้า") return styles.themeOrange;
     if (cat === "มื้อกลางวัน") return styles.themeRed;
@@ -105,16 +162,37 @@ const DailyLog: React.FC = () => {
   return (
     <div className={styles.pageContainer}>
       <header className={styles.header}>
-        <div className={styles.logo}>Vitality Food Diary</div>
-        <button className={styles.addBtn} onClick={() => navigate("/add-meal")}>
-          <span className="material-symbols-outlined">add</span> Add Meal
-        </button>
+        <div className={styles.logo}>Food Diary</div>
+        <div style={{ display: "flex", gap: "12px" }}>
+          <button
+            onClick={() => navigate("/trends")}
+            style={{
+              background: "white",
+              border: "1px solid var(--primary)",
+              color: "var(--primary)",
+              padding: "10px 16px",
+              borderRadius: "12px",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              fontWeight: 600,
+            }}
+          >
+            <span className="material-symbols-outlined">analytics</span> Trends
+          </button>
+          <button
+            className={styles.addBtn}
+            onClick={() => navigate("/add-meal")}
+          >
+            <span className="material-symbols-outlined">add</span> Add Meal
+          </button>
+        </div>
       </header>
 
       <main className={styles.mainContent}>
         <div className={styles.sectionHeader}>
           <h2>รายการอาหาร ({formattedDate})</h2>
-
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <label
               htmlFor="datePicker"
@@ -131,17 +209,12 @@ const DailyLog: React.FC = () => {
                 padding: "8px 12px",
                 borderRadius: "8px",
                 border: "1px solid var(--tertiary-fixed)",
-                fontFamily: "var(--font-body)",
-                fontSize: "14px",
                 outline: "none",
               }}
             />
           </div>
         </div>
 
-        {/* ==========================================
-            Water Tracker Widget 
-        ========================================== */}
         <div className={styles.waterWidget}>
           <div className={styles.waterInfo}>
             <h3>
@@ -151,9 +224,6 @@ const DailyLog: React.FC = () => {
             <p>
               วันนี้ดื่มไปแล้ว: {waterGlasses * 22} ออนซ์ (~
               {((waterGlasses * 650) / 1000).toFixed(1)} ลิตร)
-            </p>
-            <p style={{ fontSize: "12px", opacity: 0.8, marginTop: "4px" }}>
-              *คำนวณจากแก้วส่วนตัวขนาด 22 oz
             </p>
           </div>
           <div className={styles.waterControls}>
@@ -172,7 +242,6 @@ const DailyLog: React.FC = () => {
             </button>
           </div>
         </div>
-        {/* ========================================== */}
 
         {meals.length > 0 ? (
           categoryOrder.map((cat) => {
@@ -185,7 +254,6 @@ const DailyLog: React.FC = () => {
                 className={`${styles.categorySection} ${getCategoryTheme(cat)}`}
               >
                 <h3 className={styles.categoryTitle}>{cat}</h3>
-
                 <div className={styles.mealGrid}>
                   {mealsInCat.map((meal) => (
                     <div key={meal.id} className={styles.mealCard}>
@@ -215,32 +283,64 @@ const DailyLog: React.FC = () => {
                             </span>
                           </h3>
                         </div>
-                        <button
-                          onClick={() => handleDelete(meal.id)}
-                          style={{
-                            background: "none",
-                            border: "none",
-                            color: "#ff4d4f",
-                            cursor: "pointer",
-                            padding: "8px",
-                            borderRadius: "50%",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
-                          onMouseOver={(e) =>
-                            (e.currentTarget.style.backgroundColor = "#ffebee")
-                          }
-                          onMouseOut={(e) =>
-                            (e.currentTarget.style.backgroundColor =
-                              "transparent")
-                          }
-                          title="ลบรายการนี้"
-                        >
-                          <span className="material-symbols-outlined">
-                            delete
-                          </span>
-                        </button>
+
+                        {/* -------------------------------------- */}
+                        {/* ปุ่ม Edit และ Delete */}
+                        {/* -------------------------------------- */}
+                        <div style={{ display: "flex", gap: "4px" }}>
+                          <button
+                            onClick={() => handleOpenEdit(meal)}
+                            style={{
+                              background: "none",
+                              border: "none",
+                              color: "#2196f3",
+                              cursor: "pointer",
+                              padding: "8px",
+                              borderRadius: "50%",
+                              display: "flex",
+                              alignItems: "center",
+                            }}
+                            onMouseOver={(e) =>
+                              (e.currentTarget.style.backgroundColor =
+                                "#e3f2fd")
+                            }
+                            onMouseOut={(e) =>
+                              (e.currentTarget.style.backgroundColor =
+                                "transparent")
+                            }
+                            title="แก้ไขรายการ"
+                          >
+                            <span className="material-symbols-outlined">
+                              edit
+                            </span>
+                          </button>
+                          <button
+                            onClick={() => handleDelete(meal.id)}
+                            style={{
+                              background: "none",
+                              border: "none",
+                              color: "#ff4d4f",
+                              cursor: "pointer",
+                              padding: "8px",
+                              borderRadius: "50%",
+                              display: "flex",
+                              alignItems: "center",
+                            }}
+                            onMouseOver={(e) =>
+                              (e.currentTarget.style.backgroundColor =
+                                "#ffebee")
+                            }
+                            onMouseOut={(e) =>
+                              (e.currentTarget.style.backgroundColor =
+                                "transparent")
+                            }
+                            title="ลบรายการนี้"
+                          >
+                            <span className="material-symbols-outlined">
+                              delete
+                            </span>
+                          </button>
+                        </div>
                       </div>
 
                       <div className={styles.cardBody}>
@@ -294,6 +394,121 @@ const DailyLog: React.FC = () => {
         )}
       </main>
 
+      {/* ==========================================
+          Edit Modal Popup (เด้งขึ้นมาเมื่อกดปุ่มดินสอ)
+      ========================================== */}
+      {editingMeal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <h2 className={styles.modalTitle}>แก้ไขมื้ออาหาร</h2>
+
+            <div className={styles.modalInputGroup}>
+              <label>หมวดหมู่ (เวลา)</label>
+              <select
+                value={editingMeal.category}
+                onChange={(e) =>
+                  setEditingMeal({ ...editingMeal, category: e.target.value })
+                }
+              >
+                <option value="มื้อเช้า">มื้อเช้า</option>
+                <option value="มื้อกลางวัน">มื้อกลางวัน</option>
+                <option value="มื้อเย็น">มื้อเย็น</option>
+                <option value="ระหว่างวัน">ระหว่างวัน</option>
+              </select>
+            </div>
+
+            <div className={styles.modalInputGroup}>
+              <label>ประเภทของกิน</label>
+              <select
+                value={editingMeal.item_type}
+                onChange={(e) =>
+                  setEditingMeal({ ...editingMeal, item_type: e.target.value })
+                }
+              >
+                <option value="อาหาร">อาหาร</option>
+                <option value="เครื่องดื่ม">เครื่องดื่ม</option>
+                <option value="ขนม">ขนม</option>
+              </select>
+            </div>
+
+            <div className={styles.modalInputGroup}>
+              <label>ชื่อเมนู</label>
+              <input
+                type="text"
+                value={editingMeal.main_dish}
+                onChange={(e) =>
+                  setEditingMeal({ ...editingMeal, main_dish: e.target.value })
+                }
+              />
+            </div>
+
+            <div className={styles.modalInputGroup}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: "8px",
+                }}
+              >
+                <label style={{ margin: 0 }}>Toppings</label>
+                <button
+                  type="button"
+                  onClick={handleAddEditOption}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "var(--primary)",
+                    cursor: "pointer",
+                    fontWeight: 600,
+                  }}
+                >
+                  + เพิ่ม
+                </button>
+              </div>
+              {editingMeal.options.map((opt, idx) => (
+                <div
+                  key={opt.id}
+                  style={{ display: "flex", gap: "8px", marginBottom: "8px" }}
+                >
+                  <input
+                    type="text"
+                    value={opt.option_name}
+                    onChange={(e) =>
+                      handleEditOptionChange(idx, e.target.value)
+                    }
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveEditOption(opt.id)}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "#ff4d4f",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <span className="material-symbols-outlined">close</span>
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <div className={styles.modalActions}>
+              <button
+                className={styles.btnCancel}
+                onClick={() => setEditingMeal(null)}
+              >
+                ยกเลิก
+              </button>
+              <button className={styles.btnSave} onClick={handleSaveEdit}>
+                บันทึกข้อมูล
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <footer className={styles.footer}>
         <div className={styles.footerContent}>
           <div className={styles.footerInfo}>
@@ -301,12 +516,6 @@ const DailyLog: React.FC = () => {
             <div className={styles.footerCopyright}>
               © 2026 Vitality Food Diary. Mindful Eating, Better Living.
             </div>
-          </div>
-
-          <div className={styles.footerLinks}>
-            <a href="#">Privacy</a>
-            <a href="#">Terms</a>
-            <a href="#">Support</a>
           </div>
         </div>
       </footer>
