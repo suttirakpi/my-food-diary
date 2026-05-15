@@ -14,7 +14,7 @@ interface MealEntry {
   meal_time: string;
   main_dish: string;
   category: string;
-  item_type: string; // เพิ่มตัวแปรนี้มารับข้อมูลจาก DB
+  item_type: string;
   options: MealOption[];
 }
 
@@ -46,11 +46,36 @@ const DailyLog: React.FC = () => {
     day: "numeric",
   });
 
-  // ฟังก์ชันช่วยเลือก Emoji ตามประเภทที่กิน
   const getItemIcon = (type: string) => {
     if (type === "เครื่องดื่ม") return "🥤";
     if (type === "ขนม") return "🍰";
-    return "🍛"; // อาหาร
+    return "🍛";
+  };
+
+  // ==========================================
+  // 1. นำข้อมูลมาจัดกลุ่ม (Group) ตามหมวดหมู่ (Category)
+  // ==========================================
+  const groupedMeals = meals.reduce(
+    (acc, meal) => {
+      const cat = meal.category || "อื่นๆ";
+      if (!acc[cat]) {
+        acc[cat] = [];
+      }
+      acc[cat].push(meal);
+      return acc;
+    },
+    {} as Record<string, MealEntry[]>,
+  );
+
+  // 2. กำหนดลำดับการแสดงผล (เช้า -> กลางวัน -> เย็น -> ว่าง)
+  const categoryOrder = ["มื้อเช้า", "มื้อกลางวัน", "มื้อเย็น", "ระหว่างวัน"];
+
+  // 3. ฟังก์ชันช่วยเลือกสีของกล่องแต่ละมื้อ
+  const getCategoryTheme = (cat: string) => {
+    if (cat === "มื้อเช้า") return styles.themeOrange; // สีส้ม
+    if (cat === "มื้อกลางวัน") return styles.themeRed; // สีแดง
+    if (cat === "มื้อเย็น") return styles.themeYellow; // สีเหลือง
+    return styles.themeBlue; // สีฟ้า (ระหว่างวัน/ของว่าง)
   };
 
   return (
@@ -90,51 +115,74 @@ const DailyLog: React.FC = () => {
           </div>
         </div>
 
+        {/* ==========================================
+            4. แสดงผลแยกตามกลุ่ม (Grid Category)
+        ========================================== */}
         {meals.length > 0 ? (
-          meals.map((meal) => (
-            <div key={meal.id} className={styles.mealCard}>
-              <div className={styles.cardHeader}>
-                <div>
-                  <span className={styles.timeTag}>
-                    {meal.category} • {meal.meal_time}
-                  </span>
-                  <h3 className={styles.dishTitle}>
-                    {getItemIcon(meal.item_type)} {meal.main_dish}
-                    <span
-                      style={{
-                        fontSize: "14px",
-                        fontWeight: "normal",
-                        color: "var(--on-surface-variant)",
-                        marginLeft: "8px",
-                      }}
-                    >
-                      ({meal.item_type})
-                    </span>
-                  </h3>
+          categoryOrder.map((cat) => {
+            const mealsInCat = groupedMeals[cat];
+
+            // ถ้ามื้อไหนไม่มีข้อมูลในวันนั้น ให้ข้ามไปไม่ต้องแสดงกล่อง
+            if (!mealsInCat || mealsInCat.length === 0) return null;
+
+            return (
+              <section
+                key={cat}
+                className={`${styles.categorySection} ${getCategoryTheme(cat)}`}
+              >
+                {/* หัวข้อของกลุ่ม */}
+                <h3 className={styles.categoryTitle}>{cat}</h3>
+
+                {/* เริ่ม Grid แบ่ง 2 คอลัมน์ (หรือ 1 ในมือถือ) */}
+                <div className={styles.mealGrid}>
+                  {mealsInCat.map((meal) => (
+                    <div key={meal.id} className={styles.mealCard}>
+                      <div className={styles.cardHeader}>
+                        <div>
+                          <span className={styles.timeTag}>
+                            เวลา • {meal.meal_time}
+                          </span>
+                          <h3 className={styles.dishTitle}>
+                            {getItemIcon(meal.item_type)} {meal.main_dish}
+                            <span
+                              style={{
+                                fontSize: "14px",
+                                fontWeight: "normal",
+                                color: "var(--on-surface-variant)",
+                                marginLeft: "8px",
+                              }}
+                            >
+                              ({meal.item_type})
+                            </span>
+                          </h3>
+                        </div>
+                      </div>
+                      <div className={styles.cardBody}>
+                        <div className={styles.detailColumn}>
+                          <p className={styles.detailLabel}>Main Item</p>
+                          <p>{meal.main_dish}</p>
+                        </div>
+                        <div className={styles.detailColumn}>
+                          <p className={styles.detailLabel}>Toppings</p>
+                          {meal.options && meal.options.length > 0 ? (
+                            <ul>
+                              {meal.options.map((opt) => (
+                                <li key={opt.id}>{opt.option_name}</li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p style={{ color: "var(--on-surface-variant)" }}>
+                              -
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              </div>
-              <div className={styles.cardBody}>
-                <div className={styles.detailColumn}>
-                  <p className={styles.detailLabel}>รายละเอียด / Main Item</p>
-                  <p>{meal.main_dish}</p>
-                </div>
-                <div className={styles.detailColumn}>
-                  <p className={styles.detailLabel}>ตัวเลือกเสริม / Toppings</p>
-                  {meal.options && meal.options.length > 0 ? (
-                    <ul>
-                      {meal.options.map((opt) => (
-                        <li key={opt.id}>{opt.option_name}</li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p style={{ color: "var(--on-surface-variant)" }}>
-                      - ไม่มีตัวเลือกเสริม -
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))
+              </section>
+            );
+          })
         ) : (
           <div
             style={{
