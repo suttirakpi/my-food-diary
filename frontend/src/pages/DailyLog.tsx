@@ -83,7 +83,7 @@ const DailyLog: React.FC = () => {
   return (
     <div className={styles.pageContainer}>
       <header className={styles.header}>
-        <div className={styles.logo}>Vitality Food Diary</div>
+        <div className={styles.logo}>Food Diary</div>
         <button className={styles.addBtn} onClick={() => navigate("/add-meal")}>
           <span className="material-symbols-outlined">add</span> Add Meal
         </button>
