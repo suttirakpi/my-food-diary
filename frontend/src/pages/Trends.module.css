@@ -110,3 +110,14 @@
   text-transform: uppercase;
   letter-spacing: 1px;
 }
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .summaryGrid {
+    grid-template-columns: 1fr; /* การ์ดแคลอรี่เรียงบนล่าง */
+  }
+}

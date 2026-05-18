@@ -154,3 +154,41 @@
 .saveBtn:hover {
   opacity: 0.9;
 }
+/* =========================================
+   โหมดมือถือ (Mobile Responsive)
+========================================= */
+.formGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.dishGrid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 768px) {
+  .formCard {
+    padding: 24px 16px;
+  }
+
+  .formFooter {
+    flex-direction: column; /* ปุ่มตกลงมาซ้อนกัน */
+    gap: 12px;
+  }
+
+  .cancelBtn,
+  .saveBtn {
+    width: 100%; /* ปุ่มกว้างเต็มจอ */
+    justify-content: center;
+  }
+
+  .formGrid,
+  .dishGrid {
+    grid-template-columns: 1fr; /* ฟอร์มกรอกข้อมูลเรียงบนล่าง */
+  }
+}

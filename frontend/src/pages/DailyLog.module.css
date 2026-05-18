@@ -500,3 +500,34 @@
   font-size: 13px;
   color: var(--on-surface-variant);
 }
+@media (max-width: 768px) {
+  .header {
+    padding: 16px 20px; /* ลดขอบซ้ายขวาลง */
+  }
+
+  .cardBody {
+    grid-template-columns: 1fr; /* ให้ Toppings ตกลงมาบรรทัดใหม่ */
+    gap: 12px;
+  }
+
+  .waterWidget {
+    flex-direction: column; /* กล่องน้ำดื่มเรียงบนล่าง */
+    text-align: center;
+    gap: 16px;
+  }
+
+  .waterControls {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .goalHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .topSummary {
+    grid-template-columns: 1fr; /* การ์ดตัวเลขเรียงซ้อนกัน 3 ชั้น */
+  }
+}
