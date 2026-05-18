@@ -50,6 +50,7 @@
   padding: 40px 20px;
   width: 100%;
   flex-grow: 1; /* ดัน Footer ให้อยู่ล่างสุดเสมอ */
+  box-sizing: border-box;
 }
 
 .sectionHeader {
@@ -345,6 +346,7 @@
   transition:
     border-color 0.2s,
     box-shadow 0.2s;
+  box-sizing: border-box;
 }
 
 .searchInput:focus {
