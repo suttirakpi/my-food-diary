@@ -1,13 +1,12 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "Preserve", // แนะนำสำหรับ TS 6.0+ เพื่อความยืดหยุ่น
-    "moduleResolution": "bundler", // ใช้แทน node10 เพื่อลดอาการ deprecated
+    "module": "NodeNext", // ปรับตัวนี้เพื่อให้รองรับการคอมไพล์ลงโฟลเดอร์ใน Production ได้เสถียรขึ้นครับ
+    "moduleResolution": "NodeNext",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "skipLibCheck": true,
-    "allowImportingTsExtensions": true, // รองรับการทำงานร่วมกับ ts-node-dev ได้ดีขึ้น
-    "noEmit": true // เนื่องจากเราใช้ ts-node-dev ในการรันตรงๆ
+    "outDir": "./dist" // 1. เพิ่มบรรทัดนี้ เพื่อบอกให้มันสร้างโฟลเดอร์ dist
   }
 }
