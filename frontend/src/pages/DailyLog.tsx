@@ -35,11 +35,11 @@ const DailyLog: React.FC = () => {
   const fetchData = async () => {
     try {
       const mealsRes = await axios.get(
-        `http://localhost:3000/api/meals?date=${selectedDate}`,
+        `https://my-food-diary-n1tf.onrender.com/api/meals?date=${selectedDate}`,
       );
       setMeals(mealsRes.data);
       const waterRes = await axios.get(
-        `http://localhost:3000/api/water?date=${selectedDate}`,
+        `https://my-food-diary-n1tf.onrender.com/api/water?date=${selectedDate}`,
       );
       setWaterGlasses(waterRes.data.glasses);
     } catch (error) {
@@ -58,7 +58,7 @@ const DailyLog: React.FC = () => {
     const searchTimer = setTimeout(async () => {
       try {
         const res = await axios.get(
-          `http://localhost:3000/api/search?q=${searchQuery}`,
+          `https://my-food-diary-n1tf.onrender.com/api/search?q=${searchQuery}`,
         );
         setMeals(res.data);
       } catch (error) {
@@ -73,7 +73,7 @@ const DailyLog: React.FC = () => {
     if (newAmount < 0) return;
     setWaterGlasses(newAmount);
     try {
-      await axios.post("http://localhost:3000/api/water", {
+      await axios.post("https://my-food-diary-n1tf.onrender.com/api/water", {
         date: selectedDate,
         glasses: newAmount,
       });
@@ -86,7 +86,9 @@ const DailyLog: React.FC = () => {
     const isConfirm = window.confirm("คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้?");
     if (!isConfirm) return;
     try {
-      await axios.delete(`http://localhost:3000/api/meals/${id}`);
+      await axios.delete(
+        `https://my-food-diary-n1tf.onrender.com/api/meals/${id}`,
+      );
       setMeals((prevMeals) => prevMeals.filter((meal) => meal.id !== id));
       toast.success("ลบรายการเรียบร้อย");
     } catch (error) {
@@ -113,7 +115,7 @@ const DailyLog: React.FC = () => {
 
     try {
       await axios.put(
-        `http://localhost:3000/api/meals/${editingMeal.id}`,
+        `https://my-food-diary-n1tf.onrender.com/api/meals/${editingMeal.id}`,
         payload,
       );
       setEditingMeal(null);
@@ -183,7 +185,6 @@ const DailyLog: React.FC = () => {
     (sum, meal) => sum + (meal.calories || 0),
     0,
   );
-  const foodCount = meals.filter((m) => m.item_type === "อาหาร").length;
   const snackCount = meals.filter((m) => m.item_type === "ขนม").length;
 
   // --- Logic สำหรับหลอดพลัง (Daily Goal) ---

@@ -33,7 +33,9 @@ const Trends: React.FC = () => {
   useEffect(() => {
     const fetchTrends = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/api/trends");
+        const response = await axios.get(
+          "https://my-food-diary-n1tf.onrender.com/api/trends",
+        );
         setData(response.data);
       } catch (error) {
         console.error("ดึงข้อมูลสถิติไม่สำเร็จ", error);

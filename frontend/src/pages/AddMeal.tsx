@@ -47,7 +47,10 @@ const AddMeal = () => {
 
     try {
       const loadingToast = toast.loading("กำลังบันทึกข้อมูล...");
-      await axios.post("http://localhost:3000/api/meals", payload);
+      await axios.post(
+        "https://my-food-diary-n1tf.onrender.com/api/meals",
+        payload,
+      );
       toast.success("บันทึกมื้ออาหารเรียบร้อย!", { id: loadingToast });
       navigate("/");
     } catch (error) {
