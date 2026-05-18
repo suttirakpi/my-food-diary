@@ -14,7 +14,7 @@ const AddMeal = () => {
   const [mainDish, setMainDish] = useState("");
   const [category, setCategory] = useState("มื้อเช้า");
   const [itemType, setItemType] = useState("อาหาร");
-  const [calories, setCalories] = useState<number | "">(""); // เพิ่ม State แคลอรี่
+  const [calories, setCalories] = useState<number | "">("");
   const [sideOptions, setSideOptions] = useState<SideOption[]>([
     { id: Date.now(), value: "" },
   ]);
@@ -42,7 +42,7 @@ const AddMeal = () => {
       category,
       itemType,
       options: validOptions,
-      calories: Number(calories) || 0, // ส่งค่าแคลอรี่ไป Backend
+      calories: Number(calories) || 0,
     };
 
     try {
@@ -67,14 +67,8 @@ const AddMeal = () => {
       </div>
       <div className={styles.formCard}>
         <form onSubmit={handleSubmit}>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: "16px",
-              marginBottom: "24px",
-            }}
-          >
+          {/* เปลี่ยนจาก style เป็น className แทน */}
+          <div className={styles.formGrid}>
             <div>
               <label
                 style={{
@@ -136,14 +130,8 @@ const AddMeal = () => {
             </div>
           </div>
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "2fr 1fr",
-              gap: "16px",
-              marginBottom: "24px",
-            }}
-          >
+          {/* เปลี่ยนจาก style เป็น className แทน */}
+          <div className={styles.dishGrid}>
             <div className={styles.inputGroup} style={{ marginBottom: 0 }}>
               <label>MAIN DISH / DRINK NAME</label>
               <input
