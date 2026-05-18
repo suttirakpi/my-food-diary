@@ -1,12 +1,13 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "NodeNext", // ปรับตัวนี้เพื่อให้รองรับการคอมไพล์ลงโฟลเดอร์ใน Production ได้เสถียรขึ้นครับ
+    "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "skipLibCheck": true,
-    "outDir": "./dist" // 1. เพิ่มบรรทัดนี้ เพื่อบอกให้มันสร้างโฟลเดอร์ dist
+    "outDir": "./dist",
+    "rootDir": "./src" // 🌟 เพิ่มบรรทัดนี้เข้าไปครับตูน เพื่อล็อกโฟลเดอร์ต้นทาง
   }
 }
