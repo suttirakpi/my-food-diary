@@ -16,14 +16,16 @@ app.use(express.json());
 // ตั้งค่าการเชื่อมต่อ Database (แก้ Type Error ตรงนี้)
 // ----------------------------------------------------
 const pool = mysql.createPool({
-  host: process.env.DB_HOST || "localhost",
-  user: process.env.DB_USER || "root",
-  password: process.env.DB_PASSWORD || "",
-  database: process.env.DB_NAME || "food_diary",
-  waitForConnections: true,
-  connectionLimit: 10,
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  port: 4000,
+  ssl: {
+    minVersion: "TLSv1.2",
+    rejectUnauthorized: false,
+  },
 });
-
 // ----------------------------------------------------
 // API 1: GET /api/meals
 // ----------------------------------------------------
