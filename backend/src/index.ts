@@ -197,6 +197,16 @@ app.get("/api/trends", async (req: Request, res: Response) => {
       FROM meals
     `);
 
+    const [exerciseTrend] = await pool.query(`
+      SELECT 
+        DATE_FORMAT(exercise_date, '%d %b') as date, 
+        SUM(calories_burned) as total_burned
+      FROM exercises 
+      WHERE exercise_date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+      GROUP BY exercise_date
+      ORDER BY exercise_date ASC
+    `);
+
     // ปรับ Format วันที่ให้กราฟดูสวยๆ (เช่น "ศ. 15")
     const formatData = (data: any[], valueKey: string) => {
       return data
@@ -214,6 +224,7 @@ app.get("/api/trends", async (req: Request, res: Response) => {
       itemStats,
       waterStats: formatData(waterStats as any[], "glasses"),
       calorieTrend: formatData(calorieTrend as any[], "total_cal"),
+      exerciseTrend,
       summary: (summaryStats as any[])[0], // ส่งก้อนสรุปไปให้ด้วย
     });
   } catch (error) {

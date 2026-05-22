@@ -14,7 +14,9 @@ import {
   ResponsiveContainer,
   LineChart,
   Line,
-  CartesianGrid, // นำเข้ากราฟเส้นเพิ่ม
+  CartesianGrid,
+  AreaChart,
+  Area,
 } from "recharts";
 import styles from "./Trends.module.css";
 
@@ -22,6 +24,8 @@ interface TrendData {
   itemStats: { name: string; value: number }[];
   waterStats: { date: string; glasses: number }[];
   calorieTrend: { date: string; total_cal: number }[];
+  // 🌟 เพิ่ม Interface สำหรับข้อมูลออกกำลังกาย
+  exerciseTrend: { date: string; total_burned: number }[];
   summary: { cal_today: number; cal_month: number; cal_year: number };
 }
 
@@ -67,60 +71,79 @@ const Trends: React.FC = () => {
         <div style={{ width: "40px" }}></div>
       </header>
 
-      {/* ---------------- Section 1: ตัวเลขสรุป (Summary) ---------------- */}
+      {/* สรุปแคลอรี่ */}
       <div className={styles.summaryGrid}>
         <div className={styles.summaryCard}>
-          <div className={styles.summaryLabel}>แคลอรี่วันนี้</div>
+          <div className={styles.summaryLabel}>แคลอรี่ที่กินวันนี้</div>
           <div className={styles.summaryValue}>
             {data.summary.cal_today || 0} <span>kcal</span>
           </div>
         </div>
         <div className={styles.summaryCard}>
-          <div className={styles.summaryLabel}>แคลอรี่เดือนนี้</div>
+          <div className={styles.summaryLabel}>แคลอรี่เฉลี่ยเดือนนี้</div>
           <div className={styles.summaryValue}>
             {data.summary.cal_month || 0} <span>kcal</span>
           </div>
         </div>
-        <div className={styles.summaryCard}>
-          <div className={styles.summaryLabel}>แคลอรี่ปีนี้</div>
-          <div className={styles.summaryValue}>
-            {data.summary.cal_year || 0} <span>kcal</span>
-          </div>
-        </div>
       </div>
 
-      {/* ---------------- Section 2: กราฟ (Charts) ---------------- */}
       <div className={styles.dashboardGrid}>
-        {/* กราฟเส้น: แนวโน้มแคลอรี่ */}
-        <div
-          className={styles.chartCard}
-          style={{ gridColumn: "1 / -1", minHeight: "350px" }}
-        >
-          <h3 className={styles.chartTitle}>แนวโน้มแคลอรี่ 7 วันล่าสุด</h3>
-          <ResponsiveContainer width="100%" height={300}>
+        {/* 1. กราฟเส้น: แนวโน้มแคลอรี่ที่กิน (ของเดิม) */}
+        <div className={styles.chartCard} style={{ gridColumn: "1 / -1" }}>
+          <h3 className={styles.chartTitle}>แนวโน้มการกิน 7 วันล่าสุด</h3>
+          <ResponsiveContainer width="100%" height={250}>
             <LineChart data={data.calorieTrend}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
               <XAxis dataKey="date" />
               <YAxis />
-              <Tooltip formatter={(value) => [`${value} kcal`, "แคลอรี่รวม"]} />
-              <Legend />
+              <Tooltip formatter={(value) => [`${value} kcal`, "กินเข้า"]} />
               <Line
                 type="monotone"
                 dataKey="total_cal"
-                name="แคลอรี่"
-                stroke="#ff5722"
+                stroke="#4caf50"
                 strokeWidth={3}
-                dot={{ r: 6 }}
-                activeDot={{ r: 8 }}
+                dot={{ r: 5 }}
               />
             </LineChart>
           </ResponsiveContainer>
         </div>
 
-        {/* กราฟวงกลม: สัดส่วน */}
-        <div className={styles.chartCard} style={{ minHeight: "350px" }}>
-          <h3 className={styles.chartTitle}>สัดส่วนประเภทอาหาร</h3>
-          <ResponsiveContainer width="100%" height={300}>
+        {/* 🌟 2. กราฟพื้นที่ (Area Chart): แนวโน้มการเผาผลาญ (เพิ่มใหม่!) */}
+        <div
+          className={styles.chartCard}
+          style={{ gridColumn: "1 / -1", backgroundColor: "#fff5f5" }}
+        >
+          <h3 className={styles.chartTitle} style={{ color: "#d32f2f" }}>
+            แนวโน้มการเผาผลาญ (Exercise)
+          </h3>
+          <ResponsiveContainer width="100%" height={250}>
+            <AreaChart data={data.exerciseTrend}>
+              <defs>
+                <linearGradient id="colorBurn" x1="0" y1="0" x2="0" y2="100%">
+                  <stop offset="5%" stopColor="#f44336" stopOpacity={0.8} />
+                  <stop offset="95%" stopColor="#f44336" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="date" />
+              <YAxis />
+              <Tooltip formatter={(value) => [`${value} kcal`, "เบิร์นออก"]} />
+              <Area
+                type="monotone"
+                dataKey="total_burned"
+                stroke="#d32f2f"
+                fillOpacity={1}
+                fill="url(#colorBurn)"
+                strokeWidth={3}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* 3. กราฟวงกลม: สัดส่วนอาหาร (ของเดิม) */}
+        <div className={styles.chartCard}>
+          <h3 className={styles.chartTitle}>สัดส่วนประเภทที่กิน</h3>
+          <ResponsiveContainer width="100%" height={250}>
             <PieChart>
               <Pie
                 data={data.itemStats}
@@ -148,19 +171,18 @@ const Trends: React.FC = () => {
           </ResponsiveContainer>
         </div>
 
-        {/* กราฟแท่ง: น้ำดื่ม */}
-        <div className={styles.chartCard} style={{ minHeight: "350px" }}>
-          <h3 className={styles.chartTitle}>น้ำดื่ม 7 วันย้อนหลัง</h3>
-          <ResponsiveContainer width="100%" height={300}>
+        {/* 4. กราฟแท่ง: น้ำดื่ม (ของเดิม) */}
+        <div className={styles.chartCard}>
+          <h3 className={styles.chartTitle}>สถิติน้ำดื่ม 7 วัน</h3>
+          <ResponsiveContainer width="100%" height={250}>
             <BarChart data={data.waterStats}>
               <XAxis dataKey="date" />
               <YAxis />
               <Tooltip />
-              <Legend />
               <Bar
                 dataKey="glasses"
                 name="จำนวนแก้ว"
-                fill="#42a5f5"
+                fill="#2196f3"
                 radius={[4, 4, 0, 0]}
               />
             </BarChart>
