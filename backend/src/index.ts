@@ -288,3 +288,50 @@ app.get("/api/search", async (req: Request, res: Response) => {
 app.listen(port, () => {
   console.log(`Backend Server is running on http://localhost:${port}`);
 });
+// ==========================================
+// 🏋️‍♂️ API สำหรับจัดการการออกกำลังกาย (Exercises)
+// ==========================================
+
+// 1. ดึงข้อมูลการออกกำลังกายตามวันที่ (GET)
+app.get("/api/exercises", async (req, res) => {
+  const { date } = req.query;
+  try {
+    const [rows] = await pool.query(
+      "SELECT * FROM exercises WHERE exercise_date = ? ORDER BY created_at DESC",
+      [date],
+    );
+    res.json(rows);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "ดึงข้อมูลออกกำลังกายไม่สำเร็จ" });
+  }
+});
+
+// 2. บันทึกการออกกำลังกายใหม่ (POST)
+app.post("/api/exercises", async (req, res) => {
+  const { date, activityName, caloriesBurned } = req.body;
+  try {
+    const [result] = await pool.query(
+      "INSERT INTO exercises (exercise_date, activity_name, calories_burned) VALUES (?, ?, ?)",
+      [date, activityName, caloriesBurned],
+    );
+    res
+      .status(201)
+      .json({ message: "บันทึกสำเร็จ", id: (result as any).insertId });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "บันทึกข้อมูลไม่สำเร็จ" });
+  }
+});
+
+// 3. ลบการออกกำลังกาย (DELETE)
+app.delete("/api/exercises/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    await pool.query("DELETE FROM exercises WHERE id = ?", [id]);
+    res.json({ message: "ลบข้อมูลสำเร็จ" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "ลบข้อมูลไม่สำเร็จ" });
+  }
+});
