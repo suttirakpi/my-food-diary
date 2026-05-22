@@ -18,6 +18,12 @@ interface MealEntry {
   calories: number;
   options: MealOption[];
 }
+// 🌟 1. เพิ่ม Interface สำหรับการออกกำลังกาย
+interface ExerciseEntry {
+  id: number;
+  activity_name: string;
+  calories_burned: number;
+}
 
 const DailyLog: React.FC = () => {
   const navigate = useNavigate();
@@ -27,6 +33,11 @@ const DailyLog: React.FC = () => {
     new Date().toISOString().split("T")[0],
   );
   const [editingMeal, setEditingMeal] = useState<MealEntry | null>(null);
+
+  // 🌟 2. เพิ่ม State สำหรับการออกกำลังกาย
+  const [exercises, setExercises] = useState<ExerciseEntry[]>([]);
+  const [exName, setExName] = useState("");
+  const [exCal, setExCal] = useState<number | "">("");
 
   // --- State สำหรับค้นหา ---
   const [searchQuery, setSearchQuery] = useState("");
@@ -38,23 +49,28 @@ const DailyLog: React.FC = () => {
         `https://my-food-diary-n1tf.onrender.com/api/meals?date=${selectedDate}`,
       );
       setMeals(mealsRes.data);
+
       const waterRes = await axios.get(
         `https://my-food-diary-n1tf.onrender.com/api/water?date=${selectedDate}`,
       );
       setWaterGlasses(waterRes.data.glasses);
+
+      // 🌟 ดึงข้อมูลการออกกำลังกาย
+      const exRes = await axios.get(
+        `https://my-food-diary-n1tf.onrender.com/api/exercises?date=${selectedDate}`,
+      );
+      setExercises(exRes.data);
     } catch (error) {
       console.error("ดึงข้อมูลไม่สำเร็จ:", error);
     }
   };
 
-  // --- ระบบดักจับการพิมพ์ค้นหา (Debounce) ---
   useEffect(() => {
     if (!isSearching) {
-      fetchData(); // ถ้าช่องค้นหาว่าง ให้ดึงข้อมูลวันปัจจุบันปกติ
+      fetchData();
       return;
     }
 
-    // ตั้งเวลาหน่วง 0.5 วินาทีหลังพิมพ์เสร็จ ค่อยยิง API ไปหา
     const searchTimer = setTimeout(async () => {
       try {
         const res = await axios.get(
@@ -68,6 +84,46 @@ const DailyLog: React.FC = () => {
 
     return () => clearTimeout(searchTimer);
   }, [searchQuery, selectedDate]);
+
+  // 🌟 3. ฟังก์ชันเพิ่ม/ลบ การออกกำลังกาย
+  const handleAddExercise = async () => {
+    if (!exName.trim() || !exCal) {
+      toast.error("กรุณากรอกชื่อกิจกรรมและจำนวนแคลอรี่ให้ครบ");
+      return;
+    }
+    try {
+      await axios.post(
+        "https://my-food-diary-n1tf.onrender.com/api/exercises",
+        {
+          date: selectedDate,
+          activityName: exName,
+          caloriesBurned: Number(exCal),
+        },
+      );
+      setExName("");
+      setExCal("");
+      fetchData(); // ดึงข้อมูลใหม่หลังบันทึก
+      toast.success("บันทึกการออกกำลังกายสำเร็จ!");
+    } catch (error) {
+      console.error("เพิ่มการออกกำลังกายไม่สำเร็จ:", error);
+      toast.error("บันทึกข้อมูลไม่สำเร็จ");
+    }
+  };
+
+  const handleDeleteExercise = async (id: number) => {
+    const isConfirm = window.confirm("คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้?");
+    if (!isConfirm) return;
+    try {
+      await axios.delete(
+        `https://my-food-diary-n1tf.onrender.com/api/exercises/${id}`,
+      );
+      setExercises((prev) => prev.filter((ex) => ex.id !== id));
+      toast.success("ลบรายการเรียบร้อย");
+    } catch (error) {
+      console.error("ลบข้อมูลไม่สำเร็จ:", error);
+      toast.error("เกิดข้อผิดพลาดในการลบข้อมูล");
+    }
+  };
 
   const handleUpdateWater = async (newAmount: number) => {
     if (newAmount < 0) return;
@@ -83,7 +139,9 @@ const DailyLog: React.FC = () => {
   };
 
   const handleDelete = async (id: number) => {
-    const isConfirm = window.confirm("คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้?");
+    const isConfirm = window.confirm(
+      "คุณแน่ใจหรือไม่ว่าต้องการลบรายการอาหารนี้?",
+    );
     if (!isConfirm) return;
     try {
       await axios.delete(
@@ -148,7 +206,6 @@ const DailyLog: React.FC = () => {
     });
   };
 
-  // --- Logic การจัดกลุ่มข้อมูล: ค้นหาโชว์เป็นวันที่ / ปกติโชว์เป็นมื้อ ---
   const groupedMeals = meals.reduce(
     (acc, meal) => {
       const groupKey = isSearching
@@ -164,7 +221,7 @@ const DailyLog: React.FC = () => {
   const groupsToRender = isSearching
     ? Object.keys(groupedMeals).sort(
         (a, b) => new Date(b).getTime() - new Date(a).getTime(),
-      ) // เรียงวันที่ล่าสุดขึ้นก่อน
+      )
     : ["มื้อเช้า", "มื้อกลางวัน", "มื้อเย็น", "ระหว่างวัน"];
 
   const getCategoryTheme = (cat: string) => {
@@ -180,14 +237,20 @@ const DailyLog: React.FC = () => {
     day: "numeric",
   });
 
-  // --- คำนวณสถิติของวันนี้ ---
+  // 🌟 4. คำนวณสถิติทั้งหมด (อาหาร, ออกกำลังกาย, สุทธิ)
   const totalCalories = meals.reduce(
     (sum, meal) => sum + (meal.calories || 0),
     0,
   );
+  const totalBurned = exercises.reduce(
+    (sum, ex) => sum + ex.calories_burned,
+    0,
+  );
+  const netCalories = totalCalories - totalBurned; // แคลอรี่สุทธิ
+
   const snackCount = meals.filter((m) => m.item_type === "ขนม").length;
 
-  // --- Logic สำหรับหลอดพลัง (Daily Goal) ---
+  // --- Logic สำหรับหลอดพลังเป้าหมายกินอาหาร (ของเดิม ไม่แตะต้อง) ---
   const DAILY_CALORIE_GOAL = 1600;
   const isOverGoal = totalCalories > DAILY_CALORIE_GOAL;
   const calPercentage = Math.min(
@@ -211,7 +274,7 @@ const DailyLog: React.FC = () => {
   } else if (isOverGoal) {
     barColor = "#f44336";
     messageColor = "#d32f2f";
-    motivationMessage = "แคลอรี่เกินเป้าหมายแล้ว!";
+    motivationMessage = "แคลอรี่กินเข้าไปเกินเป้าหมายแล้ว! ไปออกกำลังกายด่วน!";
   }
 
   return (
@@ -260,10 +323,10 @@ const DailyLog: React.FC = () => {
           />
         </div>
 
-        {/* --- Header วันที่ (ซ่อนตอนกำลังค้นหา) --- */}
+        {/* --- Header วันที่ --- */}
         {!isSearching && (
           <div className={styles.sectionHeader}>
-            <h2>รายการอาหาร ({formattedDate})</h2>
+            <h2>สรุปประจำวัน ({formattedDate})</h2>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <label
                 htmlFor="datePicker"
@@ -287,7 +350,6 @@ const DailyLog: React.FC = () => {
           </div>
         )}
 
-        {/* โชว์หัวข้อค้นหาถ้ากำลังพิมพ์ */}
         {isSearching && (
           <h2 style={{ marginBottom: "24px" }}>
             ผลการค้นหา: "{searchQuery}"
@@ -297,13 +359,15 @@ const DailyLog: React.FC = () => {
           </h2>
         )}
 
-        {/* --- ซ่อน Dashboard และน้ำดื่ม เมื่อกำลังค้นหา เพื่อไม่ให้ตัวเลขตีกัน --- */}
         {!isSearching && (
           <>
+            {/* Top Summary Dashboard */}
             <div className={styles.topSummary}>
               <div className={styles.summaryCard}>
                 <span className={styles.summaryValue}>{totalCalories}</span>
-                <span className={styles.summaryLabel}>แคลอรี่รวม (kcal)</span>
+                <span className={styles.summaryLabel}>
+                  แคลอรี่รวมที่กิน (kcal)
+                </span>
               </div>
               <div className={styles.summaryCard}>
                 <span className={styles.summaryValue}>
@@ -324,6 +388,71 @@ const DailyLog: React.FC = () => {
               </div>
             </div>
 
+            {/* 🌟 5. กล่องแสดงแคลอรี่สุทธิ (Net Calories) */}
+            <div
+              style={{
+                backgroundColor: "#fff3e0",
+                borderRadius: "16px",
+                padding: "24px",
+                marginBottom: "32px",
+                borderLeft: "6px solid #ff9800",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.03)",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  flexWrap: "wrap",
+                  gap: "16px",
+                }}
+              >
+                <div>
+                  <h3
+                    style={{
+                      margin: "0 0 8px 0",
+                      color: "#e65100",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                    }}
+                  >
+                    <span className="material-symbols-outlined">
+                      local_fire_department
+                    </span>
+                    แคลอรี่สุทธิ (Net Calories)
+                  </h3>
+                  <p
+                    style={{
+                      margin: 0,
+                      color: "#f57c00",
+                      fontSize: "14px",
+                      fontWeight: 500,
+                    }}
+                  >
+                    กินเข้า{" "}
+                    <span style={{ fontWeight: "bold" }}>{totalCalories}</span>{" "}
+                    - เผาผลาญ{" "}
+                    <span style={{ fontWeight: "bold" }}>{totalBurned}</span>
+                  </p>
+                </div>
+                <div
+                  style={{
+                    fontSize: "36px",
+                    fontWeight: "bold",
+                    color: "#e65100",
+                  }}
+                >
+                  {netCalories}{" "}
+                  <span style={{ fontSize: "16px", fontWeight: "normal" }}>
+                    kcal
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* เป้าหมายการกิน (หลอดเดิม) */}
             <div className={styles.goalContainer}>
               <div className={styles.goalHeader}>
                 <div className={styles.goalTitle}>
@@ -333,7 +462,7 @@ const DailyLog: React.FC = () => {
                   >
                     speed
                   </span>
-                  เป้าหมายแคลอรี่รายวัน
+                  เป้าหมายการกิน (หลอดเดิม)
                 </div>
                 <div className={styles.goalText}>
                   <span
@@ -361,6 +490,157 @@ const DailyLog: React.FC = () => {
               </div>
             </div>
 
+            {/* 🌟 6. ระบบบันทึกการออกกำลังกาย */}
+            <div
+              style={{
+                backgroundColor: "white",
+                borderRadius: "16px",
+                padding: "24px",
+                marginBottom: "32px",
+                border: "1px solid var(--tertiary-fixed)",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.03)",
+              }}
+            >
+              <h3
+                style={{
+                  margin: "0 0 16px 0",
+                  fontFamily: "var(--font-heading)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                }}
+              >
+                <span className="material-symbols-outlined">
+                  fitness_center
+                </span>
+                บันทึกการออกกำลังกาย
+              </h3>
+
+              {/* ฟอร์มกรอกแบบ Flexbox หดตามมือถือ */}
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "12px",
+                  marginBottom: "16px",
+                }}
+              >
+                <input
+                  type="text"
+                  placeholder="เช่น วิ่ง, ยกเวท, ว่ายน้ำ"
+                  value={exName}
+                  onChange={(e) => setExName(e.target.value)}
+                  style={{
+                    flex: "2",
+                    minWidth: "200px",
+                    padding: "12px",
+                    borderRadius: "8px",
+                    border: "1px solid var(--tertiary-fixed)",
+                    outline: "none",
+                    fontFamily: "var(--font-body)",
+                  }}
+                />
+                <input
+                  type="number"
+                  placeholder="kcal ที่เบิร์น"
+                  value={exCal}
+                  onChange={(e) =>
+                    setExCal(
+                      e.target.value === "" ? "" : Number(e.target.value),
+                    )
+                  }
+                  style={{
+                    flex: "1",
+                    minWidth: "120px",
+                    padding: "12px",
+                    borderRadius: "8px",
+                    border: "1px solid var(--tertiary-fixed)",
+                    outline: "none",
+                    fontFamily: "var(--font-body)",
+                  }}
+                />
+                <button
+                  onClick={handleAddExercise}
+                  style={{
+                    flex: "0 1 auto",
+                    backgroundColor: "#e65100",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "8px",
+                    padding: "12px 24px",
+                    cursor: "pointer",
+                    fontWeight: "bold",
+                    fontFamily: "var(--font-body)",
+                  }}
+                >
+                  บันทึก
+                </button>
+              </div>
+
+              {/* รายการที่ออกกำลังกายไปแล้ว */}
+              {exercises.length > 0 && (
+                <div
+                  style={{
+                    marginTop: "16px",
+                    borderTop: "1px solid var(--tertiary-fixed)",
+                    paddingTop: "16px",
+                  }}
+                >
+                  {exercises.map((ex) => (
+                    <div
+                      key={ex.id}
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        marginBottom: "8px",
+                        padding: "12px",
+                        backgroundColor: "#fff3e0",
+                        borderRadius: "8px",
+                        border: "1px solid #ffe0b2",
+                      }}
+                    >
+                      <span style={{ fontWeight: 600, color: "#e65100" }}>
+                        {ex.activity_name}
+                      </span>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "16px",
+                        }}
+                      >
+                        <span style={{ color: "#e65100", fontWeight: "bold" }}>
+                          - {ex.calories_burned} kcal
+                        </span>
+                        <button
+                          onClick={() => handleDeleteExercise(ex.id)}
+                          style={{
+                            background: "white",
+                            border: "1px solid #ffcc80",
+                            color: "#f44336",
+                            cursor: "pointer",
+                            display: "flex",
+                            padding: "6px",
+                            borderRadius: "50%",
+                          }}
+                          title="ลบรายการ"
+                        >
+                          <span
+                            className="material-symbols-outlined"
+                            style={{ fontSize: "18px" }}
+                          >
+                            delete
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Widget น้ำดื่ม */}
             <div className={styles.waterWidget}>
               <div className={styles.waterInfo}>
                 <h3>
@@ -388,7 +668,7 @@ const DailyLog: React.FC = () => {
           </>
         )}
 
-        {/* --- รายการอาหาร --- */}
+        {/* --- รายการอาหาร (ของเดิม) --- */}
         {meals.length > 0 ? (
           groupsToRender.map((cat) => {
             const mealsInCat = groupedMeals[cat];
