@@ -12,7 +12,6 @@ interface SideOption {
 const AddMeal = () => {
   const navigate = useNavigate();
 
-  // 🌟 เพิ่ม State สำหรับวันที่และเวลา (ค่าเริ่มต้นคือปัจจุบัน)
   const [mealDate, setMealDate] = useState(
     new Date().toISOString().split("T")[0],
   );
@@ -56,8 +55,8 @@ const AddMeal = () => {
       itemType,
       options: validOptions,
       calories: Number(calories) || 0,
-      date: mealDate, // 🌟 ส่งวันที่ไปให้ Backend
-      time: mealTime, // 🌟 ส่งเวลาไปให้ Backend
+      date: mealDate,
+      time: mealTime,
     };
 
     try {
@@ -82,8 +81,6 @@ const AddMeal = () => {
       </div>
       <div className={styles.formCard}>
         <form onSubmit={handleSubmit}>
-          {/* 🌟 เพิ่มช่องเลือกวันที่ และ เวลา */}
-          {/* 🌟 ช่องเลือกวันที่ และ เวลา (แก้กล่องเบียดกันแล้ว) */}
           <div className={styles.formGrid}>
             <div>
               <label
@@ -109,7 +106,7 @@ const AddMeal = () => {
                   fontSize: "16px",
                   outline: "none",
                   fontFamily: "var(--font-body)",
-                  boxSizing: "border-box", // 🌟 เพิ่มบรรทัดนี้เข้ามาครับ
+                  boxSizing: "border-box",
                 }}
                 required
               />
@@ -138,7 +135,7 @@ const AddMeal = () => {
                   fontSize: "16px",
                   outline: "none",
                   fontFamily: "var(--font-body)",
-                  boxSizing: "border-box", // 🌟 เพิ่มบรรทัดนี้เข้ามาครับ
+                  boxSizing: "border-box",
                 }}
                 required
               />
@@ -168,6 +165,7 @@ const AddMeal = () => {
                   border: "1px solid var(--tertiary-fixed)",
                   fontSize: "16px",
                   outline: "none",
+                  boxSizing: "border-box",
                 }}
               >
                 <option value="มื้อเช้า">มื้อเช้า</option>
@@ -198,6 +196,7 @@ const AddMeal = () => {
                   border: "1px solid var(--tertiary-fixed)",
                   fontSize: "16px",
                   outline: "none",
+                  boxSizing: "border-box",
                 }}
               >
                 <option value="อาหาร">อาหาร</option>

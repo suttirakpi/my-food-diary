@@ -18,7 +18,6 @@ interface MealEntry {
   calories: number;
   options: MealOption[];
 }
-// 🌟 1. เพิ่ม Interface สำหรับการออกกำลังกาย
 interface ExerciseEntry {
   id: number;
   activity_name: string;
@@ -34,16 +33,14 @@ const DailyLog: React.FC = () => {
   );
   const [editingMeal, setEditingMeal] = useState<MealEntry | null>(null);
 
-  // 🌟 2. เพิ่ม State สำหรับการออกกำลังกาย
   const [exercises, setExercises] = useState<ExerciseEntry[]>([]);
   const [exName, setExName] = useState("");
   const [exCal, setExCal] = useState<number | "">("");
 
-  // --- State สำหรับค้นหา ---
   const [searchQuery, setSearchQuery] = useState("");
   const isSearching = searchQuery.trim() !== "";
 
-  // 🌟 State สำหรับ IF 16/8
+  // State สำหรับ IF 16/8
   const [isFasting, setIsFasting] = useState<boolean>(() => {
     return localStorage.getItem("isFasting") === "true";
   });
@@ -66,7 +63,6 @@ const DailyLog: React.FC = () => {
       );
       setWaterGlasses(waterRes.data.glasses);
 
-      // 🌟 ดึงข้อมูลการออกกำลังกาย
       const exRes = await axios.get(
         `https://my-food-diary-n1tf.onrender.com/api/exercises?date=${selectedDate}`,
       );
@@ -76,7 +72,27 @@ const DailyLog: React.FC = () => {
     }
   };
 
-  // 🌟 ระบบจับเวลา IF 16/8
+  useEffect(() => {
+    if (!isSearching) {
+      fetchData();
+      return;
+    }
+
+    const searchTimer = setTimeout(async () => {
+      try {
+        const res = await axios.get(
+          `https://my-food-diary-n1tf.onrender.com/api/search?q=${searchQuery}`,
+        );
+        setMeals(res.data);
+      } catch (error) {
+        console.error("ค้นหาล้มเหลว", error);
+      }
+    }, 500);
+
+    return () => clearTimeout(searchTimer);
+  }, [searchQuery, selectedDate]);
+
+  // ระบบจับเวลา IF 16/8
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
 
@@ -84,14 +100,12 @@ const DailyLog: React.FC = () => {
       interval = setInterval(() => {
         const now = Date.now();
         const elapsed = now - fastStartTime;
-        const targetMs = 16 * 60 * 60 * 1000; // 16 ชั่วโมง
+        const targetMs = 16 * 60 * 60 * 1000;
         const remaining = targetMs - elapsed;
 
         if (remaining <= 0) {
           setFastTimeLeft("00:00:00");
           setFastProgress(100);
-          // ถ้าอยากให้แจ้งเตือนตอนครบเวลา เอาคอมเมนต์ออกได้ครับ
-          // toast.success("ทำ IF ครบ 16 ชั่วโมงแล้ว! เก่งมาก!");
         } else {
           const h = Math.floor(remaining / (1000 * 60 * 60));
           const m = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
@@ -101,7 +115,7 @@ const DailyLog: React.FC = () => {
           );
           setFastProgress((elapsed / targetMs) * 100);
         }
-      }, 1000); // อัปเดตทุก 1 วินาที
+      }, 1000);
     } else {
       setFastTimeLeft("16:00:00");
       setFastProgress(0);
@@ -127,7 +141,6 @@ const DailyLog: React.FC = () => {
     }
   };
 
-  // 🌟 3. ฟังก์ชันเพิ่ม/ลบ การออกกำลังกาย
   const handleAddExercise = async () => {
     if (!exName.trim() || !exCal) {
       toast.error("กรุณากรอกชื่อกิจกรรมและจำนวนแคลอรี่ให้ครบ");
@@ -144,7 +157,7 @@ const DailyLog: React.FC = () => {
       );
       setExName("");
       setExCal("");
-      fetchData(); // ดึงข้อมูลใหม่หลังบันทึก
+      fetchData();
       toast.success("บันทึกการออกกำลังกายสำเร็จ!");
     } catch (error) {
       console.error("เพิ่มการออกกำลังกายไม่สำเร็จ:", error);
@@ -279,7 +292,6 @@ const DailyLog: React.FC = () => {
     day: "numeric",
   });
 
-  // 🌟 4. คำนวณสถิติทั้งหมด (อาหาร, ออกกำลังกาย, สุทธิ)
   const totalCalories = meals.reduce(
     (sum, meal) => sum + (meal.calories || 0),
     0,
@@ -288,11 +300,10 @@ const DailyLog: React.FC = () => {
     (sum, ex) => sum + ex.calories_burned,
     0,
   );
-  const netCalories = totalCalories - totalBurned; // แคลอรี่สุทธิ
+  const netCalories = totalCalories - totalBurned;
 
   const snackCount = meals.filter((m) => m.item_type === "ขนม").length;
 
-  // --- Logic สำหรับหลอดพลังเป้าหมายกินอาหาร (ของเดิม ไม่แตะต้อง) ---
   const DAILY_CALORIE_GOAL = 1600;
   const isOverGoal = totalCalories > DAILY_CALORIE_GOAL;
   const calPercentage = Math.min(
@@ -351,7 +362,6 @@ const DailyLog: React.FC = () => {
       </header>
 
       <main className={styles.mainContent}>
-        {/* --- ช่องค้นหา (Search Bar) --- */}
         <div className={styles.searchContainer}>
           <span className={`material-symbols-outlined ${styles.searchIcon}`}>
             search
@@ -365,7 +375,6 @@ const DailyLog: React.FC = () => {
           />
         </div>
 
-        {/* --- Header วันที่ --- */}
         {!isSearching && (
           <div className={styles.sectionHeader}>
             <h2>สรุปประจำวัน ({formattedDate})</h2>
@@ -403,7 +412,6 @@ const DailyLog: React.FC = () => {
 
         {!isSearching && (
           <>
-            {/* 🌟 Widget ติดตาม Intermittent Fasting (16/8) */}
             <div
               style={{
                 backgroundColor: isFasting ? "#fff3e0" : "#e8f5e9",
@@ -493,7 +501,6 @@ const DailyLog: React.FC = () => {
                 </button>
               </div>
 
-              {/* Progress Bar หลอดพลังงาน */}
               {isFasting && (
                 <div style={{ marginTop: "20px" }}>
                   <div
@@ -531,7 +538,7 @@ const DailyLog: React.FC = () => {
                 </div>
               )}
             </div>
-            {/* Top Summary Dashboard */}
+
             <div className={styles.topSummary}>
               <div className={styles.summaryCard}>
                 <span className={styles.summaryValue}>{totalCalories}</span>
@@ -558,7 +565,6 @@ const DailyLog: React.FC = () => {
               </div>
             </div>
 
-            {/* 🌟 5. กล่องแสดงแคลอรี่สุทธิ (Net Calories) */}
             <div
               style={{
                 backgroundColor: "#fff3e0",
@@ -622,7 +628,6 @@ const DailyLog: React.FC = () => {
               </div>
             </div>
 
-            {/* เป้าหมายการกิน (หลอดเดิม) */}
             <div className={styles.goalContainer}>
               <div className={styles.goalHeader}>
                 <div className={styles.goalTitle}>
@@ -660,7 +665,6 @@ const DailyLog: React.FC = () => {
               </div>
             </div>
 
-            {/* 🌟 6. ระบบบันทึกการออกกำลังกาย */}
             <div
               style={{
                 backgroundColor: "white",
@@ -686,7 +690,6 @@ const DailyLog: React.FC = () => {
                 บันทึกการออกกำลังกาย
               </h3>
 
-              {/* ฟอร์มกรอกแบบ Flexbox หดตามมือถือ */}
               <div
                 style={{
                   display: "flex",
@@ -747,7 +750,6 @@ const DailyLog: React.FC = () => {
                 </button>
               </div>
 
-              {/* รายการที่ออกกำลังกายไปแล้ว */}
               {exercises.length > 0 && (
                 <div
                   style={{
@@ -810,7 +812,6 @@ const DailyLog: React.FC = () => {
               )}
             </div>
 
-            {/* Widget น้ำดื่ม */}
             <div className={styles.waterWidget}>
               <div className={styles.waterInfo}>
                 <h3>
@@ -838,7 +839,6 @@ const DailyLog: React.FC = () => {
           </>
         )}
 
-        {/* --- รายการอาหาร (ของเดิม) --- */}
         {meals.length > 0 ? (
           groupsToRender.map((cat) => {
             const mealsInCat = groupedMeals[cat];
@@ -992,7 +992,6 @@ const DailyLog: React.FC = () => {
         )}
       </main>
 
-      {/* --- Edit Modal --- */}
       {editingMeal && (
         <div className={styles.modalOverlay}>
           <div className={styles.modalContent}>
@@ -1128,7 +1127,6 @@ const DailyLog: React.FC = () => {
         </div>
       )}
 
-      {/* --- Footer --- */}
       <footer className={styles.footer}>
         <div className={styles.footerContent}>
           <div className={styles.footerInfo}>

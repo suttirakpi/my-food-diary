@@ -24,7 +24,6 @@ interface TrendData {
   itemStats: { name: string; value: number }[];
   waterStats: { date: string; glasses: number }[];
   calorieTrend: { date: string; total_cal: number }[];
-  // 🌟 เพิ่ม Interface สำหรับข้อมูลออกกำลังกาย
   exerciseTrend: { date: string; total_burned: number }[];
   summary: { cal_today: number; cal_month: number; cal_year: number };
 }
@@ -71,7 +70,6 @@ const Trends: React.FC = () => {
         <div style={{ width: "40px" }}></div>
       </header>
 
-      {/* สรุปแคลอรี่ */}
       <div className={styles.summaryGrid}>
         <div className={styles.summaryCard}>
           <div className={styles.summaryLabel}>แคลอรี่ที่กินวันนี้</div>
@@ -88,7 +86,6 @@ const Trends: React.FC = () => {
       </div>
 
       <div className={styles.dashboardGrid}>
-        {/* 1. กราฟเส้น: แนวโน้มแคลอรี่ที่กิน (ของเดิม) */}
         <div className={styles.chartCard} style={{ gridColumn: "1 / -1" }}>
           <h3 className={styles.chartTitle}>แนวโน้มการกิน 7 วันล่าสุด</h3>
           <ResponsiveContainer width="100%" height={250}>
@@ -108,7 +105,6 @@ const Trends: React.FC = () => {
           </ResponsiveContainer>
         </div>
 
-        {/* 🌟 2. กราฟพื้นที่ (Area Chart): แนวโน้มการเผาผลาญ (เพิ่มใหม่!) */}
         <div
           className={styles.chartCard}
           style={{ gridColumn: "1 / -1", backgroundColor: "#fff5f5" }}
@@ -140,7 +136,6 @@ const Trends: React.FC = () => {
           </ResponsiveContainer>
         </div>
 
-        {/* 3. กราฟวงกลม: สัดส่วนอาหาร (ของเดิม) */}
         <div className={styles.chartCard}>
           <h3 className={styles.chartTitle}>สัดส่วนประเภทที่กิน</h3>
           <ResponsiveContainer width="100%" height={250}>
@@ -171,7 +166,6 @@ const Trends: React.FC = () => {
           </ResponsiveContainer>
         </div>
 
-        {/* 4. กราฟแท่ง: น้ำดื่ม (ของเดิม) */}
         <div className={styles.chartCard}>
           <h3 className={styles.chartTitle}>สถิติน้ำดื่ม 7 วัน</h3>
           <ResponsiveContainer width="100%" height={250}>
