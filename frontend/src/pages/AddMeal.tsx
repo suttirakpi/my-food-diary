@@ -11,6 +11,19 @@ interface SideOption {
 
 const AddMeal = () => {
   const navigate = useNavigate();
+
+  // 🌟 เพิ่ม State สำหรับวันที่และเวลา (ค่าเริ่มต้นคือปัจจุบัน)
+  const [mealDate, setMealDate] = useState(
+    new Date().toISOString().split("T")[0],
+  );
+  const [mealTime, setMealTime] = useState(
+    new Date().toLocaleTimeString("th-TH", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }),
+  );
+
   const [mainDish, setMainDish] = useState("");
   const [category, setCategory] = useState("มื้อเช้า");
   const [itemType, setItemType] = useState("อาหาร");
@@ -43,6 +56,8 @@ const AddMeal = () => {
       itemType,
       options: validOptions,
       calories: Number(calories) || 0,
+      date: mealDate, // 🌟 ส่งวันที่ไปให้ Backend
+      time: mealTime, // 🌟 ส่งเวลาไปให้ Backend
     };
 
     try {
@@ -67,7 +82,66 @@ const AddMeal = () => {
       </div>
       <div className={styles.formCard}>
         <form onSubmit={handleSubmit}>
-          {/* เปลี่ยนจาก style เป็น className แทน */}
+          {/* 🌟 เพิ่มช่องเลือกวันที่ และ เวลา */}
+          <div className={styles.formGrid}>
+            <div>
+              <label
+                style={{
+                  display: "block",
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  color: "var(--on-surface-variant)",
+                  marginBottom: "8px",
+                }}
+              >
+                DATE (วันที่)
+              </label>
+              <input
+                type="date"
+                value={mealDate}
+                onChange={(e) => setMealDate(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "16px",
+                  borderRadius: "8px",
+                  border: "1px solid var(--tertiary-fixed)",
+                  fontSize: "16px",
+                  outline: "none",
+                  fontFamily: "var(--font-body)",
+                }}
+                required
+              />
+            </div>
+            <div>
+              <label
+                style={{
+                  display: "block",
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  color: "var(--on-surface-variant)",
+                  marginBottom: "8px",
+                }}
+              >
+                TIME (เวลา)
+              </label>
+              <input
+                type="time"
+                value={mealTime}
+                onChange={(e) => setMealTime(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "16px",
+                  borderRadius: "8px",
+                  border: "1px solid var(--tertiary-fixed)",
+                  fontSize: "16px",
+                  outline: "none",
+                  fontFamily: "var(--font-body)",
+                }}
+                required
+              />
+            </div>
+          </div>
+
           <div className={styles.formGrid}>
             <div>
               <label
@@ -130,7 +204,6 @@ const AddMeal = () => {
             </div>
           </div>
 
-          {/* เปลี่ยนจาก style เป็น className แทน */}
           <div className={styles.dishGrid}>
             <div className={styles.inputGroup} style={{ marginBottom: 0 }}>
               <label>MAIN DISH / DRINK NAME</label>

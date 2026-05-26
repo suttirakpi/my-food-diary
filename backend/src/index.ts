@@ -67,19 +67,20 @@ app.get("/api/meals", async (req: Request, res: Response) => {
 // API 2: POST /api/meals
 // ----------------------------------------------------
 app.post("/api/meals", async (req: Request, res: Response) => {
-  // รับค่า calories เพิ่มมา
-  const { mainDish, options, category, itemType, calories } = req.body;
+  // 🌟 1. รับค่า date และ time จากหน้าบ้านเพิ่มเข้ามา
+  const { mainDish, options, category, itemType, calories, date, time } =
+    req.body;
 
   const today = new Date();
-  const mealDate = today.toISOString().split("T")[0];
-  const mealTime = today.toTimeString().split(" ")[0];
+  // 🌟 2. ถ้ามี date/time ส่งมาให้ใช้อันนั้น แต่ถ้าไม่มีให้ใช้วันนี้เวลาปัจจุบัน
+  const mealDate = date || today.toISOString().split("T")[0];
+  const mealTime = time || today.toTimeString().split(" ")[0];
 
   const connection = await pool.getConnection();
 
   try {
     await connection.beginTransaction();
 
-    // เพิ่ม calories ลงไปในคำสั่ง INSERT
     const [mealResult] = await connection.query(
       "INSERT INTO meals (meal_date, meal_time, main_dish, category, item_type, calories) VALUES (?, ?, ?, ?, ?, ?)",
       [mealDate, mealTime, mainDish, category, itemType, calories || 0],
@@ -100,38 +101,6 @@ app.post("/api/meals", async (req: Request, res: Response) => {
     await connection.rollback();
     console.error(error);
     res.status(500).json({ error: "บันทึกล้มเหลว" });
-  } finally {
-    connection.release();
-  }
-});
-app.delete("/api/meals/:id", async (req: Request, res: Response) => {
-  const { id } = req.params; // รับค่า ID ที่ส่งมาจาก Frontend
-  const connection = await pool.getConnection();
-
-  try {
-    await connection.beginTransaction();
-
-    // 1. ลบ "ตัวเลือกเสริม (options)" ที่ผูกกับมื้อนี้ทิ้งก่อน (ถ้าไม่ลบตัวลูกก่อน ตัวแม่จะลบไม่ได้ครับ)
-    await connection.query("DELETE FROM meal_options WHERE meal_id = ?", [id]);
-
-    // 2. ลบ "มื้ออาหารหลัก (meals)"
-    const [result] = await connection.query("DELETE FROM meals WHERE id = ?", [
-      id,
-    ]);
-
-    await connection.commit();
-
-    // เช็คว่าลบสำเร็จไหม
-    if ((result as any).affectedRows === 0) {
-      res.status(404).json({ error: "ไม่พบข้อมูลที่ต้องการลบ" });
-      return;
-    }
-
-    res.json({ message: "ลบข้อมูลสำเร็จ!" });
-  } catch (error) {
-    await connection.rollback();
-    console.error(error);
-    res.status(500).json({ error: "ลบข้อมูลล้มเหลว" });
   } finally {
     connection.release();
   }
