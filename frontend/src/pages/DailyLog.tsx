@@ -43,6 +43,17 @@ const DailyLog: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const isSearching = searchQuery.trim() !== "";
 
+  // 🌟 State สำหรับ IF 16/8
+  const [isFasting, setIsFasting] = useState<boolean>(() => {
+    return localStorage.getItem("isFasting") === "true";
+  });
+  const [fastStartTime, setFastStartTime] = useState<number | null>(() => {
+    const savedTime = localStorage.getItem("fastStartTime");
+    return savedTime ? parseInt(savedTime) : null;
+  });
+  const [fastTimeLeft, setFastTimeLeft] = useState<string>("16:00:00");
+  const [fastProgress, setFastProgress] = useState<number>(0);
+
   const fetchData = async () => {
     try {
       const mealsRes = await axios.get(
@@ -65,25 +76,56 @@ const DailyLog: React.FC = () => {
     }
   };
 
+  // 🌟 ระบบจับเวลา IF 16/8
   useEffect(() => {
-    if (!isSearching) {
-      fetchData();
-      return;
+    let interval: ReturnType<typeof setInterval>;
+
+    if (isFasting && fastStartTime) {
+      interval = setInterval(() => {
+        const now = Date.now();
+        const elapsed = now - fastStartTime;
+        const targetMs = 16 * 60 * 60 * 1000; // 16 ชั่วโมง
+        const remaining = targetMs - elapsed;
+
+        if (remaining <= 0) {
+          setFastTimeLeft("00:00:00");
+          setFastProgress(100);
+          // ถ้าอยากให้แจ้งเตือนตอนครบเวลา เอาคอมเมนต์ออกได้ครับ
+          // toast.success("ทำ IF ครบ 16 ชั่วโมงแล้ว! เก่งมาก!");
+        } else {
+          const h = Math.floor(remaining / (1000 * 60 * 60));
+          const m = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+          const s = Math.floor((remaining % (1000 * 60)) / 1000);
+          setFastTimeLeft(
+            `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`,
+          );
+          setFastProgress((elapsed / targetMs) * 100);
+        }
+      }, 1000); // อัปเดตทุก 1 วินาที
+    } else {
+      setFastTimeLeft("16:00:00");
+      setFastProgress(0);
     }
 
-    const searchTimer = setTimeout(async () => {
-      try {
-        const res = await axios.get(
-          `https://my-food-diary-n1tf.onrender.com/api/search?q=${searchQuery}`,
-        );
-        setMeals(res.data);
-      } catch (error) {
-        console.error("ค้นหาล้มเหลว", error);
-      }
-    }, 500);
+    return () => clearInterval(interval);
+  }, [isFasting, fastStartTime]);
 
-    return () => clearTimeout(searchTimer);
-  }, [searchQuery, selectedDate]);
+  const toggleFasting = () => {
+    if (isFasting) {
+      setIsFasting(false);
+      setFastStartTime(null);
+      localStorage.removeItem("isFasting");
+      localStorage.removeItem("fastStartTime");
+      toast.success("จบการ Fasting! ได้เวลาเติมพลังแล้ว 🍽️");
+    } else {
+      const now = Date.now();
+      setIsFasting(true);
+      setFastStartTime(now);
+      localStorage.setItem("isFasting", "true");
+      localStorage.setItem("fastStartTime", now.toString());
+      toast.success("เริ่ม Fasting 16 ชั่วโมง! ลุย! ✌️");
+    }
+  };
 
   // 🌟 3. ฟังก์ชันเพิ่ม/ลบ การออกกำลังกาย
   const handleAddExercise = async () => {
@@ -361,6 +403,134 @@ const DailyLog: React.FC = () => {
 
         {!isSearching && (
           <>
+            {/* 🌟 Widget ติดตาม Intermittent Fasting (16/8) */}
+            <div
+              style={{
+                backgroundColor: isFasting ? "#fff3e0" : "#e8f5e9",
+                borderRadius: "16px",
+                padding: "24px",
+                marginBottom: "32px",
+                borderLeft: `6px solid ${isFasting ? "#ff9800" : "#4caf50"}`,
+                boxShadow: "0 4px 12px rgba(0,0,0,0.03)",
+                transition: "all 0.3s ease",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  flexWrap: "wrap",
+                  gap: "16px",
+                }}
+              >
+                <div>
+                  <h3
+                    style={{
+                      margin: "0 0 8px 0",
+                      color: isFasting ? "#e65100" : "#2e7d32",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                    }}
+                  >
+                    <span className="material-symbols-outlined">timer</span>
+                    Intermittent Fasting (16/8)
+                  </h3>
+                  <p
+                    style={{
+                      margin: 0,
+                      color: isFasting ? "#f57c00" : "#4caf50",
+                      fontSize: "14px",
+                      fontWeight: 500,
+                    }}
+                  >
+                    {isFasting
+                      ? "🔥 ร่างกายกำลังดึงไขมันมาใช้! อดทนอีกนิดเพื่อเป้าหมาย 70kg"
+                      : "🍽️ ช่วงเวลากิน (Feeding Window) เติมพลังให้เต็มที่!"}
+                  </p>
+                </div>
+
+                <div style={{ textAlign: "center" }}>
+                  <div
+                    style={{
+                      fontSize: "36px",
+                      fontWeight: "bold",
+                      color: isFasting ? "#e65100" : "#2e7d32",
+                      fontFamily: "monospace",
+                    }}
+                  >
+                    {isFasting ? fastTimeLeft : "08:00:00"}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "12px",
+                      color: isFasting ? "#f57c00" : "#4caf50",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {isFasting
+                      ? "เวลา Fasting ที่เหลือ"
+                      : "เวลา Feeding (โดยประมาณ)"}
+                  </div>
+                </div>
+
+                <button
+                  onClick={toggleFasting}
+                  style={{
+                    backgroundColor: isFasting ? "#f44336" : "#4caf50",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "8px",
+                    padding: "12px 24px",
+                    cursor: "pointer",
+                    fontWeight: "bold",
+                    fontFamily: "var(--font-body)",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+                  }}
+                >
+                  {isFasting ? "🛑 จบการ Fasting" : "▶️ เริ่ม Fasting 16 ชม."}
+                </button>
+              </div>
+
+              {/* Progress Bar หลอดพลังงาน */}
+              {isFasting && (
+                <div style={{ marginTop: "20px" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      fontSize: "12px",
+                      color: "#e65100",
+                      marginBottom: "8px",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    <span>0 ชม.</span>
+                    <span>เป้าหมาย 16 ชม.</span>
+                  </div>
+                  <div
+                    style={{
+                      width: "100%",
+                      height: "12px",
+                      backgroundColor: "#ffe0b2",
+                      borderRadius: "6px",
+                      overflow: "hidden",
+                    }}
+                  >
+                    <div
+                      style={{
+                        height: "100%",
+                        width: `${fastProgress}%`,
+                        backgroundColor:
+                          fastProgress >= 100 ? "#4caf50" : "#ff9800",
+                        transition: "width 1s linear",
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
             {/* Top Summary Dashboard */}
             <div className={styles.topSummary}>
               <div className={styles.summaryCard}>
