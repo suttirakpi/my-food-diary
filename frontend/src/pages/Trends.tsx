@@ -12,11 +12,7 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-  LineChart,
-  Line,
   CartesianGrid,
-  AreaChart,
-  Area,
 } from "recharts";
 import styles from "./Trends.module.css";
 
@@ -54,6 +50,43 @@ const Trends: React.FC = () => {
     [],
   );
 
+  // 🌟 ฟังก์ชันมัดรวมข้อมูล "กิน" กับ "เบิร์น" ให้อยู่ในวันเดียวกัน
+  const mergedChartData = useMemo(() => {
+    if (!data) return [];
+
+    const combined: Record<string, any> = {};
+
+    // 1. ใส่ข้อมูลการกินเข้าไปก่อน
+    data.calorieTrend.forEach((item) => {
+      combined[item.date] = {
+        date: item.date,
+        total_cal: item.total_cal,
+        total_burned: 0, // ค่าเริ่มต้นถ้าวันนี้ไม่ได้ออกกำลังกาย
+      };
+    });
+
+    // 2. เอาข้อมูลเบิร์นมาประกบในวันเดียวกัน
+    data.exerciseTrend.forEach((item) => {
+      if (combined[item.date]) {
+        combined[item.date].total_burned = item.total_burned;
+      } else {
+        combined[item.date] = {
+          date: item.date,
+          total_cal: 0, // ค่าเริ่มต้นถ้าวันนี้ไม่ได้กินแต่ดันออกกำลังกาย
+          total_burned: item.total_burned,
+        };
+      }
+    });
+
+    // 3. ดึงวันที่ทั้งหมดมาเรียงลำดับให้สวยงาม
+    const allDates = new Set([
+      ...data.calorieTrend.map((d) => d.date),
+      ...data.exerciseTrend.map((d) => d.date),
+    ]);
+
+    return Array.from(allDates).map((date) => combined[date]);
+  }, [data]);
+
   if (loading) return <div className={styles.pageContainer}>กำลังโหลด...</div>;
   if (!data) return <div className={styles.pageContainer}>ไม่พบข้อมูล</div>;
 
@@ -70,6 +103,7 @@ const Trends: React.FC = () => {
         <div style={{ width: "40px" }}></div>
       </header>
 
+      {/* สรุปแคลอรี่ */}
       <div className={styles.summaryGrid}>
         <div className={styles.summaryCard}>
           <div className={styles.summaryLabel}>แคลอรี่ที่กินวันนี้</div>
@@ -86,56 +120,47 @@ const Trends: React.FC = () => {
       </div>
 
       <div className={styles.dashboardGrid}>
+        {/* 🌟 1. กราฟแท่งคู่: เปรียบเทียบ กิน vs เบิร์น (Net Calories) */}
         <div className={styles.chartCard} style={{ gridColumn: "1 / -1" }}>
-          <h3 className={styles.chartTitle}>แนวโน้มการกิน 7 วันล่าสุด</h3>
-          <ResponsiveContainer width="100%" height={250}>
-            <LineChart data={data.calorieTrend}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="date" />
-              <YAxis />
-              <Tooltip formatter={(value) => [`${value} kcal`, "กินเข้า"]} />
-              <Line
-                type="monotone"
-                dataKey="total_cal"
-                stroke="#4caf50"
-                strokeWidth={3}
-                dot={{ r: 5 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-
-        <div
-          className={styles.chartCard}
-          style={{ gridColumn: "1 / -1", backgroundColor: "#fff5f5" }}
-        >
-          <h3 className={styles.chartTitle} style={{ color: "#d32f2f" }}>
-            แนวโน้มการเผาผลาญ (Exercise)
+          <h3 className={styles.chartTitle}>
+            เปรียบเทียบ กิน vs เบิร์น (7 วันล่าสุด)
           </h3>
-          <ResponsiveContainer width="100%" height={250}>
-            <AreaChart data={data.exerciseTrend}>
-              <defs>
-                <linearGradient id="colorBurn" x1="0" y1="0" x2="0" y2="100%">
-                  <stop offset="5%" stopColor="#f44336" stopOpacity={0.8} />
-                  <stop offset="95%" stopColor="#f44336" stopOpacity={0} />
-                </linearGradient>
-              </defs>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart
+              data={mergedChartData}
+              margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+            >
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
               <XAxis dataKey="date" />
               <YAxis />
-              <Tooltip formatter={(value) => [`${value} kcal`, "เบิร์นออก"]} />
-              <Area
-                type="monotone"
-                dataKey="total_burned"
-                stroke="#d32f2f"
-                fillOpacity={1}
-                fill="url(#colorBurn)"
-                strokeWidth={3}
+              <Tooltip
+                cursor={{ fill: "rgba(0,0,0,0.05)" }}
+                contentStyle={{
+                  borderRadius: "12px",
+                  border: "none",
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                }}
               />
-            </AreaChart>
+              <Legend wrapperStyle={{ paddingTop: "20px" }} />
+              {/* แท่งที่ 1: สีเขียว (กินเข้า) */}
+              <Bar
+                dataKey="total_cal"
+                name="กินเข้า (kcal)"
+                fill="#4caf50"
+                radius={[6, 6, 0, 0]}
+              />
+              {/* แท่งที่ 2: สีแดง (เบิร์นออก) */}
+              <Bar
+                dataKey="total_burned"
+                name="เบิร์นออก (kcal)"
+                fill="#f44336"
+                radius={[6, 6, 0, 0]}
+              />
+            </BarChart>
           </ResponsiveContainer>
         </div>
 
+        {/* 2. กราฟวงกลม: สัดส่วนอาหาร (ของเดิม) */}
         <div className={styles.chartCard}>
           <h3 className={styles.chartTitle}>สัดส่วนประเภทที่กิน</h3>
           <ResponsiveContainer width="100%" height={250}>
@@ -166,6 +191,7 @@ const Trends: React.FC = () => {
           </ResponsiveContainer>
         </div>
 
+        {/* 3. กราฟแท่ง: น้ำดื่ม (ของเดิม) */}
         <div className={styles.chartCard}>
           <h3 className={styles.chartTitle}>สถิติน้ำดื่ม 7 วัน</h3>
           <ResponsiveContainer width="100%" height={250}>
