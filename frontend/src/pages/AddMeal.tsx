@@ -83,6 +83,7 @@ const AddMeal = () => {
       <div className={styles.formCard}>
         <form onSubmit={handleSubmit}>
           {/* 🌟 เพิ่มช่องเลือกวันที่ และ เวลา */}
+          {/* 🌟 ช่องเลือกวันที่ และ เวลา (แก้กล่องเบียดกันแล้ว) */}
           <div className={styles.formGrid}>
             <div>
               <label
@@ -108,6 +109,7 @@ const AddMeal = () => {
                   fontSize: "16px",
                   outline: "none",
                   fontFamily: "var(--font-body)",
+                  boxSizing: "border-box", // 🌟 เพิ่มบรรทัดนี้เข้ามาครับ
                 }}
                 required
               />
@@ -136,6 +138,7 @@ const AddMeal = () => {
                   fontSize: "16px",
                   outline: "none",
                   fontFamily: "var(--font-body)",
+                  boxSizing: "border-box", // 🌟 เพิ่มบรรทัดนี้เข้ามาครับ
                 }}
                 required
               />
