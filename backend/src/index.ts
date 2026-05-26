@@ -166,14 +166,15 @@ app.get("/api/trends", async (req: Request, res: Response) => {
       FROM meals
     `);
 
+    // 🌟 1. เปลี่ยนคำสั่ง SQL ของ exerciseTrend ใหม่ให้เป็นแบบนี้
     const [exerciseTrend] = await pool.query(`
       SELECT 
-        DATE_FORMAT(exercise_date, '%d %b') as date, 
+        exercise_date as date, 
         SUM(calories_burned) as total_burned
       FROM exercises 
-      WHERE exercise_date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
       GROUP BY exercise_date
-      ORDER BY exercise_date ASC
+      ORDER BY exercise_date DESC
+      LIMIT 7
     `);
 
     // ปรับ Format วันที่ให้กราฟดูสวยๆ (เช่น "ศ. 15")
@@ -193,8 +194,8 @@ app.get("/api/trends", async (req: Request, res: Response) => {
       itemStats,
       waterStats: formatData(waterStats as any[], "glasses"),
       calorieTrend: formatData(calorieTrend as any[], "total_cal"),
-      exerciseTrend,
-      summary: (summaryStats as any[])[0], // ส่งก้อนสรุปไปให้ด้วย
+      exerciseTrend: formatData(exerciseTrend as any[], "total_burned"), // <-- แก้ตรงบรรทัดนี้ครับ
+      summary: (summaryStats as any[])[0],
     });
   } catch (error) {
     console.error(error);
