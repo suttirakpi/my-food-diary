@@ -352,6 +352,25 @@ const DailyLog: React.FC = () => {
           >
             <span className="material-symbols-outlined">analytics</span> Trends
           </button>
+
+          <button
+            onClick={() => navigate("/history")}
+            style={{
+              background: "white",
+              border: "1px solid #4caf50",
+              color: "#4caf50",
+              padding: "10px 16px",
+              borderRadius: "12px",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              fontWeight: 600,
+            }}
+          >
+            <span className="material-symbols-outlined">table_chart</span>{" "}
+            History
+          </button>
           <button
             className={styles.addBtn}
             onClick={() => navigate("/add-meal")}
