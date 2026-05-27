@@ -311,20 +311,6 @@ const DailyLog: React.FC = () => {
     100,
   );
 
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
-    return localStorage.getItem("theme") === "dark";
-  });
-
-  useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.setAttribute("data-theme", "dark");
-      localStorage.setItem("theme", "dark");
-    } else {
-      document.documentElement.removeAttribute("data-theme");
-      localStorage.setItem("theme", "light");
-    }
-  }, [isDarkMode]);
-
   let barColor = "#4caf50";
   let messageColor = "var(--on-surface-variant)";
   let motivationMessage = "เริ่มต้นวันใหม่! ทานอาหารที่มีประโยชน์นะ";
@@ -349,26 +335,6 @@ const DailyLog: React.FC = () => {
       <header className={styles.header}>
         <div className={styles.logo}>Vitality Food Diary</div>
         <div style={{ display: "flex", gap: "12px" }}>
-          <button
-            onClick={() => setIsDarkMode(!isDarkMode)}
-            style={{
-              background: "var(--surface)",
-              border: "1px solid var(--tertiary-fixed)",
-              color: "var(--on-surface)",
-              padding: "10px",
-              borderRadius: "50%",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              transition: "all 0.3s ease",
-            }}
-            title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
-          >
-            <span className="material-symbols-outlined">
-              {isDarkMode ? "light_mode" : "dark_mode"}
-            </span>
-          </button>
           <button
             onClick={() => navigate("/trends")}
             style={{
