@@ -3,6 +3,7 @@ import { Toaster } from "react-hot-toast"; // นำเข้า Toaster
 import DailyLog from "./pages/DailyLog";
 import AddMeal from "./pages/AddMeal";
 import Trends from "./pages/Trends";
+import MealHistory from "./pages/MealHistory";
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
         <Route path="/" element={<DailyLog />} />
         <Route path="/add-meal" element={<AddMeal />} />
         <Route path="/trends" element={<Trends />} />
+        <Route path="/history" element={<MealHistory />} />
       </Routes>
     </BrowserRouter>
   );
