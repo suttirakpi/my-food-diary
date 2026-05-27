@@ -35,3 +35,23 @@ body {
     "GRAD" 0,
     "opsz" 24;
 }
+
+/* 🌟 สเต็ป 1: เพิ่มชุดสีสำหรับโหมดมืด (Dark Theme) */
+[data-theme="dark"] {
+  --background: #121212;
+  --surface: #1e1e1e;
+  --primary: #81c784; /* ปรับสีเขียวให้สว่างขึ้นเพื่อตัดกับพื้นดำ */
+  --on-surface: #e0e0e0;
+  --on-surface-variant: #aaaaaa;
+  --tertiary-fixed: #333333;
+  --outline-variant: #444444;
+}
+
+/* ให้สลับสีแบบมี Animation นุ่มๆ */
+body {
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
+  background-color: var(--background);
+  color: var(--on-surface);
+}
