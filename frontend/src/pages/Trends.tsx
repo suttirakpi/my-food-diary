@@ -17,7 +17,6 @@ import {
   CartesianGrid,
   AreaChart,
   Area,
-  ReferenceLine, // 🌟 1. นำเข้า ReferenceLine เพิ่มเข้ามา
 } from "recharts";
 import styles from "./Trends.module.css";
 
@@ -55,17 +54,17 @@ const Trends: React.FC = () => {
     [],
   );
 
-  // มัดรวมข้อมูล "กิน" กับ "เบิร์น"
+  // 🌟 ฟังก์ชันมัดรวมข้อมูล "กิน" กับ "เบิร์น" และแก้บั๊กเรียงวันที่
   const mergedChartData = useMemo(() => {
     if (!data) return [];
-    
+
     const combined: Record<string, any> = {};
 
     data.calorieTrend.forEach((item) => {
       combined[item.date] = {
         date: item.date,
         total_cal: item.total_cal,
-        total_burned: 0, 
+        total_burned: 0,
       };
     });
 
@@ -75,36 +74,33 @@ const Trends: React.FC = () => {
       } else {
         combined[item.date] = {
           date: item.date,
-          total_cal: 0, 
+          total_cal: 0,
           total_burned: item.total_burned,
         };
       }
     });
 
-    const allDates = Array.from(new Set([
-      ...data.calorieTrend.map((d) => d.date),
-      ...data.exerciseTrend.map((d) => d.date),
-    ]));
+    const allDates = Array.from(
+      new Set([
+        ...data.calorieTrend.map((d) => d.date),
+        ...data.exerciseTrend.map((d) => d.date),
+      ]),
+    );
 
+    // 🛠️ แก้บั๊กวันที่สลับ: เรียงลำดับจากตัวเลขวันที่
     allDates.sort((a, b) => {
-      const numA = parseInt(a.replace(/\D/g, '')) || 0;
-      const numB = parseInt(b.replace(/\D/g, '')) || 0;
+      const numA = parseInt(a.replace(/\D/g, "")) || 0;
+      const numB = parseInt(b.replace(/\D/g, "")) || 0;
       const today = new Date().getDate();
-      
-      const scoreA = (today < 15 && numA > 20) ? numA - 31 : numA;
-      const scoreB = (today < 15 && numB > 20) ? numB - 31 : numB;
-      
+
+      // จัดการกรณีคร่อมเดือน (เช่น วันนี้วันที่ 2 แต่วันในกราฟมีวันที่ 28)
+      const scoreA = today < 15 && numA > 20 ? numA - 31 : numA;
+      const scoreB = today < 15 && numB > 20 ? numB - 31 : numB;
+
       return scoreA - scoreB;
     });
 
     return allDates.map((date) => combined[date]);
-  }, [data]);
-
-  // 🌟 2. คำนวณค่าเฉลี่ยน้ำดื่ม 7 วัน
-  const avgWater = useMemo(() => {
-    if (!data || data.waterStats.length === 0) return 0;
-    const total = data.waterStats.reduce((sum, item) => sum + item.glasses, 0);
-    return (total / data.waterStats.length).toFixed(1);
   }, [data]);
 
   if (loading) return <div className={styles.pageContainer}>กำลังโหลด...</div>;
@@ -123,7 +119,7 @@ const Trends: React.FC = () => {
         <div style={{ width: "40px" }}></div>
       </header>
 
-      {/* สรุปแคลอรี่ และ น้ำดื่ม */}
+      {/* สรุปแคลอรี่ */}
       <div className={styles.summaryGrid}>
         <div className={styles.summaryCard}>
           <div className={styles.summaryLabel}>แคลอรี่ที่กินวันนี้</div>
@@ -137,37 +133,48 @@ const Trends: React.FC = () => {
             {data.summary.cal_month || 0} <span>kcal</span>
           </div>
         </div>
-        {/* 🌟 3. เพิ่มการ์ดสรุปน้ำดื่ม */}
-        <div className={styles.summaryCard}>
-          <div className={styles.summaryLabel}>น้ำดื่มเฉลี่ย (7 วัน)</div>
-          <div className={styles.summaryValue}>
-            {avgWater} <span>แก้ว/วัน</span>
-          </div>
-        </div>
       </div>
 
       <div className={styles.dashboardGrid}>
-        
-        {/* กราฟแท่งคู่: เปรียบเทียบ กิน vs เบิร์น */}
+        {/* 🌟 1. กราฟแท่งคู่: เปรียบเทียบ กิน vs เบิร์น (Net Calories) */}
         <div className={styles.chartCard} style={{ gridColumn: "1 / -1" }}>
-          <h3 className={styles.chartTitle}>เปรียบเทียบ กิน vs เบิร์น (7 วันล่าสุด)</h3>
+          <h3 className={styles.chartTitle}>
+            เปรียบเทียบ กิน vs เบิร์น (7 วันล่าสุด)
+          </h3>
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={mergedChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+            <BarChart
+              data={mergedChartData}
+              margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+            >
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
               <XAxis dataKey="date" />
               <YAxis />
-              <Tooltip 
-                cursor={{ fill: 'rgba(0,0,0,0.05)' }} 
-                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+              <Tooltip
+                cursor={{ fill: "rgba(0,0,0,0.05)" }}
+                contentStyle={{
+                  borderRadius: "12px",
+                  border: "none",
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                }}
               />
-              <Legend wrapperStyle={{ paddingTop: '20px' }} />
-              <Bar dataKey="total_cal" name="กินเข้า (kcal)" fill="#4caf50" radius={[6, 6, 0, 0]} />
-              <Bar dataKey="total_burned" name="เบิร์นออก (kcal)" fill="#f44336" radius={[6, 6, 0, 0]} />
+              <Legend wrapperStyle={{ paddingTop: "20px" }} />
+              <Bar
+                dataKey="total_cal"
+                name="กินเข้า (kcal)"
+                fill="#4caf50"
+                radius={[6, 6, 0, 0]}
+              />
+              <Bar
+                dataKey="total_burned"
+                name="เบิร์นออก (kcal)"
+                fill="#f44336"
+                radius={[6, 6, 0, 0]}
+              />
             </BarChart>
           </ResponsiveContainer>
         </div>
 
-        {/* กราฟเส้น: แนวโน้มแคลอรี่ที่กิน */}
+        {/* 🌟 2. กราฟเส้น: แนวโน้มแคลอรี่ที่กิน (เอากราฟเก่ากลับมา) */}
         <div className={styles.chartCard} style={{ gridColumn: "1 / -1" }}>
           <h3 className={styles.chartTitle}>แนวโน้มการกิน 7 วันล่าสุด</h3>
           <ResponsiveContainer width="100%" height={250}>
@@ -187,7 +194,7 @@ const Trends: React.FC = () => {
           </ResponsiveContainer>
         </div>
 
-        {/* กราฟพื้นที่: แนวโน้มการเผาผลาญ */}
+        {/* 🌟 3. กราฟพื้นที่: แนวโน้มการเผาผลาญ (เอากราฟเก่ากลับมา) */}
         <div
           className={styles.chartCard}
           style={{ gridColumn: "1 / -1", backgroundColor: "#fff5f5" }}
@@ -219,7 +226,7 @@ const Trends: React.FC = () => {
           </ResponsiveContainer>
         </div>
 
-        {/* กราฟวงกลม: สัดส่วนอาหาร */}
+        {/* 4. กราฟวงกลม: สัดส่วนอาหาร */}
         <div className={styles.chartCard}>
           <h3 className={styles.chartTitle}>สัดส่วนประเภทที่กิน</h3>
           <ResponsiveContainer width="100%" height={250}>
@@ -250,37 +257,23 @@ const Trends: React.FC = () => {
           </ResponsiveContainer>
         </div>
 
-        {/* 🌟 4. กราฟวิเคราะห์น้ำดื่ม (อัปเกรดใหม่) */}
+        {/* 5. กราฟแท่ง: น้ำดื่ม */}
         <div className={styles.chartCard}>
-          <h3 className={styles.chartTitle}>วิเคราะห์การดื่มน้ำ</h3>
+          <h3 className={styles.chartTitle}>สถิติน้ำดื่ม 7 วัน</h3>
           <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={data.waterStats} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} />
+            <BarChart data={data.waterStats}>
               <XAxis dataKey="date" />
               <YAxis />
-              <Tooltip cursor={{ fill: 'rgba(0,0,0,0.05)' }} contentStyle={{ borderRadius: '12px' }} />
-              
-              {/* เส้นเป้าหมาย 8 แก้ว */}
-              <ReferenceLine 
-                y={8} 
-                stroke="#ff9800" 
-                strokeDasharray="3 3" 
-                label={{ position: 'top', value: 'เป้าหมาย (8 แก้ว)', fill: '#ff9800', fontSize: 12, fontWeight: 'bold' }} 
+              <Tooltip />
+              <Bar
+                dataKey="glasses"
+                name="จำนวนแก้ว"
+                fill="#2196f3"
+                radius={[4, 4, 0, 0]}
               />
-              
-              {/* แท่งกราฟเปลี่ยนสีอัตโนมัติ */}
-              <Bar dataKey="glasses" name="จำนวนแก้ว" radius={[6, 6, 0, 0]}>
-                {data.waterStats.map((entry, index) => (
-                  <Cell 
-                    key={`cell-${index}`} 
-                    fill={entry.glasses >= 8 ? "#4caf50" : "#2196f3"} // ถึง 8 แก้วเป็นสีเขียว ไม่ถึงเป็นสีฟ้า
-                  />
-                ))}
-              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>
-
       </div>
     </div>
   );
