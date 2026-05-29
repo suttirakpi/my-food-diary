@@ -54,7 +54,7 @@ const Trends: React.FC = () => {
     [],
   );
 
-  // 🌟 ฟังก์ชันมัดรวมข้อมูล "กิน" กับ "เบิร์น" และแก้บั๊กเรียงวันที่
+  // 🌟 ฟังก์ชันมัดรวมข้อมูล "กิน" กับ "เบิร์น" และแก้บั๊กเรียงวันที่ + บังคับ 7 วัน
   const mergedChartData = useMemo(() => {
     if (!data) return [];
 
@@ -87,20 +87,19 @@ const Trends: React.FC = () => {
       ]),
     );
 
-    // 🛠️ แก้บั๊กวันที่สลับ: เรียงลำดับจากตัวเลขวันที่
     allDates.sort((a, b) => {
       const numA = parseInt(a.replace(/\D/g, "")) || 0;
       const numB = parseInt(b.replace(/\D/g, "")) || 0;
       const today = new Date().getDate();
 
-      // จัดการกรณีคร่อมเดือน (เช่น วันนี้วันที่ 2 แต่วันในกราฟมีวันที่ 28)
       const scoreA = today < 15 && numA > 20 ? numA - 31 : numA;
       const scoreB = today < 15 && numB > 20 ? numB - 31 : numB;
 
       return scoreA - scoreB;
     });
 
-    return allDates.map((date) => combined[date]);
+    // 🌟 บรรทัดนี้แหละที่แก้บั๊ก! บังคับตัดมาแค่ 7 แท่งสุดท้าย (ล่าสุด)
+    return allDates.map((date) => combined[date]).slice(-7);
   }, [data]);
 
   if (loading) return <div className={styles.pageContainer}>กำลังโหลด...</div>;
@@ -174,7 +173,7 @@ const Trends: React.FC = () => {
           </ResponsiveContainer>
         </div>
 
-        {/* 🌟 2. กราฟเส้น: แนวโน้มแคลอรี่ที่กิน (เอากราฟเก่ากลับมา) */}
+        {/* 🌟 2. กราฟเส้น: แนวโน้มแคลอรี่ที่กิน */}
         <div className={styles.chartCard} style={{ gridColumn: "1 / -1" }}>
           <h3 className={styles.chartTitle}>แนวโน้มการกิน 7 วันล่าสุด</h3>
           <ResponsiveContainer width="100%" height={250}>
@@ -194,7 +193,7 @@ const Trends: React.FC = () => {
           </ResponsiveContainer>
         </div>
 
-        {/* 🌟 3. กราฟพื้นที่: แนวโน้มการเผาผลาญ (เอากราฟเก่ากลับมา) */}
+        {/* 🌟 3. กราฟพื้นที่: แนวโน้มการเผาผลาญ */}
         <div
           className={styles.chartCard}
           style={{ gridColumn: "1 / -1", backgroundColor: "#fff5f5" }}

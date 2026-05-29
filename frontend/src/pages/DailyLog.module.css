@@ -49,7 +49,7 @@
   margin: 0 auto;
   padding: 40px 20px;
   width: 100%;
-  flex-grow: 1; /* ดัน Footer ให้อยู่ล่างสุดเสมอ */
+  flex-grow: 1;
   box-sizing: border-box;
 }
 
@@ -504,16 +504,16 @@
 }
 @media (max-width: 768px) {
   .header {
-    padding: 16px 20px; /* ลดขอบซ้ายขวาลง */
+    padding: 16px 20px;
   }
 
   .cardBody {
-    grid-template-columns: 1fr; /* ให้ Toppings ตกลงมาบรรทัดใหม่ */
+    grid-template-columns: 1fr;
     gap: 12px;
   }
 
   .waterWidget {
-    flex-direction: column; /* กล่องน้ำดื่มเรียงบนล่าง */
+    flex-direction: column;
     text-align: center;
     gap: 16px;
   }
@@ -530,6 +530,107 @@
   }
 
   .topSummary {
-    grid-template-columns: 1fr; /* การ์ดตัวเลขเรียงซ้อนกัน 3 ชั้น */
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =========================================
+   🐹 ระบบน้องไวท์มอลสุดคิวท์ (Mascot) 
+   ========================================= */
+.mascotContainer {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  z-index: 1000;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.mascotBubble {
+  padding: 14px 20px;
+  border-radius: 24px 24px 4px 24px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  font-size: 14px;
+  font-weight: 700;
+  border: 2px solid;
+  max-width: 230px;
+  position: relative;
+  line-height: 1.5;
+}
+
+/* สร้างหางกล่องข้อความสุดคิวท์ */
+.mascotBubble::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  right: -10px;
+  width: 20px;
+  height: 20px;
+  background-color: inherit;
+  border-bottom: 2px solid;
+  border-right: 2px solid;
+  border-color: inherit;
+  border-bottom-right-radius: 16px;
+  transform: skewX(-30deg);
+  z-index: -1;
+}
+
+.mascotAvatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 42px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  border: 3px solid;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  user-select: none;
+}
+
+/* เอฟเฟกต์ตอนเอาเมาส์ชี้และตอนคลิก */
+.mascotAvatar:hover {
+  transform: scale(1.15) rotate(-10deg);
+}
+.mascotAvatar:active {
+  transform: scale(0.9);
+}
+
+/* เอฟเฟกต์ตอนโดนลูบหัว */
+.petting {
+  animation: heartBeat 0.8s infinite;
+}
+
+@keyframes heartBeat {
+  0% {
+    transform: scale(1);
+  }
+  25% {
+    transform: scale(1.2);
+  }
+  50% {
+    transform: scale(1);
+  }
+  75% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
   }
 }

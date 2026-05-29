@@ -44,10 +44,19 @@ const DailyLog: React.FC = () => {
   const [isFasting, setIsFasting] = useState<boolean>(() => {
     return localStorage.getItem("isFasting") === "true";
   });
+
   const [fastStartTime, setFastStartTime] = useState<number | null>(() => {
     const savedTime = localStorage.getItem("fastStartTime");
     return savedTime ? parseInt(savedTime) : null;
   });
+
+  // 🌟 State สำหรับลูบหัวน้องไวท์มอล
+  const [isPetting, setIsPetting] = useState(false);
+  const handlePetMascot = () => {
+    setIsPetting(true);
+    setTimeout(() => setIsPetting(false), 3000); // ฟินอยู่ 3 วินาทีแล้วกลับเป็นปกติ
+  };
+
   const [fastTimeLeft, setFastTimeLeft] = useState<string>("16:00:00");
   const [fastProgress, setFastProgress] = useState<number>(0);
 
@@ -310,6 +319,32 @@ const DailyLog: React.FC = () => {
     (totalCalories / DAILY_CALORIE_GOAL) * 100,
     100,
   );
+
+  // 🌟 Logic อารมณ์ของมาสคอตน้องแฮมสเตอร์ (อัปเกรดความน่ารัก)
+  let mascotMood = "normal";
+  let mascotMessage = "สวัสดีฮะตูน! ให้ไวท์มอลช่วยดูแลเรื่องกินนะ (๑˃ᴗ˂)ﻭ 🐹";
+  let mascotEmoji = "🐹";
+
+  if (isPetting) {
+    mascotMood = "love";
+    mascotMessage = "งื้ออออ~ ลูบหัวฟินจุงเบยยย รักตูนน้าา (´♡‿♡`) 💕";
+    mascotEmoji = "🐹💖";
+  } else if (totalCalories > DAILY_CALORIE_GOAL) {
+    mascotMood = "warning";
+    mascotMessage =
+      "แงะ! แคลอรี่ทะลุแล้วฮะ ไวท์มอลตัวกลมตุ๊บเต่งเลย ไปวิ่งเดี๋ยวนี้! ( ≧Д≦) 🍔";
+    mascotEmoji = "🐹💦";
+  } else if (waterGlasses >= 8) {
+    mascotMood = "happy";
+    mascotMessage =
+      "ชื่นใจจุง! ดื่มน้ำครบ 8 แก้วแล้ว ตูนเก่งที่สุดเลยฮะ! (´ ▽ ` ) 💧";
+    mascotEmoji = "🐹✨";
+  } else if (isFasting) {
+    mascotMood = "happy";
+    mascotMessage =
+      "กำลังทำ IF อยู่สินะ! ไวท์มอลส่งพลังใจให้ ฮึบๆ! (ง •̀_•́)ง 🔥";
+    mascotEmoji = "🐹💪";
+  }
 
   let barColor = "#4caf50";
   let messageColor = "var(--on-surface-variant)";
@@ -1156,6 +1191,59 @@ const DailyLog: React.FC = () => {
           </div>
         </div>
       </footer>
+
+      {/* 🌟 Widget มาสคอตน้องไวท์มอลสุดคิวท์ (Floating Mascot) */}
+      <div className={styles.mascotContainer}>
+        {/* กล่องคำพูด (Chat Bubble) */}
+        <div
+          className={styles.mascotBubble}
+          style={{
+            color:
+              mascotMood === "warning"
+                ? "#d32f2f"
+                : mascotMood === "love"
+                  ? "#c2185b"
+                  : "#2e7d32",
+            borderColor:
+              mascotMood === "warning"
+                ? "#ef5350"
+                : mascotMood === "love"
+                  ? "#f48fb1"
+                  : "#81c784",
+            backgroundColor:
+              mascotMood === "warning"
+                ? "#ffebee"
+                : mascotMood === "love"
+                  ? "#fce4ec"
+                  : "white",
+          }}
+        >
+          {mascotMessage}
+        </div>
+
+        {/* ตัวมาสคอตน้องแฮมสเตอร์ */}
+        <div
+          className={`${styles.mascotAvatar} ${isPetting ? styles.petting : ""}`}
+          onClick={handlePetMascot}
+          style={{
+            background:
+              mascotMood === "warning"
+                ? "#ffcdd2"
+                : mascotMood === "love"
+                  ? "#f8bbd0"
+                  : "#e8f5e9",
+            borderColor:
+              mascotMood === "warning"
+                ? "#ef5350"
+                : mascotMood === "love"
+                  ? "#f48fb1"
+                  : "#4caf50",
+          }}
+          title="จิ้มเพื่อลูบหัวไวท์มอลสิฮะ!"
+        >
+          {mascotEmoji}
+        </div>
+      </div>
     </div>
   );
 };
