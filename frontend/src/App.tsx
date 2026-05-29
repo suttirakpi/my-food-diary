@@ -34,6 +34,7 @@ function App() {
         <Route path="/add-meal" element={<AddMeal />} />
         <Route path="/trends" element={<Trends />} />
         <Route path="/history" element={<MealHistory />} />
+        <Route path="/calendar" element={<CalendarView />} />
       </Routes>
     </BrowserRouter>
   );
