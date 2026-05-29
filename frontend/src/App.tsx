@@ -1,14 +1,14 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { Toaster } from "react-hot-toast"; // นำเข้า Toaster
+import { Toaster } from "react-hot-toast";
 import DailyLog from "./pages/DailyLog";
 import AddMeal from "./pages/AddMeal";
 import Trends from "./pages/Trends";
 import MealHistory from "./pages/MealHistory";
+import CalendarView from "./pages/CalendarView"; // 🌟 บรรทัดที่หายไป เติมให้แล้วครับ!
 
 function App() {
   return (
     <BrowserRouter>
-      {/* วาง Toaster ไว้ตรงนี้ พร้อมตั้งค่าสไตล์ให้ดู Official */}
       <Toaster
         position="top-right"
         toastOptions={{
@@ -23,7 +23,7 @@ function App() {
           },
           success: {
             iconTheme: {
-              primary: "#2196f3", // เปลี่ยนสีติ๊กถูกเป็นสีฟ้าให้ดูเป็นทางการ
+              primary: "#2196f3",
               secondary: "white",
             },
           },
