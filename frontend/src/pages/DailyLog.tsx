@@ -60,7 +60,10 @@ const DailyLog: React.FC = () => {
   const [fastTimeLeft, setFastTimeLeft] = useState<string>("16:00:00");
   const [fastProgress, setFastProgress] = useState<number>(0);
 
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
   const fetchData = async () => {
+    setIsLoading(true); // 🌟 สั่งเปิด Loading
     try {
       const mealsRes = await axios.get(
         `https://my-food-diary-n1tf.onrender.com/api/meals?date=${selectedDate}`,
@@ -78,6 +81,8 @@ const DailyLog: React.FC = () => {
       setExercises(exRes.data);
     } catch (error) {
       console.error("ดึงข้อมูลไม่สำเร็จ:", error);
+    } finally {
+      setIsLoading(false); // 🌟 ดึงเสร็จแล้ว สั่งปิด Loading
     }
   };
 
@@ -367,6 +372,33 @@ const DailyLog: React.FC = () => {
 
   return (
     <div className={styles.pageContainer}>
+      {isLoading && (
+        <div className={styles.loadingOverlay}>
+          <div className={styles.loadingCard}>
+            <div className={styles.loadingMascot}>🐹💨</div>
+            <h2
+              style={{ margin: "0 0 8px 0", fontFamily: "var(--font-heading)" }}
+            >
+              กำลังปลุกเซิร์ฟเวอร์...
+            </h2>
+            <p
+              style={{
+                color: "var(--on-surface-variant)",
+                margin: 0,
+                fontSize: "14px",
+                lineHeight: "1.6",
+              }}
+            >
+              รอแป๊บนะฮะ ไวท์มอลกำลังวิ่งปั่นไฟดึงข้อมูลให้อยู่!
+              <br />
+              (อาจใช้เวลา 30-50 วินาทีหากเซิร์ฟเวอร์หลับ)
+            </p>
+            <div className={styles.loadingBarContainer}>
+              <div className={styles.loadingBar}></div>
+            </div>
+          </div>
+        </div>
+      )}
       <header className={styles.header}>
         <div className={styles.logo}>Vitality Food Diary</div>
         <div style={{ display: "flex", gap: "12px" }}>
