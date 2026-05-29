@@ -319,3 +319,48 @@ app.delete("/api/exercises/:id", async (req, res) => {
 app.listen(port, () => {
   console.log(`Backend Server is running on http://localhost:${port}`);
 });
+
+app.get("/api/calendar", async (req: Request, res: Response) => {
+  try {
+    // ดึงแคลอรี่รวมรายวัน
+    const [meals] = await pool.query(
+      "SELECT meal_date as date, SUM(calories) as total_cal FROM meals GROUP BY meal_date",
+    );
+
+    // ดึงน้ำดื่มรายวัน
+    const [water] = await pool.query(
+      "SELECT log_date as date, glasses FROM water_logs",
+    );
+
+    // ดึงแคลอรี่เบิร์นรายวัน
+    const [exercises] = await pool.query(
+      "SELECT exercise_date as date, SUM(calories_burned) as total_burned FROM exercises GROUP BY exercise_date",
+    );
+
+    // ปรับ Format วันที่ให้เป็น String "YYYY-MM-DD" ชัวร์ๆ
+    const formatDate = (dateValue: any) => {
+      const d = new Date(dateValue);
+      // ชดเชย Timezone เพื่อให้ได้วันที่ตรงเป๊ะ
+      d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+      return d.toISOString().split("T")[0];
+    };
+
+    res.json({
+      meals: (meals as any[]).map((m) => ({
+        date: formatDate(m.date),
+        total_cal: m.total_cal,
+      })),
+      water: (water as any[]).map((w) => ({
+        date: formatDate(w.date),
+        glasses: w.glasses,
+      })),
+      exercises: (exercises as any[]).map((e) => ({
+        date: formatDate(e.date),
+        total_burned: e.total_burned,
+      })),
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "ดึงข้อมูลปฏิทินล้มเหลว" });
+  }
+});

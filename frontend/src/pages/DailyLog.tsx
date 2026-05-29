@@ -403,6 +403,24 @@ const DailyLog: React.FC = () => {
         <div className={styles.logo}>Vitality Food Diary</div>
         <div style={{ display: "flex", gap: "12px" }}>
           <button
+            onClick={() => navigate("/calendar")}
+            style={{
+              background: "white",
+              border: "1px solid #ff9800",
+              color: "#ff9800",
+              padding: "10px 16px",
+              borderRadius: "12px",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              fontWeight: 600,
+            }}
+          >
+            <span className="material-symbols-outlined">calendar_month</span>{" "}
+            Calendar
+          </button>
+          <button
             onClick={() => navigate("/trends")}
             style={{
               background: "white",
