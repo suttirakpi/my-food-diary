@@ -163,12 +163,17 @@ const CalendarView: React.FC = () => {
           ))}
 
           {/* วันว่างๆ ก่อนเริ่มเดือน */}
-          {calendarGrid.blanks.map((_, i) => (
-            <div key={`blank-${i}`} className={styles.blankCell}></div>
-          ))}
+          {calendarGrid.blanks.map(
+            (
+              _: any,
+              i: number, // 🌟 ระบุ (_: any, i: number)
+            ) => (
+              <div key={`blank-${i}`} className={styles.blankCell}></div>
+            ),
+          )}
 
           {/* วันจริงในเดือน */}
-          {calendarGrid.days.map((day) => {
+          {calendarGrid.days.map((day: number) => {
             const status = getDayStatus(day);
             const isToday =
               new Date().getDate() === day &&
