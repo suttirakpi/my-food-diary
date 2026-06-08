@@ -30,7 +30,7 @@ const DEFAULT_WORKOUT_PLANS: Record<
   { title: string; target: string; tasks: string[] }
 > = {
   1: {
-    title: "🔥 วันวิ่งระเบิดไขมัน (+Core)",
+    title: "ตารางออกกำลังกายวันจันทร์",
     target: "สร้าง Afterburn Effect เผาผลาญไขมัน 24 ชม.",
     tasks: [
       "นาทีที่ 0-3: เดินเร็วๆ ยืดเหยียดขาและข้อเท้า",
@@ -39,7 +39,7 @@ const DEFAULT_WORKOUT_PLANS: Record<
     ],
   },
   2: {
-    title: "💪 วันสร้างกล้ามเนื้อ (Circuit Training)",
+    title: "ตารางออกกำลังกายวันอังคาร",
     target: "หัวใจเต้นแรงพร้อมได้กล้ามเนื้อ",
     tasks: [
       "นาทีที่ 0-3: วอร์มอัพ หมุนไหล่ แกว่งแขน ย่ำเท้า",
@@ -52,7 +52,7 @@ const DEFAULT_WORKOUT_PLANS: Record<
     ],
   },
   3: {
-    title: "🔥 วันวิ่งระเบิดไขมัน (+ยืดเหยียด)",
+    title: "ตารางออกกำลังกายวันพุธ",
     target: "สร้าง Afterburn Effect เผาผลาญไขมัน 24 ชม.",
     tasks: [
       "นาทีที่ 0-3: เดินเร็วๆ ยืดเหยียดขาและข้อเท้า",
@@ -61,7 +61,7 @@ const DEFAULT_WORKOUT_PLANS: Record<
     ],
   },
   4: {
-    title: "💪 วันสร้างกล้ามเนื้อ (Circuit Training)",
+    title: "ตารางออกกำลังกายวันพฤหัส",
     target: "หัวใจเต้นแรงพร้อมได้กล้ามเนื้อ",
     tasks: [
       "นาทีที่ 0-3: วอร์มอัพ หมุนไหล่ แกว่งแขน ย่ำเท้า",
@@ -74,7 +74,7 @@ const DEFAULT_WORKOUT_PLANS: Record<
     ],
   },
   5: {
-    title: "🔥 วันวิ่งระเบิดไขมัน (+Burnout)",
+    title: "ตารางออกกำลังกายวันศุกร์",
     target: "สร้าง Afterburn Effect เผาผลาญไขมัน 24 ชม.",
     tasks: [
       "นาทีที่ 0-3: เดินเร็วๆ ยืดเหยียดขาและข้อเท้า",
@@ -83,7 +83,7 @@ const DEFAULT_WORKOUT_PLANS: Record<
     ],
   },
   6: {
-    title: "👑 วันท้าทายขีดจำกัด (Challenge)",
+    title: "ตารางออกกำลังกายวันเสาร์",
     target: "ฝึกความอึดและทำลายสถิติตัวเอง",
     tasks: [
       "เลือก 1 อย่าง: จ็อกกิ้งต่อเนื่อง (Zone 2-3) 45-60 นาที",
@@ -91,7 +91,7 @@ const DEFAULT_WORKOUT_PLANS: Record<
     ],
   },
   0: {
-    title: "💤 วันหยุดพัก (Rest Day)",
+    title: "วันหยุดพัก (Rest Day)",
     target: "ซ่อมแซมกล้ามเนื้อ 100%",
     tasks: [
       "งดออกกำลังกายหนักทุกชนิด",
