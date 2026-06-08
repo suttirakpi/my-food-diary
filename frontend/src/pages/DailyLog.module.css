@@ -471,6 +471,12 @@
   gap: 24px;
 }
 
+.menuGroup {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
 @media (min-width: 768px) {
   .footerContent {
     flex-direction: row;
@@ -502,9 +508,26 @@
   font-size: 13px;
   color: var(--on-surface-variant);
 }
+
 @media (max-width: 768px) {
   .header {
     padding: 16px 20px;
+    flex-direction: column; /* สั่งให้โลโก้กับเมนูอยู่คนละบรรทัด */
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  /* 🌟 ทำให้เมนูปัดซ้ายขวาได้ในมือถือ */
+  .menuGroup {
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: 8px; /* เว้นที่นิดนึงเวลาปัด */
+    -webkit-overflow-scrolling: touch; /* ให้ปัดได้ลื่นๆ บน iOS */
+  }
+
+  /* บังคับไม่ให้ปุ่มหดตัวเวลาโดนบีบ */
+  .menuGroup button {
+    flex-shrink: 0;
   }
 
   .cardBody {
@@ -512,23 +535,21 @@
     gap: 12px;
   }
 
+  /* ... (โค้ด Responsive อื่นๆ ที่มีอยู่ด้านล่างเก็บไว้เหมือนเดิม) ... */
   .waterWidget {
     flex-direction: column;
     text-align: center;
     gap: 16px;
   }
-
   .waterControls {
     width: 100%;
     justify-content: center;
   }
-
   .goalHeader {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
   }
-
   .topSummary {
     grid-template-columns: 1fr;
   }

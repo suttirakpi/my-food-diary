@@ -401,7 +401,7 @@ const DailyLog: React.FC = () => {
       )}
       <header className={styles.header}>
         <div className={styles.logo}>Vitality Food Diary</div>
-        <div style={{ display: "flex", gap: "12px" }}>
+        <div className={styles.menuGroup}>
           <button
             onClick={() => navigate("/calendar")}
             style={{
