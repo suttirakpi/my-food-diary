@@ -49,6 +49,109 @@ const DailyLog: React.FC = () => {
 
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
+  // 🌟 State สำหรับ Checklist ออกกำลังกาย
+  const todayDayIndex = new Date(selectedDate).getDay(); // 0 = อาทิตย์, 1 = จันทร์, ...
+  const [checkedWorkout, setCheckedWorkout] = useState<string[]>([]);
+
+  const toggleWorkoutCheck = (task: string) => {
+    if (checkedWorkout.includes(task)) {
+      setCheckedWorkout(checkedWorkout.filter((t) => t !== task));
+    } else {
+      setCheckedWorkout([...checkedWorkout, task]);
+    }
+  };
+
+  // 🌟 ฐานข้อมูลตารางออกกำลังกายของตูน
+  const workoutPlans: Record<
+    number,
+    { title: string; target: string; tasks: string[] }
+  > = {
+    1: {
+      // จันทร์
+      title: "🔥 วันวิ่งระเบิดไขมัน (+Core)",
+      target: "สร้าง Afterburn Effect เผาผลาญไขมัน 24 ชม.",
+      tasks: [
+        "นาทีที่ 0-3: เดินเร็วๆ ยืดเหยียดขาและข้อเท้า",
+        "นาทีที่ 3-23: วิ่งสปีดเต็มที่ 30 วิ สลับเดิน 30 วิ (20 นาที)",
+        "นาทีที่ 23-30: ท่า Plank 45 วิ / พัก 15 วิ (วน 7 รอบ)",
+      ],
+    },
+    2: {
+      // อังคาร
+      title: "💪 วันสร้างกล้ามเนื้อ (Circuit Training)",
+      target: "หัวใจเต้นแรงพร้อมได้กล้ามเนื้อ",
+      tasks: [
+        "นาทีที่ 0-3: วอร์มอัพ หมุนไหล่ แกว่งแขน ย่ำเท้า",
+        "ท่าที่ 1: Squat 45 วิ / พัก 15 วิ",
+        "ท่าที่ 2: Push-up (วิดพื้น) 45 วิ / พัก 15 วิ",
+        "ท่าที่ 3: Reverse Lunge 45 วิ / พัก 15 วิ",
+        "ท่าที่ 4: Mountain Climber 45 วิ / พัก 15 วิ",
+        "ท่าที่ 5: Plank 45 วิ / พัก 15 วิ",
+        "ทำวงจรนี้ 4-5 รอบ แล้วคูลดาวน์ 2 นาที",
+      ],
+    },
+    3: {
+      // พุธ
+      title: "🔥 วันวิ่งระเบิดไขมัน (+ยืดเหยียด)",
+      target: "สร้าง Afterburn Effect เผาผลาญไขมัน 24 ชม.",
+      tasks: [
+        "นาทีที่ 0-3: เดินเร็วๆ ยืดเหยียดขาและข้อเท้า",
+        "นาทีที่ 3-23: วิ่งสปีดเต็มที่ 30 วิ สลับเดิน 30 วิ (20 นาที)",
+        "นาทีที่ 23-30: นั่งเหยียดขาแตะปลายเท้า, ท่าโยคะเด็ก (Child's Pose)",
+      ],
+    },
+    4: {
+      // พฤหัสบดี
+      title: "💪 วันสร้างกล้ามเนื้อ (Circuit Training)",
+      target: "หัวใจเต้นแรงพร้อมได้กล้ามเนื้อ",
+      tasks: [
+        "นาทีที่ 0-3: วอร์มอัพ หมุนไหล่ แกว่งแขน ย่ำเท้า",
+        "ท่าที่ 1: Squat 45 วิ / พัก 15 วิ",
+        "ท่าที่ 2: Push-up (วิดพื้น) 45 วิ / พัก 15 วิ",
+        "ท่าที่ 3: Reverse Lunge 45 วิ / พัก 15 วิ",
+        "ท่าที่ 4: Mountain Climber 45 วิ / พัก 15 วิ",
+        "ท่าที่ 5: Plank 45 วิ / พัก 15 วิ",
+        "ทำวงจรนี้ 4-5 รอบ แล้วคูลดาวน์ 2 นาที",
+      ],
+    },
+    5: {
+      // ศุกร์
+      title: "🔥 วันวิ่งระเบิดไขมัน (+Burnout)",
+      target: "สร้าง Afterburn Effect เผาผลาญไขมัน 24 ชม.",
+      tasks: [
+        "นาทีที่ 0-3: เดินเร็วๆ ยืดเหยียดขาและข้อเท้า",
+        "นาทีที่ 3-23: วิ่งสปีดเต็มที่ 30 วิ สลับเดิน 30 วิ (20 นาที)",
+        "นาทีที่ 23-30: Jumping Jacks หรือ Jump Squat ต่อเนื่องจนหมดแรง!",
+      ],
+    },
+    6: {
+      // เสาร์
+      title: "👑 วันท้าทายขีดจำกัด (Challenge)",
+      target: "ฝึกความอึดและทำลายสถิติตัวเอง",
+      tasks: [
+        "เลือก 1 อย่าง: จ็อกกิ้งต่อเนื่อง (Zone 2-3) 45-60 นาที",
+        "หรือ Bodyweight Challenge: วิดพื้น 100 ครั้ง + สควอท 100 ครั้ง (แบ่งทำเรื่อยๆ จนครบ)",
+      ],
+    },
+    0: {
+      // อาทิตย์
+      title: "💤 วันหยุดพัก (Rest Day)",
+      target: "ซ่อมแซมกล้ามเนื้อ 100%",
+      tasks: [
+        "งดออกกำลังกายหนักทุกชนิด",
+        "ขยับตัวทำงานบ้าน หรือเดินเล่นนิดหน่อย",
+        "กินอาหารดีๆ ให้ร่างกายได้ฟื้นฟู",
+      ],
+    },
+  };
+
+  const todaysPlan = workoutPlans[todayDayIndex];
+
+  // รีเซ็ต Checklist ถ้าเปลี่ยนวัน
+  useEffect(() => {
+    setCheckedWorkout([]);
+  }, [selectedDate]);
+
   const fetchData = async () => {
     setIsLoading(true);
     try {
@@ -263,6 +366,10 @@ const DailyLog: React.FC = () => {
     100,
   );
 
+  const isWorkoutComplete =
+    todaysPlan.tasks.length > 0 &&
+    checkedWorkout.length === todaysPlan.tasks.length;
+
   // 🌟 Logic อารมณ์ของมาสคอตน้องแฮมสเตอร์
   let mascotMood = "normal";
   let mascotMessage = "สวัสดีฮะตูน! ให้ไวท์มอลช่วยดูแลเรื่องกินนะ (๑˃ᴗ˂)ﻭ 🐹";
@@ -272,6 +379,10 @@ const DailyLog: React.FC = () => {
     mascotMood = "love";
     mascotMessage = "งื้ออออ~ ลูบหัวฟินจุงเบยยย รักตูนน้าา (´♡‿♡`) 💕";
     mascotEmoji = "🐹💖";
+  } else if (isWorkoutComplete) {
+    mascotMood = "happy";
+    mascotMessage = "สุดยอดดด! ออกกำลังกายตามเป้าหมายครบแล้ว ไวท์มอลภูมิใจ! 🏆";
+    mascotEmoji = "🐹🔥";
   } else if (totalCalories > DAILY_CALORIE_GOAL) {
     mascotMood = "warning";
     mascotMessage =
@@ -575,6 +686,103 @@ const DailyLog: React.FC = () => {
               </div>
             </div>
 
+            {/* 🌟 Widget: Checklist ออกกำลังกายประจำวัน */}
+            <div
+              style={{
+                backgroundColor: "white",
+                borderRadius: "16px",
+                padding: "24px",
+                marginBottom: "24px",
+                border: "1px solid var(--tertiary-fixed)",
+                borderLeft: "6px solid #2196f3",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.03)",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  marginBottom: "8px",
+                }}
+              >
+                <span
+                  className="material-symbols-outlined"
+                  style={{ color: "#2196f3" }}
+                >
+                  checklist
+                </span>
+                <h3
+                  style={{
+                    margin: 0,
+                    color: "#0d47a1",
+                    fontFamily: "var(--font-heading)",
+                  }}
+                >
+                  {todaysPlan.title}
+                </h3>
+              </div>
+              <p
+                style={{
+                  margin: "0 0 16px 0",
+                  fontSize: "14px",
+                  color: "var(--on-surface-variant)",
+                  fontWeight: 500,
+                }}
+              >
+                🎯 <strong>เป้าหมาย:</strong> {todaysPlan.target}
+              </p>
+
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "12px",
+                }}
+              >
+                {todaysPlan.tasks.map((task, index) => {
+                  const isChecked = checkedWorkout.includes(task);
+                  return (
+                    <label
+                      key={index}
+                      style={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        gap: "12px",
+                        cursor: "pointer",
+                        padding: "8px",
+                        backgroundColor: isChecked ? "#f1f8e9" : "#f8fafc",
+                        borderRadius: "8px",
+                        transition: "all 0.2s",
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => toggleWorkoutCheck(task)}
+                        style={{
+                          marginTop: "4px",
+                          transform: "scale(1.2)",
+                          accentColor: "#4caf50",
+                        }}
+                      />
+                      <span
+                        style={{
+                          fontSize: "15px",
+                          color: isChecked ? "#9e9e9e" : "var(--on-surface)",
+                          textDecoration: isChecked ? "line-through" : "none",
+                          lineHeight: "1.5",
+                        }}
+                      >
+                        {task}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* บันทึกการออกกำลังกาย (กรอกแคลอรี่จริง) */}
             <div
               style={{
                 backgroundColor: "white",
@@ -597,7 +805,7 @@ const DailyLog: React.FC = () => {
                 <span className="material-symbols-outlined">
                   fitness_center
                 </span>
-                บันทึกการออกกำลังกาย
+                บันทึกแคลอรี่ที่เบิร์นได้
               </h3>
 
               <div
