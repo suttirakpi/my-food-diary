@@ -372,6 +372,25 @@ const DailyLog: React.FC = () => {
           </button>
 
           <button
+            onClick={() => navigate("/workout-plan")}
+            style={{
+              background: "white",
+              border: "1px solid #2196f3",
+              color: "#2196f3",
+              padding: "10px 16px",
+              borderRadius: "12px",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              fontWeight: 600,
+            }}
+          >
+            <span className="material-symbols-outlined">fitness_center</span>{" "}
+            Workout
+          </button>
+
+          <button
             onClick={() => navigate("/history")}
             style={{
               background: "white",
