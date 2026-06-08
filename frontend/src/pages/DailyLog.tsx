@@ -40,6 +40,16 @@ const DailyLog: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const isSearching = searchQuery.trim() !== "";
 
+  // State สำหรับ IF 16/8
+  const [isFasting, setIsFasting] = useState<boolean>(() => {
+    return localStorage.getItem("isFasting") === "true";
+  });
+
+  const [fastStartTime, setFastStartTime] = useState<number | null>(() => {
+    const savedTime = localStorage.getItem("fastStartTime");
+    return savedTime ? parseInt(savedTime) : null;
+  });
+
   // 🌟 State สำหรับลูบหัวน้องไวท์มอล
   const [isPetting, setIsPetting] = useState(false);
   const handlePetMascot = () => {
@@ -47,113 +57,13 @@ const DailyLog: React.FC = () => {
     setTimeout(() => setIsPetting(false), 3000); // ฟินอยู่ 3 วินาทีแล้วกลับเป็นปกติ
   };
 
+  const [fastTimeLeft, setFastTimeLeft] = useState<string>("16:00:00");
+  const [fastProgress, setFastProgress] = useState<number>(0);
+
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // 🌟 State สำหรับ Checklist ออกกำลังกาย
-  const todayDayIndex = new Date(selectedDate).getDay(); // 0 = อาทิตย์, 1 = จันทร์, ...
-  const [checkedWorkout, setCheckedWorkout] = useState<string[]>([]);
-
-  const toggleWorkoutCheck = (task: string) => {
-    if (checkedWorkout.includes(task)) {
-      setCheckedWorkout(checkedWorkout.filter((t) => t !== task));
-    } else {
-      setCheckedWorkout([...checkedWorkout, task]);
-    }
-  };
-
-  // 🌟 ฐานข้อมูลตารางออกกำลังกายของตูน
-  const workoutPlans: Record<
-    number,
-    { title: string; target: string; tasks: string[] }
-  > = {
-    1: {
-      // จันทร์
-      title: "🔥 วันวิ่งระเบิดไขมัน (+Core)",
-      target: "สร้าง Afterburn Effect เผาผลาญไขมัน 24 ชม.",
-      tasks: [
-        "นาทีที่ 0-3: เดินเร็วๆ ยืดเหยียดขาและข้อเท้า",
-        "นาทีที่ 3-23: วิ่งสปีดเต็มที่ 30 วิ สลับเดิน 30 วิ (20 นาที)",
-        "นาทีที่ 23-30: ท่า Plank 45 วิ / พัก 15 วิ (วน 7 รอบ)",
-      ],
-    },
-    2: {
-      // อังคาร
-      title: "💪 วันสร้างกล้ามเนื้อ (Circuit Training)",
-      target: "หัวใจเต้นแรงพร้อมได้กล้ามเนื้อ",
-      tasks: [
-        "นาทีที่ 0-3: วอร์มอัพ หมุนไหล่ แกว่งแขน ย่ำเท้า",
-        "ท่าที่ 1: Squat 45 วิ / พัก 15 วิ",
-        "ท่าที่ 2: Push-up (วิดพื้น) 45 วิ / พัก 15 วิ",
-        "ท่าที่ 3: Reverse Lunge 45 วิ / พัก 15 วิ",
-        "ท่าที่ 4: Mountain Climber 45 วิ / พัก 15 วิ",
-        "ท่าที่ 5: Plank 45 วิ / พัก 15 วิ",
-        "ทำวงจรนี้ 4-5 รอบ แล้วคูลดาวน์ 2 นาที",
-      ],
-    },
-    3: {
-      // พุธ
-      title: "🔥 วันวิ่งระเบิดไขมัน (+ยืดเหยียด)",
-      target: "สร้าง Afterburn Effect เผาผลาญไขมัน 24 ชม.",
-      tasks: [
-        "นาทีที่ 0-3: เดินเร็วๆ ยืดเหยียดขาและข้อเท้า",
-        "นาทีที่ 3-23: วิ่งสปีดเต็มที่ 30 วิ สลับเดิน 30 วิ (20 นาที)",
-        "นาทีที่ 23-30: นั่งเหยียดขาแตะปลายเท้า, ท่าโยคะเด็ก (Child's Pose)",
-      ],
-    },
-    4: {
-      // พฤหัสบดี
-      title: "💪 วันสร้างกล้ามเนื้อ (Circuit Training)",
-      target: "หัวใจเต้นแรงพร้อมได้กล้ามเนื้อ",
-      tasks: [
-        "นาทีที่ 0-3: วอร์มอัพ หมุนไหล่ แกว่งแขน ย่ำเท้า",
-        "ท่าที่ 1: Squat 45 วิ / พัก 15 วิ",
-        "ท่าที่ 2: Push-up (วิดพื้น) 45 วิ / พัก 15 วิ",
-        "ท่าที่ 3: Reverse Lunge 45 วิ / พัก 15 วิ",
-        "ท่าที่ 4: Mountain Climber 45 วิ / พัก 15 วิ",
-        "ท่าที่ 5: Plank 45 วิ / พัก 15 วิ",
-        "ทำวงจรนี้ 4-5 รอบ แล้วคูลดาวน์ 2 นาที",
-      ],
-    },
-    5: {
-      // ศุกร์
-      title: "🔥 วันวิ่งระเบิดไขมัน (+Burnout)",
-      target: "สร้าง Afterburn Effect เผาผลาญไขมัน 24 ชม.",
-      tasks: [
-        "นาทีที่ 0-3: เดินเร็วๆ ยืดเหยียดขาและข้อเท้า",
-        "นาทีที่ 3-23: วิ่งสปีดเต็มที่ 30 วิ สลับเดิน 30 วิ (20 นาที)",
-        "นาทีที่ 23-30: Jumping Jacks หรือ Jump Squat ต่อเนื่องจนหมดแรง!",
-      ],
-    },
-    6: {
-      // เสาร์
-      title: "👑 วันท้าทายขีดจำกัด (Challenge)",
-      target: "ฝึกความอึดและทำลายสถิติตัวเอง",
-      tasks: [
-        "เลือก 1 อย่าง: จ็อกกิ้งต่อเนื่อง (Zone 2-3) 45-60 นาที",
-        "หรือ Bodyweight Challenge: วิดพื้น 100 ครั้ง + สควอท 100 ครั้ง (แบ่งทำเรื่อยๆ จนครบ)",
-      ],
-    },
-    0: {
-      // อาทิตย์
-      title: "💤 วันหยุดพัก (Rest Day)",
-      target: "ซ่อมแซมกล้ามเนื้อ 100%",
-      tasks: [
-        "งดออกกำลังกายหนักทุกชนิด",
-        "ขยับตัวทำงานบ้าน หรือเดินเล่นนิดหน่อย",
-        "กินอาหารดีๆ ให้ร่างกายได้ฟื้นฟู",
-      ],
-    },
-  };
-
-  const todaysPlan = workoutPlans[todayDayIndex];
-
-  // รีเซ็ต Checklist ถ้าเปลี่ยนวัน
-  useEffect(() => {
-    setCheckedWorkout([]);
-  }, [selectedDate]);
-
   const fetchData = async () => {
-    setIsLoading(true);
+    setIsLoading(true); // 🌟 สั่งเปิด Loading
     try {
       const mealsRes = await axios.get(
         `https://my-food-diary-n1tf.onrender.com/api/meals?date=${selectedDate}`,
@@ -172,7 +82,7 @@ const DailyLog: React.FC = () => {
     } catch (error) {
       console.error("ดึงข้อมูลไม่สำเร็จ:", error);
     } finally {
-      setIsLoading(false);
+      setIsLoading(false); // 🌟 ดึงเสร็จแล้ว สั่งปิด Loading
     }
   };
 
@@ -195,6 +105,55 @@ const DailyLog: React.FC = () => {
 
     return () => clearTimeout(searchTimer);
   }, [searchQuery, selectedDate]);
+
+  // ระบบจับเวลา IF 16/8
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval>;
+
+    if (isFasting && fastStartTime) {
+      interval = setInterval(() => {
+        const now = Date.now();
+        const elapsed = now - fastStartTime;
+        const targetMs = 16 * 60 * 60 * 1000;
+        const remaining = targetMs - elapsed;
+
+        if (remaining <= 0) {
+          setFastTimeLeft("00:00:00");
+          setFastProgress(100);
+        } else {
+          const h = Math.floor(remaining / (1000 * 60 * 60));
+          const m = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+          const s = Math.floor((remaining % (1000 * 60)) / 1000);
+          setFastTimeLeft(
+            `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`,
+          );
+          setFastProgress((elapsed / targetMs) * 100);
+        }
+      }, 1000);
+    } else {
+      setFastTimeLeft("16:00:00");
+      setFastProgress(0);
+    }
+
+    return () => clearInterval(interval);
+  }, [isFasting, fastStartTime]);
+
+  const toggleFasting = () => {
+    if (isFasting) {
+      setIsFasting(false);
+      setFastStartTime(null);
+      localStorage.removeItem("isFasting");
+      localStorage.removeItem("fastStartTime");
+      toast.success("จบการ Fasting! ได้เวลาเติมพลังแล้ว 🍽️");
+    } else {
+      const now = Date.now();
+      setIsFasting(true);
+      setFastStartTime(now);
+      localStorage.setItem("isFasting", "true");
+      localStorage.setItem("fastStartTime", now.toString());
+      toast.success("เริ่ม Fasting 16 ชั่วโมง! ลุย! ✌️");
+    }
+  };
 
   const handleAddExercise = async () => {
     if (!exName.trim() || !exCal) {
@@ -366,11 +325,7 @@ const DailyLog: React.FC = () => {
     100,
   );
 
-  const isWorkoutComplete =
-    todaysPlan.tasks.length > 0 &&
-    checkedWorkout.length === todaysPlan.tasks.length;
-
-  // 🌟 Logic อารมณ์ของมาสคอตน้องแฮมสเตอร์
+  // 🌟 Logic อารมณ์ของมาสคอตน้องแฮมสเตอร์ (อัปเกรดความน่ารัก)
   let mascotMood = "normal";
   let mascotMessage = "สวัสดีฮะตูน! ให้ไวท์มอลช่วยดูแลเรื่องกินนะ (๑˃ᴗ˂)ﻭ 🐹";
   let mascotEmoji = "🐹";
@@ -379,10 +334,6 @@ const DailyLog: React.FC = () => {
     mascotMood = "love";
     mascotMessage = "งื้ออออ~ ลูบหัวฟินจุงเบยยย รักตูนน้าา (´♡‿♡`) 💕";
     mascotEmoji = "🐹💖";
-  } else if (isWorkoutComplete) {
-    mascotMood = "happy";
-    mascotMessage = "สุดยอดดด! ออกกำลังกายตามเป้าหมายครบแล้ว ไวท์มอลภูมิใจ! 🏆";
-    mascotEmoji = "🐹🔥";
   } else if (totalCalories > DAILY_CALORIE_GOAL) {
     mascotMood = "warning";
     mascotMessage =
@@ -393,6 +344,11 @@ const DailyLog: React.FC = () => {
     mascotMessage =
       "ชื่นใจจุง! ดื่มน้ำครบ 8 แก้วแล้ว ตูนเก่งที่สุดเลยฮะ! (´ ▽ ` ) 💧";
     mascotEmoji = "🐹✨";
+  } else if (isFasting) {
+    mascotMood = "happy";
+    mascotMessage =
+      "กำลังทำ IF อยู่สินะ! ไวท์มอลส่งพลังใจให้ ฮึบๆ! (ง •̀_•́)ง 🔥";
+    mascotEmoji = "🐹💪";
   }
 
   let barColor = "#4caf50";
@@ -560,6 +516,133 @@ const DailyLog: React.FC = () => {
 
         {!isSearching && (
           <>
+            <div
+              style={{
+                backgroundColor: isFasting ? "#fff3e0" : "#e8f5e9",
+                borderRadius: "16px",
+                padding: "24px",
+                marginBottom: "32px",
+                borderLeft: `6px solid ${isFasting ? "#ff9800" : "#4caf50"}`,
+                boxShadow: "0 4px 12px rgba(0,0,0,0.03)",
+                transition: "all 0.3s ease",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  flexWrap: "wrap",
+                  gap: "16px",
+                }}
+              >
+                <div>
+                  <h3
+                    style={{
+                      margin: "0 0 8px 0",
+                      color: isFasting ? "#e65100" : "#2e7d32",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                    }}
+                  >
+                    <span className="material-symbols-outlined">timer</span>
+                    Intermittent Fasting (16/8)
+                  </h3>
+                  <p
+                    style={{
+                      margin: 0,
+                      color: isFasting ? "#f57c00" : "#4caf50",
+                      fontSize: "14px",
+                      fontWeight: 500,
+                    }}
+                  >
+                    {isFasting
+                      ? "🔥 ร่างกายกำลังดึงไขมันมาใช้! อดทนอีกนิดเพื่อเป้าหมาย 70kg"
+                      : "🍽️ ช่วงเวลากิน (Feeding Window) เติมพลังให้เต็มที่!"}
+                  </p>
+                </div>
+
+                <div style={{ textAlign: "center" }}>
+                  <div
+                    style={{
+                      fontSize: "36px",
+                      fontWeight: "bold",
+                      color: isFasting ? "#e65100" : "#2e7d32",
+                      fontFamily: "monospace",
+                    }}
+                  >
+                    {isFasting ? fastTimeLeft : "08:00:00"}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "12px",
+                      color: isFasting ? "#f57c00" : "#4caf50",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {isFasting
+                      ? "เวลา Fasting ที่เหลือ"
+                      : "เวลา Feeding (โดยประมาณ)"}
+                  </div>
+                </div>
+
+                <button
+                  onClick={toggleFasting}
+                  style={{
+                    backgroundColor: isFasting ? "#f44336" : "#4caf50",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "8px",
+                    padding: "12px 24px",
+                    cursor: "pointer",
+                    fontWeight: "bold",
+                    fontFamily: "var(--font-body)",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+                  }}
+                >
+                  {isFasting ? "🛑 จบการ Fasting" : "▶️ เริ่ม Fasting 16 ชม."}
+                </button>
+              </div>
+
+              {isFasting && (
+                <div style={{ marginTop: "20px" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      fontSize: "12px",
+                      color: "#e65100",
+                      marginBottom: "8px",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    <span>0 ชม.</span>
+                    <span>เป้าหมาย 16 ชม.</span>
+                  </div>
+                  <div
+                    style={{
+                      width: "100%",
+                      height: "12px",
+                      backgroundColor: "#ffe0b2",
+                      borderRadius: "6px",
+                      overflow: "hidden",
+                    }}
+                  >
+                    <div
+                      style={{
+                        height: "100%",
+                        width: `${fastProgress}%`,
+                        backgroundColor:
+                          fastProgress >= 100 ? "#4caf50" : "#ff9800",
+                        transition: "width 1s linear",
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div className={styles.topSummary}>
               <div className={styles.summaryCard}>
                 <span className={styles.summaryValue}>{totalCalories}</span>
@@ -686,103 +769,6 @@ const DailyLog: React.FC = () => {
               </div>
             </div>
 
-            {/* 🌟 Widget: Checklist ออกกำลังกายประจำวัน */}
-            <div
-              style={{
-                backgroundColor: "white",
-                borderRadius: "16px",
-                padding: "24px",
-                marginBottom: "24px",
-                border: "1px solid var(--tertiary-fixed)",
-                borderLeft: "6px solid #2196f3",
-                boxShadow: "0 4px 12px rgba(0,0,0,0.03)",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  marginBottom: "8px",
-                }}
-              >
-                <span
-                  className="material-symbols-outlined"
-                  style={{ color: "#2196f3" }}
-                >
-                  checklist
-                </span>
-                <h3
-                  style={{
-                    margin: 0,
-                    color: "#0d47a1",
-                    fontFamily: "var(--font-heading)",
-                  }}
-                >
-                  {todaysPlan.title}
-                </h3>
-              </div>
-              <p
-                style={{
-                  margin: "0 0 16px 0",
-                  fontSize: "14px",
-                  color: "var(--on-surface-variant)",
-                  fontWeight: 500,
-                }}
-              >
-                🎯 <strong>เป้าหมาย:</strong> {todaysPlan.target}
-              </p>
-
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "12px",
-                }}
-              >
-                {todaysPlan.tasks.map((task, index) => {
-                  const isChecked = checkedWorkout.includes(task);
-                  return (
-                    <label
-                      key={index}
-                      style={{
-                        display: "flex",
-                        alignItems: "flex-start",
-                        gap: "12px",
-                        cursor: "pointer",
-                        padding: "8px",
-                        backgroundColor: isChecked ? "#f1f8e9" : "#f8fafc",
-                        borderRadius: "8px",
-                        transition: "all 0.2s",
-                      }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={isChecked}
-                        onChange={() => toggleWorkoutCheck(task)}
-                        style={{
-                          marginTop: "4px",
-                          transform: "scale(1.2)",
-                          accentColor: "#4caf50",
-                        }}
-                      />
-                      <span
-                        style={{
-                          fontSize: "15px",
-                          color: isChecked ? "#9e9e9e" : "var(--on-surface)",
-                          textDecoration: isChecked ? "line-through" : "none",
-                          lineHeight: "1.5",
-                        }}
-                      >
-                        {task}
-                      </span>
-                    </label>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* บันทึกการออกกำลังกาย (กรอกแคลอรี่จริง) */}
             <div
               style={{
                 backgroundColor: "white",
@@ -805,7 +791,7 @@ const DailyLog: React.FC = () => {
                 <span className="material-symbols-outlined">
                   fitness_center
                 </span>
-                บันทึกแคลอรี่ที่เบิร์นได้
+                บันทึกการออกกำลังกาย
               </h3>
 
               <div
