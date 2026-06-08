@@ -40,16 +40,6 @@ const DailyLog: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const isSearching = searchQuery.trim() !== "";
 
-  // State สำหรับ IF 16/8
-  const [isFasting, setIsFasting] = useState<boolean>(() => {
-    return localStorage.getItem("isFasting") === "true";
-  });
-
-  const [fastStartTime, setFastStartTime] = useState<number | null>(() => {
-    const savedTime = localStorage.getItem("fastStartTime");
-    return savedTime ? parseInt(savedTime) : null;
-  });
-
   // 🌟 State สำหรับลูบหัวน้องไวท์มอล
   const [isPetting, setIsPetting] = useState(false);
   const handlePetMascot = () => {
@@ -57,13 +47,10 @@ const DailyLog: React.FC = () => {
     setTimeout(() => setIsPetting(false), 3000); // ฟินอยู่ 3 วินาทีแล้วกลับเป็นปกติ
   };
 
-  const [fastTimeLeft, setFastTimeLeft] = useState<string>("16:00:00");
-  const [fastProgress, setFastProgress] = useState<number>(0);
-
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const fetchData = async () => {
-    setIsLoading(true); // 🌟 สั่งเปิด Loading
+    setIsLoading(true);
     try {
       const mealsRes = await axios.get(
         `https://my-food-diary-n1tf.onrender.com/api/meals?date=${selectedDate}`,
@@ -82,7 +69,7 @@ const DailyLog: React.FC = () => {
     } catch (error) {
       console.error("ดึงข้อมูลไม่สำเร็จ:", error);
     } finally {
-      setIsLoading(false); // 🌟 ดึงเสร็จแล้ว สั่งปิด Loading
+      setIsLoading(false);
     }
   };
 
@@ -105,55 +92,6 @@ const DailyLog: React.FC = () => {
 
     return () => clearTimeout(searchTimer);
   }, [searchQuery, selectedDate]);
-
-  // ระบบจับเวลา IF 16/8
-  useEffect(() => {
-    let interval: ReturnType<typeof setInterval>;
-
-    if (isFasting && fastStartTime) {
-      interval = setInterval(() => {
-        const now = Date.now();
-        const elapsed = now - fastStartTime;
-        const targetMs = 16 * 60 * 60 * 1000;
-        const remaining = targetMs - elapsed;
-
-        if (remaining <= 0) {
-          setFastTimeLeft("00:00:00");
-          setFastProgress(100);
-        } else {
-          const h = Math.floor(remaining / (1000 * 60 * 60));
-          const m = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
-          const s = Math.floor((remaining % (1000 * 60)) / 1000);
-          setFastTimeLeft(
-            `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`,
-          );
-          setFastProgress((elapsed / targetMs) * 100);
-        }
-      }, 1000);
-    } else {
-      setFastTimeLeft("16:00:00");
-      setFastProgress(0);
-    }
-
-    return () => clearInterval(interval);
-  }, [isFasting, fastStartTime]);
-
-  const toggleFasting = () => {
-    if (isFasting) {
-      setIsFasting(false);
-      setFastStartTime(null);
-      localStorage.removeItem("isFasting");
-      localStorage.removeItem("fastStartTime");
-      toast.success("จบการ Fasting! ได้เวลาเติมพลังแล้ว 🍽️");
-    } else {
-      const now = Date.now();
-      setIsFasting(true);
-      setFastStartTime(now);
-      localStorage.setItem("isFasting", "true");
-      localStorage.setItem("fastStartTime", now.toString());
-      toast.success("เริ่ม Fasting 16 ชั่วโมง! ลุย! ✌️");
-    }
-  };
 
   const handleAddExercise = async () => {
     if (!exName.trim() || !exCal) {
@@ -325,7 +263,7 @@ const DailyLog: React.FC = () => {
     100,
   );
 
-  // 🌟 Logic อารมณ์ของมาสคอตน้องแฮมสเตอร์ (อัปเกรดความน่ารัก)
+  // 🌟 Logic อารมณ์ของมาสคอตน้องแฮมสเตอร์
   let mascotMood = "normal";
   let mascotMessage = "สวัสดีฮะตูน! ให้ไวท์มอลช่วยดูแลเรื่องกินนะ (๑˃ᴗ˂)ﻭ 🐹";
   let mascotEmoji = "🐹";
@@ -344,11 +282,6 @@ const DailyLog: React.FC = () => {
     mascotMessage =
       "ชื่นใจจุง! ดื่มน้ำครบ 8 แก้วแล้ว ตูนเก่งที่สุดเลยฮะ! (´ ▽ ` ) 💧";
     mascotEmoji = "🐹✨";
-  } else if (isFasting) {
-    mascotMood = "happy";
-    mascotMessage =
-      "กำลังทำ IF อยู่สินะ! ไวท์มอลส่งพลังใจให้ ฮึบๆ! (ง •̀_•́)ง 🔥";
-    mascotEmoji = "🐹💪";
   }
 
   let barColor = "#4caf50";
@@ -516,133 +449,6 @@ const DailyLog: React.FC = () => {
 
         {!isSearching && (
           <>
-            <div
-              style={{
-                backgroundColor: isFasting ? "#fff3e0" : "#e8f5e9",
-                borderRadius: "16px",
-                padding: "24px",
-                marginBottom: "32px",
-                borderLeft: `6px solid ${isFasting ? "#ff9800" : "#4caf50"}`,
-                boxShadow: "0 4px 12px rgba(0,0,0,0.03)",
-                transition: "all 0.3s ease",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  flexWrap: "wrap",
-                  gap: "16px",
-                }}
-              >
-                <div>
-                  <h3
-                    style={{
-                      margin: "0 0 8px 0",
-                      color: isFasting ? "#e65100" : "#2e7d32",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                    }}
-                  >
-                    <span className="material-symbols-outlined">timer</span>
-                    Intermittent Fasting (16/8)
-                  </h3>
-                  <p
-                    style={{
-                      margin: 0,
-                      color: isFasting ? "#f57c00" : "#4caf50",
-                      fontSize: "14px",
-                      fontWeight: 500,
-                    }}
-                  >
-                    {isFasting
-                      ? "🔥 ร่างกายกำลังดึงไขมันมาใช้! อดทนอีกนิดเพื่อเป้าหมาย 70kg"
-                      : "🍽️ ช่วงเวลากิน (Feeding Window) เติมพลังให้เต็มที่!"}
-                  </p>
-                </div>
-
-                <div style={{ textAlign: "center" }}>
-                  <div
-                    style={{
-                      fontSize: "36px",
-                      fontWeight: "bold",
-                      color: isFasting ? "#e65100" : "#2e7d32",
-                      fontFamily: "monospace",
-                    }}
-                  >
-                    {isFasting ? fastTimeLeft : "08:00:00"}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "12px",
-                      color: isFasting ? "#f57c00" : "#4caf50",
-                      fontWeight: 600,
-                    }}
-                  >
-                    {isFasting
-                      ? "เวลา Fasting ที่เหลือ"
-                      : "เวลา Feeding (โดยประมาณ)"}
-                  </div>
-                </div>
-
-                <button
-                  onClick={toggleFasting}
-                  style={{
-                    backgroundColor: isFasting ? "#f44336" : "#4caf50",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "8px",
-                    padding: "12px 24px",
-                    cursor: "pointer",
-                    fontWeight: "bold",
-                    fontFamily: "var(--font-body)",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
-                  }}
-                >
-                  {isFasting ? "🛑 จบการ Fasting" : "▶️ เริ่ม Fasting 16 ชม."}
-                </button>
-              </div>
-
-              {isFasting && (
-                <div style={{ marginTop: "20px" }}>
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      fontSize: "12px",
-                      color: "#e65100",
-                      marginBottom: "8px",
-                      fontWeight: "bold",
-                    }}
-                  >
-                    <span>0 ชม.</span>
-                    <span>เป้าหมาย 16 ชม.</span>
-                  </div>
-                  <div
-                    style={{
-                      width: "100%",
-                      height: "12px",
-                      backgroundColor: "#ffe0b2",
-                      borderRadius: "6px",
-                      overflow: "hidden",
-                    }}
-                  >
-                    <div
-                      style={{
-                        height: "100%",
-                        width: `${fastProgress}%`,
-                        backgroundColor:
-                          fastProgress >= 100 ? "#4caf50" : "#ff9800",
-                        transition: "width 1s linear",
-                      }}
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-
             <div className={styles.topSummary}>
               <div className={styles.summaryCard}>
                 <span className={styles.summaryValue}>{totalCalories}</span>
