@@ -318,7 +318,7 @@ const DailyLog: React.FC = () => {
 
   const snackCount = meals.filter((m) => m.item_type === "ขนม").length;
 
-  const DAILY_CALORIE_GOAL = 1600;
+  const DAILY_CALORIE_GOAL = 1400;
   const isOverGoal = totalCalories > DAILY_CALORIE_GOAL;
   const calPercentage = Math.min(
     (totalCalories / DAILY_CALORIE_GOAL) * 100,
