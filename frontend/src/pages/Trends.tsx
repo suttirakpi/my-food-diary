@@ -349,7 +349,13 @@ const Trends: React.FC = () => {
             <BarChart data={data.waterStats}>
               <XAxis dataKey="date" />
               <YAxis />
-              <Tooltip />
+              {/* 🌟 ปรับ Tooltip ให้คำนวณและแสดงผลทั้ง แก้ว, ออนซ์ (oz) และ ลิตร (L) */}
+              <Tooltip 
+                formatter={(value: number) => [
+                  `${value} แก้ว (${value * 22} oz / ${((value * 650) / 1000).toFixed(1)} L)`, 
+                  "ปริมาณน้ำที่ดื่ม"
+                ]} 
+              />
               <Bar
                 dataKey="glasses"
                 name="จำนวนแก้ว"
