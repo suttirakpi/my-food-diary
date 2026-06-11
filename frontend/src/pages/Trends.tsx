@@ -28,6 +28,60 @@ interface TrendData {
   summary: { cal_today: number; cal_month: number; cal_year: number };
 }
 
+// 🌟 สร้างกล่องป๊อปอัป Custom สำหรับกราฟน้ำดื่มโดยเฉพาะ
+const CustomWaterTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    const glasses = payload[0].value;
+    const oz = glasses * 22;
+    const liters = ((glasses * 650) / 1000).toFixed(1);
+
+    return (
+      <div
+        style={{
+          backgroundColor: "white",
+          padding: "16px",
+          border: "1px solid #90caf9",
+          borderRadius: "12px",
+          boxShadow: "0 4px 12px rgba(33, 150, 243, 0.15)",
+        }}
+      >
+        <p
+          style={{
+            margin: "0 0 8px 0",
+            fontWeight: "bold",
+            color: "var(--on-surface)",
+          }}
+        >
+          📅 {label}
+        </p>
+        <p
+          style={{
+            margin: 0,
+            color: "#1565c0",
+            fontWeight: 600,
+            fontSize: "15px",
+          }}
+        >
+          💧 ดื่มไป:{" "}
+          <span style={{ fontSize: "18px", fontWeight: "bold" }}>
+            {glasses} แก้ว
+          </span>
+        </p>
+        <p
+          style={{
+            margin: "6px 0 0 0",
+            fontSize: "13px",
+            color: "var(--on-surface-variant)",
+          }}
+        >
+          เทียบเท่า: {oz} oz / {liters} ลิตร
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
 const Trends: React.FC = () => {
   const navigate = useNavigate();
   const [data, setData] = useState<TrendData | null>(null);
@@ -349,12 +403,10 @@ const Trends: React.FC = () => {
             <BarChart data={data.waterStats}>
               <XAxis dataKey="date" />
               <YAxis />
-              {/* 🌟 ปรับ Tooltip ให้คำนวณและแสดงผลทั้ง แก้ว, ออนซ์ (oz) และ ลิตร (L) */}
-              <Tooltip 
-                formatter={(value: number) => [
-                  `${value} แก้ว (${value * 22} oz / ${((value * 650) / 1000).toFixed(1)} L)`, 
-                  "ปริมาณน้ำที่ดื่ม"
-                ]} 
+              {/* 🌟 เรียกใช้ Custom Tooltip ที่เราสร้างไว้ */}
+              <Tooltip
+                content={<CustomWaterTooltip />}
+                cursor={{ fill: "rgba(33, 150, 243, 0.05)" }}
               />
               <Bar
                 dataKey="glasses"
