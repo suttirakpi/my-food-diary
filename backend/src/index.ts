@@ -317,50 +317,35 @@ app.delete("/api/exercises/:id", async (req, res) => {
 });
 
 // 🌟 ย้าย API Calendar ขึ้นมาไว้ตรงนี้ (ก่อน app.listen)
-app.get("/api/calendar", async (req: Request, res: Response) => {
+app.get("/api/calendar", async (req, res) => {
   try {
-    const [meals] = await pool.query(
-      "SELECT meal_date as date, SUM(calories) as total_cal FROM meals GROUP BY meal_date",
+    const [mealRows]: any = await pool.query(
+      "SELECT DATE_FORMAT(meal_date, '%Y-%m-%d') as date, SUM(calories) as total_cal FROM meals GROUP BY date",
+    );
+    const [waterRows]: any = await pool.query(
+      "SELECT DATE_FORMAT(log_date, '%Y-%m-%d') as date, glasses FROM water_logs",
+    );
+    const [exRows]: any = await pool.query(
+      "SELECT DATE_FORMAT(log_date, '%Y-%m-%d') as date, SUM(calories_burned) as total_burned FROM exercises GROUP BY date",
     );
 
-    const [water] = await pool.query(
-      "SELECT log_date as date, glasses FROM water_logs",
-    );
-
-    const [exercises] = await pool.query(
-      "SELECT exercise_date as date, SUM(calories_burned) as total_burned FROM exercises GROUP BY exercise_date",
-    );
-
+    // 🌟 ดึงข้อมูลโปรตีนจากตาราง daily_protein
     const [proteinRows]: any = await pool.query(
       "SELECT DATE_FORMAT(log_date, '%Y-%m-%d') as date, total_grams FROM daily_protein",
     );
 
-    const formatDate = (dateValue: any) => {
-      const d = new Date(dateValue);
-      d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-      return d.toISOString().split("T")[0];
-    };
-
+    // 🌟 ส่งค่า proteinRows กลับไปให้หน้าบ้านด้วย
     res.json({
-      meals: (meals as any[]).map((m) => ({
-        date: formatDate(m.date),
-        total_cal: m.total_cal,
-      })),
-      water: (water as any[]).map((w) => ({
-        date: formatDate(w.date),
-        glasses: w.glasses,
-      })),
-      exercises: (exercises as any[]).map((e) => ({
-        date: formatDate(e.date),
-        total_burned: e.total_burned,
-      })),
+      meals: mealRows,
+      water: waterRows,
+      exercises: exRows,
+      protein: proteinRows, // <--- เพิ่มตรงนี้ครับ
     });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "ดึงข้อมูลปฏิทินล้มเหลว" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Database error" });
   }
 });
-
 // 🌟 API สำหรับดึงข้อมูลโปรตีน
 app.get("/api/protein", async (req, res) => {
   const { date } = req.query;
