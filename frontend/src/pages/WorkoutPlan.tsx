@@ -1,108 +1,111 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import toast from "react-hot-toast";
 import styles from "./WorkoutPlan.module.css";
 
-const DEFAULT_WORKOUT_PLANS: Record<
-  number,
-  { title: string; target: string; tasks: string[] }
-> = {
-  1: {
-    title: "🔥 วันวิ่งระเบิดไขมัน (+Core)",
-    target: "สร้าง Afterburn Effect เผาผลาญไขมัน 24 ชม.",
-    tasks: [
-      "นาทีที่ 0-3: เดินเร็วๆ ยืดเหยียดขาและข้อเท้า",
-      "นาทีที่ 3-23: วิ่งสปีดเต็มที่ 30 วิ สลับเดิน 30 วิ (20 นาที)",
-      "นาทีที่ 23-30: ท่า Plank 45 วิ / พัก 15 วิ (วน 7 รอบ)",
-    ],
-  },
-  2: {
-    title: "💪 วันสร้างกล้ามเนื้อ (Circuit Training)",
-    target: "หัวใจเต้นแรงพร้อมได้กล้ามเนื้อ",
-    tasks: [
-      "นาทีที่ 0-3: วอร์มอัพ หมุนไหล่ แกว่งแขน ย่ำเท้า",
-      "ท่าที่ 1: Squat 45 วิ / พัก 15 วิ",
-      "ท่าที่ 2: Push-up (วิดพื้น) 45 วิ / พัก 15 วิ",
-      "ท่าที่ 3: Reverse Lunge 45 วิ / พัก 15 วิ",
-      "ท่าที่ 4: Mountain Climber 45 วิ / พัก 15 วิ",
-      "ท่าที่ 5: Plank 45 วิ / พัก 15 วิ",
-    ],
-  },
-  3: {
-    title: "🔥 วันวิ่งระเบิดไขมัน (+ยืดเหยียด)",
-    target: "สร้าง Afterburn Effect เผาผลาญไขมัน 24 ชม.",
-    tasks: [
-      "นาทีที่ 0-3: เดินเร็วๆ ยืดเหยียดขาและข้อเท้า",
-      "นาทีที่ 3-23: วิ่งสปีดเต็มที่ 30 วิ สลับเดิน 30 วิ (20 นาที)",
-      "นาทีที่ 23-30: นั่งเหยียดขาแตะปลายเท้า, ท่าโยคะเด็ก (Child's Pose)",
-    ],
-  },
-  4: {
-    title: "💪 วันสร้างกล้ามเนื้อ (Circuit Training)",
-    target: "หัวใจเต้นแรงพร้อมได้กล้ามเนื้อ",
-    tasks: [
-      "นาทีที่ 0-3: วอร์มอัพ หมุนไหล่ แกว่งแขน ย่ำเท้า",
-      "ท่าที่ 1: Squat 45 วิ / พัก 15 วิ",
-      "ท่าที่ 2: Push-up (วิดพื้น) 45 วิ / พัก 15 วิ",
-      "ท่าที่ 3: Reverse Lunge 45 วิ / พัก 15 วิ",
-    ],
-  },
-  5: {
-    title: "🔥 วันวิ่งระเบิดไขมัน (+Burnout)",
-    target: "สร้าง Afterburn Effect เผาผลาญไขมัน 24 ชม.",
-    tasks: [
-      "นาทีที่ 0-3: เดินเร็วๆ ยืดเหยียดขาและข้อเท้า",
-      "นาทีที่ 3-23: วิ่งสปีดเต็มที่ 30 วิ สลับเดิน 30 วิ (20 นาที)",
-      "นาทีที่ 23-30: Jumping Jacks หรือ Jump Squat ต่อเนื่องจนหมดแรง!",
-    ],
-  },
-  6: {
-    title: "👑 วันท้าทายขีดจำกัด (Challenge)",
-    target: "ฝึกความอึดและทำลายสถิติตัวเอง",
-    tasks: [
-      "เลือก 1 อย่าง: จ็อกกิ้งต่อเนื่อง (Zone 2-3) 45-60 นาที",
-      "หรือ Bodyweight Challenge: วิดพื้น 100 ครั้ง + สควอท 100 ครั้ง",
-    ],
-  },
-  0: {
-    title: "💤 วันหยุดพัก (Rest Day)",
-    target: "ซ่อมแซมกล้ามเนื้อ 100%",
-    tasks: [
-      "งดออกกำลังกายหนักทุกชนิด",
-      "ขยับตัวทำงานบ้าน หรือเดินเล่นนิดหน่อย",
-      "กินอาหารดีๆ ให้ร่างกายได้ฟื้นฟู",
-    ],
-  },
-};
+interface TaskItem {
+  text: string;
+  done: boolean;
+}
+
+interface WorkoutDay {
+  title: string;
+  target: string;
+  tasks: TaskItem[];
+}
 
 const WorkoutPlan: React.FC = () => {
   const navigate = useNavigate();
-  const [activeDay, setActiveDay] = useState<number>(1); // เริ่มต้นที่วันจันทร์
-  const [workoutPlans, setWorkoutPlans] = useState(() => {
-    const saved = localStorage.getItem("customWorkoutPlans");
-    return saved ? JSON.parse(saved) : DEFAULT_WORKOUT_PLANS;
-  });
+  const [activeDay, setActiveDay] = useState<number>(new Date().getDay()); // เริ่มที่วันปัจจุบัน
+  const [workoutPlans, setWorkoutPlans] = useState<Record<number, WorkoutDay>>(
+    {},
+  );
   const [newTaskText, setNewTaskText] = useState<string>("");
+  const [isLoading, setIsLoading] = useState(true);
 
+  // 🌟 โหลดข้อมูลจาก Database ทันทีที่เข้าหน้าเว็บ
   useEffect(() => {
-    localStorage.setItem("customWorkoutPlans", JSON.stringify(workoutPlans));
-  }, [workoutPlans]);
+    const fetchPlans = async () => {
+      try {
+        const res = await axios.get(
+          "https://my-food-diary-n1tf.onrender.com/api/workout-plans",
+        );
+
+        // สร้างโครงร่างเปล่าๆ กันบั๊กหน้าขาวเผื่อ DB ไม่มีข้อมูล
+        const loadedPlans: Record<number, WorkoutDay> = {};
+        for (let i = 0; i <= 6; i++) {
+          loadedPlans[i] = {
+            title: "ยังไม่มีชื่อแผน",
+            target: "ยังไม่ได้กำหนด",
+            tasks: [],
+          };
+        }
+
+        // เอาข้อมูลจาก DB มายัดใส่โครงร่าง
+        if (res.data && res.data.length > 0) {
+          res.data.forEach((row: any) => {
+            const parsed =
+              typeof row.plan_data === "string"
+                ? JSON.parse(row.plan_data)
+                : row.plan_data;
+            loadedPlans[row.day_index] = parsed;
+          });
+        }
+
+        setWorkoutPlans(loadedPlans);
+      } catch (error) {
+        console.error("ดึงข้อมูลตารางออกกำลังกายไม่สำเร็จ", error);
+        toast.error("ดึงข้อมูลไม่สำเร็จ");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchPlans();
+  }, []);
+
+  // 🌟 ฟังก์ชันเซฟลง Database (เรียกใช้ตอนข้อมูลเปลี่ยน)
+  const savePlanToDB = async (dayIdx: number, planData: WorkoutDay) => {
+    try {
+      await axios.post(
+        "https://my-food-diary-n1tf.onrender.com/api/workout-plans",
+        {
+          dayIndex: dayIdx,
+          planData: planData,
+        },
+      );
+    } catch (error) {
+      toast.error("บันทึกข้อมูลไม่สำเร็จ");
+    }
+  };
+
+  // 🌟 ติ๊กถูก / เอาติ๊กออก
+  const handleToggleTask = (taskIndex: number) => {
+    const updated = { ...workoutPlans };
+    updated[activeDay].tasks[taskIndex].done =
+      !updated[activeDay].tasks[taskIndex].done;
+    setWorkoutPlans(updated);
+    savePlanToDB(activeDay, updated[activeDay]);
+  };
 
   const handleAddTask = () => {
     if (!newTaskText.trim()) return;
     const updated = { ...workoutPlans };
-    updated[activeDay].tasks.push(newTaskText.trim());
+    updated[activeDay].tasks.push({ text: newTaskText.trim(), done: false });
     setWorkoutPlans(updated);
     setNewTaskText("");
+    savePlanToDB(activeDay, updated[activeDay]);
     toast.success("เพิ่มท่าออกกำลังกายเรียบร้อย!");
   };
 
   const handleDeleteTask = (indexToRemove: number) => {
+    if (!window.confirm("ต้องการลบกิจกรรมนี้ใช่ไหม?")) return;
     const updated = { ...workoutPlans };
     updated[activeDay].tasks = updated[activeDay].tasks.filter(
-      (_: string, idx: number) => idx !== indexToRemove,
+      (_, idx) => idx !== indexToRemove,
     );
     setWorkoutPlans(updated);
+    savePlanToDB(activeDay, updated[activeDay]);
     toast.success("ลบรายการเรียบร้อย");
   };
 
@@ -118,6 +121,12 @@ const WorkoutPlan: React.FC = () => {
     setWorkoutPlans(updated);
   };
 
+  // 🌟 เซฟ Title/Target เมื่อคลิกออกไปที่อื่น (onBlur)
+  const handleBlurInfo = () => {
+    savePlanToDB(activeDay, workoutPlans[activeDay]);
+    toast.success("บันทึกข้อมูลตารางแล้ว");
+  };
+
   const dayNames: Record<number, string> = {
     1: "จันทร์",
     2: "อังคาร",
@@ -127,8 +136,23 @@ const WorkoutPlan: React.FC = () => {
     6: "เสาร์",
     0: "อาทิตย์",
   };
-
   const daysOrder = [1, 2, 3, 4, 5, 6, 0];
+
+  // ถ้ายังดึงข้อมูลจาก DB ไม่เสร็จ ให้โชว์หน้าโหลดไปก่อน
+  if (isLoading || Object.keys(workoutPlans).length === 0) {
+    return (
+      <div
+        className={styles.pageContainer}
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <h2>กำลังดึงตารางออกกำลังกายจาก Database... 🏃‍♂️💨</h2>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.pageContainer}>
@@ -142,7 +166,6 @@ const WorkoutPlan: React.FC = () => {
       </header>
 
       <div className={styles.layoutGrid}>
-        {/* แถบเลือกวันย้ายมาด้านซ้ายเพื่อความชัดเจน */}
         <div className={styles.sidebar}>
           {daysOrder.map((dayNum: number) => (
             <button
@@ -155,16 +178,14 @@ const WorkoutPlan: React.FC = () => {
           ))}
         </div>
 
-        {/* ฟอร์มจัดการตารางฝั่งขวา */}
         <div className={styles.mainContent}>
           <div className={styles.inputGroup}>
             <label>ชื่อธีมการฝึกประจำวัน</label>
             <input
               type="text"
               value={workoutPlans[activeDay].title}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                handleUpdateTitle(e.target.value)
-              }
+              onChange={(e) => handleUpdateTitle(e.target.value)}
+              onBlur={handleBlurInfo} // เซฟลง DB ตอนคลิกออก
               placeholder="เช่น วันวิ่งระเบิดไขมัน"
             />
           </div>
@@ -174,9 +195,8 @@ const WorkoutPlan: React.FC = () => {
             <input
               type="text"
               value={workoutPlans[activeDay].target}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                handleUpdateTarget(e.target.value)
-              }
+              onChange={(e) => handleUpdateTarget(e.target.value)}
+              onBlur={handleBlurInfo} // เซฟลง DB ตอนคลิกออก
               placeholder="เช่น เน้น Cardio สร้าง Afterburn"
             />
           </div>
@@ -190,9 +210,29 @@ const WorkoutPlan: React.FC = () => {
             ) : (
               <div className={styles.taskList}>
                 {workoutPlans[activeDay].tasks.map(
-                  (task: string, index: number) => (
-                    <div key={index} className={styles.taskItem}>
-                      <span className={styles.taskText}>{task}</span>
+                  (task: TaskItem, index: number) => (
+                    <div
+                      key={index}
+                      className={styles.taskItem}
+                      style={{
+                        backgroundColor: task.done ? "#f1f8e9" : "#f8fafc",
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        className={styles.checkbox}
+                        checked={task.done}
+                        onChange={() => handleToggleTask(index)}
+                      />
+
+                      <span
+                        className={
+                          task.done ? styles.taskTextCompleted : styles.taskText
+                        }
+                      >
+                        {task.text}
+                      </span>
+
                       <button
                         className={styles.deleteBtn}
                         onClick={() => handleDeleteTask(index)}
@@ -212,12 +252,8 @@ const WorkoutPlan: React.FC = () => {
             <input
               type="text"
               value={newTaskText}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setNewTaskText(e.target.value)
-              }
-              onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) =>
-                e.key === "Enter" && handleAddTask()
-              }
+              onChange={(e) => setNewTaskText(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleAddTask()}
               placeholder="พิมพ์ท่าออกกำลังกายใหม่ เช่น วิดพื้น 20 ที..."
             />
             <button onClick={handleAddTask} className={styles.addBtnSubmit}>

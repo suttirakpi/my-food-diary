@@ -171,3 +171,27 @@
   font-weight: bold;
   cursor: pointer;
 }
+
+/* --- Checkbox Styles --- */
+.checkbox {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: #4caf50;
+  margin-right: 12px;
+}
+
+.taskTextCompleted {
+  font-size: 15px;
+  color: #94a3b8;
+  text-decoration: line-through;
+  flex: 1;
+  transition: all 0.2s;
+}
+
+.taskText {
+  font-size: 15px;
+  color: #334155;
+  flex: 1;
+  transition: all 0.2s;
+}
