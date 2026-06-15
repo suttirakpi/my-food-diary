@@ -361,7 +361,10 @@ app.get("/api/calendar", async (req: Request, res: Response) => {
 app.get("/api/protein", async (req, res) => {
   const { date } = req.query;
   try {
-    const [rows]: any = await pool.query("SELECT total_grams FROM daily_protein WHERE log_date = ?", [date]);
+    const [rows]: any = await pool.query(
+      "SELECT total_grams FROM daily_protein WHERE log_date = ?",
+      [date],
+    );
     res.json({ grams: rows.length > 0 ? rows[0].total_grams : 0 });
   } catch (err) {
     console.error(err);
@@ -375,7 +378,35 @@ app.post("/api/protein", async (req, res) => {
   try {
     await pool.query(
       "INSERT INTO daily_protein (log_date, total_grams) VALUES (?, ?) ON DUPLICATE KEY UPDATE total_grams = ?",
-      [date, grams, grams]
+      [date, grams, grams],
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// 🌟 API สำหรับดึงข้อมูลตารางออกกำลังกายทั้งหมด
+app.get("/api/workout-plans", async (req, res) => {
+  try {
+    const [rows]: any = await pool.query(
+      "SELECT day_index, plan_data FROM workout_plans",
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// 2. บันทึก/อัปเดตตารางออกกำลังกาย (รายวัน)
+app.post("/api/workout-plans", async (req, res) => {
+  const { dayIndex, planData } = req.body;
+  try {
+    await pool.query(
+      "INSERT INTO workout_plans (day_index, plan_data) VALUES (?, ?) ON DUPLICATE KEY UPDATE plan_data = ?",
+      [dayIndex, JSON.stringify(planData), JSON.stringify(planData)],
     );
     res.json({ success: true });
   } catch (err) {
@@ -385,6 +416,6 @@ app.post("/api/protein", async (req, res) => {
 });
 
 // 🌟 บรรทัด app.listen ต้องอยู่ล่างสุดเสมอ!
-app.listen(port, () => {   
+app.listen(port, () => {
   console.log(`Backend Server is running on http://localhost:${port}`);
 });
