@@ -728,3 +728,94 @@
     left: 100%;
   }
 }
+
+/* --- Protein Widget --- */
+.proteinWidget {
+  background-color: #fff3e0;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 32px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.1);
+  border-left: 6px solid #ff9800;
+}
+
+.proteinInfo h3 {
+  margin: 0 0 8px 0;
+  color: #e65100;
+  font-family: var(--font-heading);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.proteinInfo p {
+  margin: 0;
+  color: #f57c00;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.proteinControls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .proteinControls {
+    width: auto;
+  }
+}
+
+.proteinInput {
+  width: 80px;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ffcc80;
+  outline: none;
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-weight: bold;
+  color: #e65100;
+  text-align: center;
+}
+
+.proteinAddBtn {
+  background-color: #ff9800;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: bold;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.proteinAddBtn:hover {
+  background-color: #f57c00;
+}
+
+.proteinResetBtn {
+  background: white;
+  border: 1px solid #ffcc80;
+  color: #f44336;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.proteinResetBtn:hover {
+  background-color: #ffebee;
+}

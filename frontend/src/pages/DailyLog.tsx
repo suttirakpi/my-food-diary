@@ -18,56 +18,51 @@ interface MealEntry {
   calories: number;
   options: MealOption[];
 }
-interface ExerciseEntry {
-  id: number;
-  activity_name: string;
-  calories_burned: number;
-}
 
 const DailyLog: React.FC = () => {
   const navigate = useNavigate();
   const [meals, setMeals] = useState<MealEntry[]>([]);
   const [waterGlasses, setWaterGlasses] = useState<number>(0);
+
+  // 🌟 State สำหรับเก็บโปรตีน
+  const [proteinGrams, setProteinGrams] = useState<number>(0);
+  const [proteinInput, setProteinInput] = useState<number | "">("");
+
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().split("T")[0],
   );
   const [editingMeal, setEditingMeal] = useState<MealEntry | null>(null);
-
-  const [exercises, setExercises] = useState<ExerciseEntry[]>([]);
-  const [exName, setExName] = useState("");
-  const [exCal, setExCal] = useState<number | "">("");
-
   const [searchQuery, setSearchQuery] = useState("");
   const isSearching = searchQuery.trim() !== "";
-
-  // 🌟 State สำหรับลูบหัวน้องไวท์มอล
   const [isPetting, setIsPetting] = useState(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
   const handlePetMascot = () => {
     setIsPetting(true);
-    setTimeout(() => setIsPetting(false), 3000); // ฟินอยู่ 3 วินาทีแล้วกลับเป็นปกติ
+    setTimeout(() => setIsPetting(false), 3000);
   };
-
-  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const mealsRes = await axios.get(
-        `https://my-food-diary-n1tf.onrender.com/api/meals?date=${selectedDate}`,
-      );
+      const [mealsRes, waterRes, proteinRes] = await Promise.all([
+        axios.get(
+          `https://my-food-diary-n1tf.onrender.com/api/meals?date=${selectedDate}`,
+        ),
+        axios.get(
+          `https://my-food-diary-n1tf.onrender.com/api/water?date=${selectedDate}`,
+        ),
+        axios
+          .get(
+            `https://my-food-diary-n1tf.onrender.com/api/protein?date=${selectedDate}`,
+          )
+          .catch(() => ({ data: { grams: 0 } })),
+      ]);
       setMeals(mealsRes.data);
-
-      const waterRes = await axios.get(
-        `https://my-food-diary-n1tf.onrender.com/api/water?date=${selectedDate}`,
-      );
       setWaterGlasses(waterRes.data.glasses);
-
-      const exRes = await axios.get(
-        `https://my-food-diary-n1tf.onrender.com/api/exercises?date=${selectedDate}`,
-      );
-      setExercises(exRes.data);
-    } catch (error) {
-      console.error("ดึงข้อมูลไม่สำเร็จ:", error);
+      setProteinGrams(proteinRes.data.grams || 0); // 🌟 เซ็ตค่าเริ่มต้นโปรตีน
+    } catch (e) {
+      toast.error("ดึงข้อมูลไม่สำเร็จ");
     } finally {
       setIsLoading(false);
     }
@@ -78,7 +73,6 @@ const DailyLog: React.FC = () => {
       fetchData();
       return;
     }
-
     const searchTimer = setTimeout(async () => {
       try {
         const res = await axios.get(
@@ -89,48 +83,8 @@ const DailyLog: React.FC = () => {
         console.error("ค้นหาล้มเหลว", error);
       }
     }, 500);
-
     return () => clearTimeout(searchTimer);
   }, [searchQuery, selectedDate]);
-
-  const handleAddExercise = async () => {
-    if (!exName.trim() || !exCal) {
-      toast.error("กรุณากรอกชื่อกิจกรรมและจำนวนแคลอรี่ให้ครบ");
-      return;
-    }
-    try {
-      await axios.post(
-        "https://my-food-diary-n1tf.onrender.com/api/exercises",
-        {
-          date: selectedDate,
-          activityName: exName,
-          caloriesBurned: Number(exCal),
-        },
-      );
-      setExName("");
-      setExCal("");
-      fetchData();
-      toast.success("บันทึกการออกกำลังกายสำเร็จ!");
-    } catch (error) {
-      console.error("เพิ่มการออกกำลังกายไม่สำเร็จ:", error);
-      toast.error("บันทึกข้อมูลไม่สำเร็จ");
-    }
-  };
-
-  const handleDeleteExercise = async (id: number) => {
-    const isConfirm = window.confirm("คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้?");
-    if (!isConfirm) return;
-    try {
-      await axios.delete(
-        `https://my-food-diary-n1tf.onrender.com/api/exercises/${id}`,
-      );
-      setExercises((prev) => prev.filter((ex) => ex.id !== id));
-      toast.success("ลบรายการเรียบร้อย");
-    } catch (error) {
-      console.error("ลบข้อมูลไม่สำเร็จ:", error);
-      toast.error("เกิดข้อผิดพลาดในการลบข้อมูล");
-    }
-  };
 
   const handleUpdateWater = async (newAmount: number) => {
     if (newAmount < 0) return;
@@ -145,11 +99,41 @@ const DailyLog: React.FC = () => {
     }
   };
 
+  // 🌟 ฟังก์ชันบวกเพิ่มโปรตีน
+  const handleAddProtein = async () => {
+    if (!proteinInput || proteinInput <= 0) return;
+    const newTotal = proteinGrams + Number(proteinInput);
+    setProteinGrams(newTotal);
+
+    try {
+      await axios.post("https://my-food-diary-n1tf.onrender.com/api/protein", {
+        date: selectedDate,
+        grams: newTotal,
+      });
+      setProteinInput("");
+      toast.success(`เพิ่มโปรตีน ${proteinInput}g เรียบร้อย!`);
+    } catch (error) {
+      toast.error("บันทึกข้อมูลไม่สำเร็จ");
+    }
+  };
+
+  // 🌟 ฟังก์ชันรีเซ็ตโปรตีนเผื่อกรอกผิด
+  const handleResetProtein = async () => {
+    if (!window.confirm("ต้องการรีเซ็ตโปรตีนของวันนี้เป็น 0 ใช่ไหม?")) return;
+    setProteinGrams(0);
+    try {
+      await axios.post("https://my-food-diary-n1tf.onrender.com/api/protein", {
+        date: selectedDate,
+        grams: 0,
+      });
+      toast.success("รีเซ็ตโปรตีนเรียบร้อย");
+    } catch (error) {
+      console.error("อัปเดตไม่สำเร็จ", error);
+    }
+  };
+
   const handleDelete = async (id: number) => {
-    const isConfirm = window.confirm(
-      "คุณแน่ใจหรือไม่ว่าต้องการลบรายการอาหารนี้?",
-    );
-    if (!isConfirm) return;
+    if (!window.confirm("คุณแน่ใจหรือไม่ว่าต้องการลบรายการอาหารนี้?")) return;
     try {
       await axios.delete(
         `https://my-food-diary-n1tf.onrender.com/api/meals/${id}`,
@@ -157,7 +141,6 @@ const DailyLog: React.FC = () => {
       setMeals((prevMeals) => prevMeals.filter((meal) => meal.id !== id));
       toast.success("ลบรายการเรียบร้อย");
     } catch (error) {
-      console.error("ลบข้อมูลไม่สำเร็จ:", error);
       toast.error("เกิดข้อผิดพลาดในการลบข้อมูล");
     }
   };
@@ -177,7 +160,6 @@ const DailyLog: React.FC = () => {
       calories: Number(editingMeal.calories) || 0,
       options: validOptions,
     };
-
     try {
       await axios.put(
         `https://my-food-diary-n1tf.onrender.com/api/meals/${editingMeal.id}`,
@@ -187,7 +169,6 @@ const DailyLog: React.FC = () => {
       fetchData();
       toast.success("อัปเดตข้อมูลสำเร็จ!");
     } catch (error) {
-      console.error("แก้ไขไม่สำเร็จ", error);
       toast.error("เกิดข้อผิดพลาดในการแก้ไขข้อมูล");
     }
   };
@@ -198,6 +179,7 @@ const DailyLog: React.FC = () => {
     newOptions[idx].option_name = val;
     setEditingMeal({ ...editingMeal, options: newOptions });
   };
+
   const handleAddEditOption = () => {
     if (!editingMeal) return;
     setEditingMeal({
@@ -205,6 +187,7 @@ const DailyLog: React.FC = () => {
       options: [...editingMeal.options, { id: Date.now(), option_name: "" }],
     });
   };
+
   const handleRemoveEditOption = (idToRemove: number) => {
     if (!editingMeal) return;
     setEditingMeal({
@@ -243,19 +226,11 @@ const DailyLog: React.FC = () => {
     month: "long",
     day: "numeric",
   });
-
   const totalCalories = meals.reduce(
     (sum, meal) => sum + (meal.calories || 0),
     0,
   );
-  const totalBurned = exercises.reduce(
-    (sum, ex) => sum + ex.calories_burned,
-    0,
-  );
-  const netCalories = totalCalories - totalBurned;
-
   const snackCount = meals.filter((m) => m.item_type === "ขนม").length;
-
   const DAILY_CALORIE_GOAL = 1400;
   const isOverGoal = totalCalories > DAILY_CALORIE_GOAL;
   const calPercentage = Math.min(
@@ -263,7 +238,6 @@ const DailyLog: React.FC = () => {
     100,
   );
 
-  // 🌟 Logic อารมณ์ของมาสคอตน้องแฮมสเตอร์
   let mascotMood = "normal";
   let mascotMessage = "สวัสดีฮะตูน! ให้ไวท์มอลช่วยดูแลเรื่องกินนะ (๑˃ᴗ˂)ﻭ 🐹";
   let mascotEmoji = "🐹";
@@ -274,8 +248,7 @@ const DailyLog: React.FC = () => {
     mascotEmoji = "🐹💖";
   } else if (totalCalories > DAILY_CALORIE_GOAL) {
     mascotMood = "warning";
-    mascotMessage =
-      "แงะ! แคลอรี่ทะลุแล้วฮะ ไวท์มอลตัวกลมตุ๊บเต่งเลย ไปวิ่งเดี๋ยวนี้! ( ≧Д≦) 🍔";
+    mascotMessage = "แงะ! แคลอรี่ทะลุแล้วฮะ ไวท์มอลตัวกลมตุ๊บเต่งเลย ( ≧Д≦) 🍔";
     mascotEmoji = "🐹💦";
   } else if (waterGlasses >= 8) {
     mascotMood = "happy";
@@ -300,7 +273,7 @@ const DailyLog: React.FC = () => {
   } else if (isOverGoal) {
     barColor = "#f44336";
     messageColor = "#d32f2f";
-    motivationMessage = "แคลอรี่กินเข้าไปเกินเป้าหมายแล้ว! ไปออกกำลังกายด่วน!";
+    motivationMessage = "แคลอรี่กินเข้าไปเกินเป้าหมายแล้ว!";
   }
 
   return (
@@ -314,24 +287,13 @@ const DailyLog: React.FC = () => {
             >
               กำลังปลุกเซิร์ฟเวอร์...
             </h2>
-            <p
-              style={{
-                color: "var(--on-surface-variant)",
-                margin: 0,
-                fontSize: "14px",
-                lineHeight: "1.6",
-              }}
-            >
-              รอแป๊บนะฮะ ไวท์มอลกำลังวิ่งปั่นไฟดึงข้อมูลให้อยู่!
-              <br />
-              (อาจใช้เวลา 30-50 วินาทีหากเซิร์ฟเวอร์หลับ)
-            </p>
             <div className={styles.loadingBarContainer}>
               <div className={styles.loadingBar}></div>
             </div>
           </div>
         </div>
       )}
+
       <header className={styles.header}>
         <div className={styles.logo}>Vitality Food Diary</div>
         <div className={styles.menuGroup}>
@@ -354,24 +316,6 @@ const DailyLog: React.FC = () => {
             Calendar
           </button>
           <button
-            onClick={() => navigate("/trends")}
-            style={{
-              background: "white",
-              border: "1px solid var(--primary)",
-              color: "var(--primary)",
-              padding: "10px 16px",
-              borderRadius: "12px",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              fontWeight: 600,
-            }}
-          >
-            <span className="material-symbols-outlined">analytics</span> Trends
-          </button>
-
-          <button
             onClick={() => navigate("/workout-plan")}
             style={{
               background: "white",
@@ -389,7 +333,23 @@ const DailyLog: React.FC = () => {
             <span className="material-symbols-outlined">fitness_center</span>{" "}
             Workout
           </button>
-
+          <button
+            onClick={() => navigate("/trends")}
+            style={{
+              background: "white",
+              border: "1px solid var(--primary)",
+              color: "var(--primary)",
+              padding: "10px 16px",
+              borderRadius: "12px",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              fontWeight: 600,
+            }}
+          >
+            <span className="material-symbols-outlined">analytics</span> Trends
+          </button>
           <button
             onClick={() => navigate("/history")}
             style={{
@@ -459,7 +419,7 @@ const DailyLog: React.FC = () => {
 
         {isSearching && (
           <h2 style={{ marginBottom: "24px" }}>
-            ผลการค้นหา: "{searchQuery}"
+            ผลการค้นหา: "{searchQuery}"{" "}
             <span className={styles.searchBadge}>
               เจอ {meals.length} รายการ
             </span>
@@ -494,69 +454,6 @@ const DailyLog: React.FC = () => {
               </div>
             </div>
 
-            <div
-              style={{
-                backgroundColor: "#fff3e0",
-                borderRadius: "16px",
-                padding: "24px",
-                marginBottom: "32px",
-                borderLeft: "6px solid #ff9800",
-                boxShadow: "0 4px 12px rgba(0,0,0,0.03)",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  flexWrap: "wrap",
-                  gap: "16px",
-                }}
-              >
-                <div>
-                  <h3
-                    style={{
-                      margin: "0 0 8px 0",
-                      color: "#e65100",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                    }}
-                  >
-                    <span className="material-symbols-outlined">
-                      local_fire_department
-                    </span>
-                    แคลอรี่สุทธิ (Net Calories)
-                  </h3>
-                  <p
-                    style={{
-                      margin: 0,
-                      color: "#f57c00",
-                      fontSize: "14px",
-                      fontWeight: 500,
-                    }}
-                  >
-                    กินเข้า{" "}
-                    <span style={{ fontWeight: "bold" }}>{totalCalories}</span>{" "}
-                    - เผาผลาญ{" "}
-                    <span style={{ fontWeight: "bold" }}>{totalBurned}</span>
-                  </p>
-                </div>
-                <div
-                  style={{
-                    fontSize: "36px",
-                    fontWeight: "bold",
-                    color: "#e65100",
-                  }}
-                >
-                  {netCalories}{" "}
-                  <span style={{ fontSize: "16px", fontWeight: "normal" }}>
-                    kcal
-                  </span>
-                </div>
-              </div>
-            </div>
-
             <div className={styles.goalContainer}>
               <div className={styles.goalHeader}>
                 <div className={styles.goalTitle}>
@@ -566,7 +463,7 @@ const DailyLog: React.FC = () => {
                   >
                     speed
                   </span>
-                  เป้าหมายการกิน (หลอดเดิม)
+                  เป้าหมายแคลอรี่
                 </div>
                 <div className={styles.goalText}>
                   <span
@@ -594,151 +491,53 @@ const DailyLog: React.FC = () => {
               </div>
             </div>
 
-            <div
-              style={{
-                backgroundColor: "white",
-                borderRadius: "16px",
-                padding: "24px",
-                marginBottom: "32px",
-                border: "1px solid var(--tertiary-fixed)",
-                boxShadow: "0 4px 12px rgba(0,0,0,0.03)",
-              }}
-            >
-              <h3
-                style={{
-                  margin: "0 0 16px 0",
-                  fontFamily: "var(--font-heading)",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                }}
-              >
-                <span className="material-symbols-outlined">
-                  fitness_center
-                </span>
-                บันทึกการออกกำลังกาย
-              </h3>
-
-              <div
-                style={{
-                  display: "flex",
-                  flexWrap: "wrap",
-                  gap: "12px",
-                  marginBottom: "16px",
-                }}
-              >
-                <input
-                  type="text"
-                  placeholder="เช่น วิ่ง, ยกเวท, ว่ายน้ำ"
-                  value={exName}
-                  onChange={(e) => setExName(e.target.value)}
-                  style={{
-                    flex: "2",
-                    minWidth: "200px",
-                    padding: "12px",
-                    borderRadius: "8px",
-                    border: "1px solid var(--tertiary-fixed)",
-                    outline: "none",
-                    fontFamily: "var(--font-body)",
-                  }}
-                />
+            {/* 🌟 Widget: ติดตามโปรตีน */}
+            <div className={styles.proteinWidget}>
+              <div className={styles.proteinInfo}>
+                <h3>
+                  <span className="material-symbols-outlined">set_meal</span>{" "}
+                  ติดตามโปรตีน
+                </h3>
+                <p>
+                  เป้าหมาย: ~140g | กินไปแล้ว:{" "}
+                  <span
+                    style={{
+                      fontSize: "28px",
+                      fontWeight: "bold",
+                      marginLeft: "4px",
+                    }}
+                  >
+                    {proteinGrams}
+                  </span>{" "}
+                  กรัม
+                </p>
+              </div>
+              <div className={styles.proteinControls}>
                 <input
                   type="number"
-                  placeholder="kcal ที่เบิร์น"
-                  value={exCal}
+                  placeholder="+ กรัม"
+                  value={proteinInput}
                   onChange={(e) =>
-                    setExCal(
+                    setProteinInput(
                       e.target.value === "" ? "" : Number(e.target.value),
                     )
                   }
-                  style={{
-                    flex: "1",
-                    minWidth: "120px",
-                    padding: "12px",
-                    borderRadius: "8px",
-                    border: "1px solid var(--tertiary-fixed)",
-                    outline: "none",
-                    fontFamily: "var(--font-body)",
-                  }}
+                  className={styles.proteinInput}
                 />
                 <button
-                  onClick={handleAddExercise}
-                  style={{
-                    flex: "0 1 auto",
-                    backgroundColor: "#e65100",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "8px",
-                    padding: "12px 24px",
-                    cursor: "pointer",
-                    fontWeight: "bold",
-                    fontFamily: "var(--font-body)",
-                  }}
+                  className={styles.proteinAddBtn}
+                  onClick={handleAddProtein}
                 >
-                  บันทึก
+                  เพิ่ม
+                </button>
+                <button
+                  className={styles.proteinResetBtn}
+                  onClick={handleResetProtein}
+                  title="รีเซ็ตเป็น 0"
+                >
+                  <span className="material-symbols-outlined">refresh</span>
                 </button>
               </div>
-
-              {exercises.length > 0 && (
-                <div
-                  style={{
-                    marginTop: "16px",
-                    borderTop: "1px solid var(--tertiary-fixed)",
-                    paddingTop: "16px",
-                  }}
-                >
-                  {exercises.map((ex) => (
-                    <div
-                      key={ex.id}
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        marginBottom: "8px",
-                        padding: "12px",
-                        backgroundColor: "#fff3e0",
-                        borderRadius: "8px",
-                        border: "1px solid #ffe0b2",
-                      }}
-                    >
-                      <span style={{ fontWeight: 600, color: "#e65100" }}>
-                        {ex.activity_name}
-                      </span>
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "16px",
-                        }}
-                      >
-                        <span style={{ color: "#e65100", fontWeight: "bold" }}>
-                          - {ex.calories_burned} kcal
-                        </span>
-                        <button
-                          onClick={() => handleDeleteExercise(ex.id)}
-                          style={{
-                            background: "white",
-                            border: "1px solid #ffcc80",
-                            color: "#f44336",
-                            cursor: "pointer",
-                            display: "flex",
-                            padding: "6px",
-                            borderRadius: "50%",
-                          }}
-                          title="ลบรายการ"
-                        >
-                          <span
-                            className="material-symbols-outlined"
-                            style={{ fontSize: "18px" }}
-                          >
-                            delete
-                          </span>
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
 
             <div className={styles.waterWidget}>
@@ -772,21 +571,14 @@ const DailyLog: React.FC = () => {
           groupsToRender.map((cat) => {
             const mealsInCat = groupedMeals[cat];
             if (!mealsInCat || mealsInCat.length === 0) return null;
-
             return (
               <section
                 key={cat}
-                className={`${styles.categorySection} ${
-                  isSearching ? styles.themeOrange : getCategoryTheme(cat)
-                }`}
+                className={`${styles.categorySection} ${isSearching ? styles.themeOrange : getCategoryTheme(cat)}`}
               >
                 <h3 className={styles.categoryTitle}>
                   {isSearching
-                    ? `📅 วันที่ ${new Date(cat).toLocaleDateString("th-TH", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })}`
+                    ? `📅 วันที่ ${new Date(cat).toLocaleDateString("th-TH", { year: "numeric", month: "long", day: "numeric" })}`
                     : cat}
                 </h3>
                 <div className={styles.mealGrid}>
@@ -843,8 +635,6 @@ const DailyLog: React.FC = () => {
                               cursor: "pointer",
                               padding: "8px",
                               borderRadius: "50%",
-                              display: "flex",
-                              alignItems: "center",
                             }}
                             title="แก้ไขรายการ"
                           >
@@ -861,8 +651,6 @@ const DailyLog: React.FC = () => {
                               cursor: "pointer",
                               padding: "8px",
                               borderRadius: "50%",
-                              display: "flex",
-                              alignItems: "center",
                             }}
                             title="ลบรายการนี้"
                           >
@@ -963,7 +751,6 @@ const DailyLog: React.FC = () => {
                 </select>
               </div>
             </div>
-
             <div className={styles.modalInputGroup}>
               <label>ชื่อเมนู</label>
               <input
@@ -974,7 +761,6 @@ const DailyLog: React.FC = () => {
                 }
               />
             </div>
-
             <div className={styles.modalInputGroup}>
               <label>แคลอรี่ (kcal)</label>
               <input
@@ -988,7 +774,6 @@ const DailyLog: React.FC = () => {
                 }
               />
             </div>
-
             <div className={styles.modalInputGroup}>
               <div
                 style={{
@@ -1040,7 +825,6 @@ const DailyLog: React.FC = () => {
                 </div>
               ))}
             </div>
-
             <div className={styles.modalActions}>
               <button
                 className={styles.btnCancel}
@@ -1067,9 +851,7 @@ const DailyLog: React.FC = () => {
         </div>
       </footer>
 
-      {/* 🌟 Widget มาสคอตน้องไวท์มอลสุดคิวท์ (Floating Mascot) */}
       <div className={styles.mascotContainer}>
-        {/* กล่องคำพูด (Chat Bubble) */}
         <div
           className={styles.mascotBubble}
           style={{
@@ -1095,8 +877,6 @@ const DailyLog: React.FC = () => {
         >
           {mascotMessage}
         </div>
-
-        {/* ตัวมาสคอตน้องแฮมสเตอร์ */}
         <div
           className={`${styles.mascotAvatar} ${isPetting ? styles.petting : ""}`}
           onClick={handlePetMascot}

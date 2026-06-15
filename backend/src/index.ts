@@ -357,7 +357,34 @@ app.get("/api/calendar", async (req: Request, res: Response) => {
   }
 });
 
+// 🌟 API สำหรับดึงข้อมูลโปรตีน
+app.get("/api/protein", async (req, res) => {
+  const { date } = req.query;
+  try {
+    const [rows]: any = await pool.query("SELECT total_grams FROM daily_protein WHERE log_date = ?", [date]);
+    res.json({ grams: rows.length > 0 ? rows[0].total_grams : 0 });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// 🌟 API สำหรับบันทึก/อัปเดตโปรตีน
+app.post("/api/protein", async (req, res) => {
+  const { date, grams } = req.body;
+  try {
+    await pool.query(
+      "INSERT INTO daily_protein (log_date, total_grams) VALUES (?, ?) ON DUPLICATE KEY UPDATE total_grams = ?",
+      [date, grams, grams]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
 // 🌟 บรรทัด app.listen ต้องอยู่ล่างสุดเสมอ!
-app.listen(port, () => {
+app.listen(port, () => {   
   console.log(`Backend Server is running on http://localhost:${port}`);
 });
