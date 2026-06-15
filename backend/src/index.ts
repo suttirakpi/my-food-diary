@@ -325,27 +325,29 @@ app.get("/api/calendar", async (req, res) => {
     const [waterRows]: any = await pool.query(
       "SELECT DATE_FORMAT(log_date, '%Y-%m-%d') as date, glasses FROM water_logs",
     );
+
+    // 🌟 แก้ไข: เปลี่ยนจาก log_date เป็น exercise_date ให้ตรงกับฐานข้อมูล
     const [exRows]: any = await pool.query(
-      "SELECT DATE_FORMAT(log_date, '%Y-%m-%d') as date, SUM(calories_burned) as total_burned FROM exercises GROUP BY date",
+      "SELECT DATE_FORMAT(exercise_date, '%Y-%m-%d') as date, SUM(calories_burned) as total_burned FROM exercises GROUP BY date",
     );
 
-    // 🌟 ดึงข้อมูลโปรตีนจากตาราง daily_protein
+    // 🌟 แก้ไข: ดึงข้อมูลโปรตีนแบบปกติ (เอา CONVERT_TZ ออก ป้องกันบั๊กค่าว่าง)
     const [proteinRows]: any = await pool.query(
       "SELECT DATE_FORMAT(log_date, '%Y-%m-%d') as date, total_grams FROM daily_protein",
     );
 
-    // 🌟 ส่งค่า proteinRows กลับไปให้หน้าบ้านด้วย
     res.json({
       meals: mealRows,
       water: waterRows,
       exercises: exRows,
-      protein: proteinRows, // <--- เพิ่มตรงนี้ครับ
+      protein: proteinRows,
     });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Database error" });
   }
 });
+
 // 🌟 API สำหรับดึงข้อมูลโปรตีน
 app.get("/api/protein", async (req, res) => {
   const { date } = req.query;
