@@ -19,7 +19,6 @@ interface MealEntry {
   options: MealOption[];
 }
 
-// ฟังก์ชันแปลงวันที่ให้ตรงกับ Timezone ท้องถิ่น (YYYY-MM-DD)
 const getLocalDateStr = (dateString: string) => {
   const d = new Date(dateString);
   const year = d.getFullYear();
@@ -34,28 +33,26 @@ const MealHistory: React.FC = () => {
   const [waterData, setWaterData] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState<boolean>(true);
 
-  // 🌟 States สำหรับระบบค้นหาและตัวกรอง (Filters)
+  // 🌟 States สำหรับระบบค้นหา ตัวกรอง และการเรียงลำดับ
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string>("ทั้งหมด");
   const [selectedType, setSelectedType] = useState<string>("ทั้งหมด");
   const [minCal, setMinCal] = useState<number | "">("");
   const [maxCal, setMaxCal] = useState<number | "">("");
+  const [sortOrder, setSortOrder] = useState<string>("default"); // 🌟 เพิ่ม State สำหรับเรียงลำดับ
 
-  // 🌟 State สำหรับระบบแบ่งหน้า (Pagination)
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const DATES_PER_PAGE = 7; // จำกัดให้แสดงหน้าละ 7 วัน
+  const DATES_PER_PAGE = 7;
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // ดึงทั้งข้อมูล Meals และ ข้อมูล Calendar (เพื่อเอาน้ำดื่ม)
         const [mealsRes, calendarRes] = await Promise.all([
           axios.get("https://my-food-diary-n1tf.onrender.com/api/meals"),
           axios.get("https://my-food-diary-n1tf.onrender.com/api/calendar"),
         ]);
         setMeals(mealsRes.data);
 
-        // ดึงข้อมูลน้ำดื่มมาจัดรูปให้ค้นหาง่ายๆ (key เป็นวันที่ value เป็นแก้ว)
         const wData: Record<string, number> = {};
         if (calendarRes.data && calendarRes.data.water) {
           calendarRes.data.water.forEach((w: any) => {
@@ -72,9 +69,10 @@ const MealHistory: React.FC = () => {
     fetchData();
   }, []);
 
-  // 🌟 1. กรองข้อมูลตามเงื่อนไขที่ผู้ใช้กรอก
+  // 🌟 1. กรองข้อมูลและ "เรียงลำดับ (Sort)"
   const filteredMeals = useMemo(() => {
-    return meals.filter((meal) => {
+    // กรองข้อมูลตามเงื่อนไขก่อน
+    let result = meals.filter((meal) => {
       const matchesSearch = meal.main_dish
         .toLowerCase()
         .includes(searchTerm.toLowerCase());
@@ -95,14 +93,34 @@ const MealHistory: React.FC = () => {
         matchesMaxCal
       );
     });
-  }, [meals, searchTerm, selectedCategory, selectedType, minCal, maxCal]);
 
-  // รีเซ็ตหน้ากลับไปหน้าที่ 1 เสมอเวลาเปลี่ยนตัวกรอง
+    // 🌟 ระบบเรียงลำดับแคลอรี่
+    if (sortOrder === "highToLow") {
+      result.sort(
+        (a, b) => (Number(b.calories) || 0) - (Number(a.calories) || 0),
+      );
+    } else if (sortOrder === "lowToHigh") {
+      result.sort(
+        (a, b) => (Number(a.calories) || 0) - (Number(b.calories) || 0),
+      );
+    }
+
+    return result;
+  }, [
+    meals,
+    searchTerm,
+    selectedCategory,
+    selectedType,
+    minCal,
+    maxCal,
+    sortOrder,
+  ]);
+
+  // รีเซ็ตกลับไปหน้า 1 เสมอเวลาเปลี่ยนเงื่อนไขใดๆ รวมถึงตอนเรียงลำดับด้วย
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, selectedCategory, selectedType, minCal, maxCal]);
+  }, [searchTerm, selectedCategory, selectedType, minCal, maxCal, sortOrder]);
 
-  // 🌟 2. จัดกลุ่มข้อมูลที่กรองแล้ว "ตามวันที่"
   const groupedByDate = useMemo(() => {
     const groups: Record<string, MealEntry[]> = {};
     filteredMeals.forEach((meal) => {
@@ -113,14 +131,12 @@ const MealHistory: React.FC = () => {
     return groups;
   }, [filteredMeals]);
 
-  // 🌟 3. ดึงวันที่ทั้งหมดมาเรียงลำดับจากใหม่ -> เก่า
   const uniqueDates = useMemo(() => {
     return Object.keys(groupedByDate).sort(
       (a, b) => new Date(b).getTime() - new Date(a).getTime(),
     );
   }, [groupedByDate]);
 
-  // 🌟 4. คำนวณระบบหน้า (Pagination)
   const totalPages = Math.ceil(uniqueDates.length / DATES_PER_PAGE) || 1;
   const currentDates = useMemo(() => {
     const startIndex = (currentPage - 1) * DATES_PER_PAGE;
@@ -152,7 +168,6 @@ const MealHistory: React.FC = () => {
         <div style={{ width: "40px" }}></div>
       </header>
 
-      {/* 🔍 ส่วนแถบตัวกรองและค้นหา (Excel Filter Bar) */}
       <div className={styles.filterSection}>
         <div className={styles.inputGroup}>
           <label>ค้นหาชื่อเมนู</label>
@@ -185,6 +200,19 @@ const MealHistory: React.FC = () => {
               }
             />
           </div>
+        </div>
+
+        {/* 🌟 เพิ่ม Dropdown สำหรับการเรียงลำดับ */}
+        <div className={styles.inputGroup}>
+          <label>เรียงลำดับแคลอรี่</label>
+          <select
+            value={sortOrder}
+            onChange={(e) => setSortOrder(e.target.value)}
+          >
+            <option value="default">ค่าเริ่มต้น (เวลา)</option>
+            <option value="highToLow">แคลอรี่: มากไปน้อย 🔥</option>
+            <option value="lowToHigh">แคลอรี่: น้อยไปมาก 🥗</option>
+          </select>
         </div>
 
         <div className={styles.inputGroup}>
@@ -220,7 +248,6 @@ const MealHistory: React.FC = () => {
         แคลอรี่รวมในการค้นหานี้: <strong>{totalFilteredCalories} kcal</strong>
       </div>
 
-      {/* 📊 ตารางข้อมูล (ตัดคอลัมน์วันที่ออก เพราะใช้วิธีจัดกลุ่มรายวันแทน) */}
       <div className={styles.tableWrapper}>
         <table className={styles.excelTable}>
           <thead>
@@ -239,7 +266,6 @@ const MealHistory: React.FC = () => {
                 const dayMeals = groupedByDate[date];
                 const glasses = waterData[date] || 0;
 
-                // จัดฟอร์แมตวันที่ให้สวยงาม
                 const dateObj = new Date(date);
                 const formattedDate = dateObj.toLocaleDateString("th-TH", {
                   year: "numeric",
@@ -250,16 +276,14 @@ const MealHistory: React.FC = () => {
 
                 return (
                   <React.Fragment key={date}>
-                    {/* 🌟 แถบหัวตารางของแต่ละวัน (รวมข้อมูลน้ำดื่ม) */}
                     <tr className={styles.dateHeaderRow}>
                       <td colSpan={6}>
-                        {formattedDate} &nbsp;&nbsp;|&nbsp;&nbsp; ดื่มน้ำ:{" "}
+                        📅 {formattedDate} &nbsp;&nbsp;|&nbsp;&nbsp; 💧 ดื่มน้ำ:{" "}
                         {glasses} แก้ว ({glasses * 22} oz /{" "}
                         {((glasses * 650) / 1000).toFixed(1)} L)
                       </td>
                     </tr>
 
-                    {/* ข้อมูลมื้ออาหารของวันนั้นๆ */}
                     {dayMeals.map((meal) => (
                       <tr key={meal.id}>
                         <td data-label="เวลา">
@@ -345,7 +369,6 @@ const MealHistory: React.FC = () => {
         </table>
       </div>
 
-      {/* 🌟 ระบบแบ่งหน้า (Pagination) โชว์ด้านล่าง */}
       {totalPages > 1 && (
         <div className={styles.pagination}>
           <button
