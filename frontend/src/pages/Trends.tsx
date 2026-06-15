@@ -17,7 +17,7 @@ import {
   CartesianGrid,
   AreaChart,
   Area,
-  ReferenceLine, // 🌟 เพิ่มสำหรับการทำเส้นเป้าหมาย 140g
+  ReferenceLine,
 } from "recharts";
 import styles from "./Trends.module.css";
 
@@ -29,7 +29,6 @@ interface TrendData {
   summary: { cal_today: number; cal_month: number; cal_year: number };
 }
 
-// 🌟 สร้างกล่องป๊อปอัป Custom สำหรับกราฟน้ำดื่มโดยเฉพาะ
 const CustomWaterTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     const glasses = payload[0].value;
@@ -83,7 +82,6 @@ const CustomWaterTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-// 🌟 ฟังก์ชันจัดการวันที่ให้อยู่ในโซนเวลาไทย (ป้องกันวันที่เพี้ยน)
 const getLocalDateStr = (d: Date) => {
   const year = d.getFullYear();
   const month = String(d.getMonth() + 1).padStart(2, "0");
@@ -95,10 +93,10 @@ const Trends: React.FC = () => {
   const navigate = useNavigate();
   const [data, setData] = useState<TrendData | null>(null);
 
-  const [monthlyData, setMonthlyData] = useState<any[]>([]); // ภาพรวม 30 วัน
-  const [proteinTrend, setProteinTrend] = useState<any[]>([]); // 🌟 กราฟโปรตีน
-  const [weeklyTrend, setWeeklyTrend] = useState<any[]>([]); // 🌟 เฉลี่ยรายสัปดาห์
-  const [monthlyAvgTrend, setMonthlyAvgTrend] = useState<any[]>([]); // 🌟 เฉลี่ยรายเดือน
+  const [monthlyData, setMonthlyData] = useState<any[]>([]);
+  const [proteinTrend, setProteinTrend] = useState<any[]>([]);
+  const [weeklyTrend, setWeeklyTrend] = useState<any[]>([]);
+  const [monthlyAvgTrend, setMonthlyAvgTrend] = useState<any[]>([]);
 
   const [loading, setLoading] = useState(true);
 
@@ -113,9 +111,7 @@ const Trends: React.FC = () => {
         setData(trendsRes.data);
         const calData = calendarRes.data;
 
-        // ==========================================
         // 🌟 1. ดึงข้อมูลโปรตีนย้อนหลัง 7 วัน
-        // ==========================================
         const last7Dates = Array.from({ length: 7 }, (_, i) => {
           const d = new Date();
           d.setDate(d.getDate() - (6 - i));
@@ -135,14 +131,12 @@ const Trends: React.FC = () => {
           const d = new Date(date);
           return {
             date: `${d.getDate()}/${d.getMonth() + 1}`,
-            grams: proteinResults[index].data.grams || 0,
+            grams: Number(proteinResults[index].data.grams) || 0, // 🌟 บังคับเป็นตัวเลข
           };
         });
         setProteinTrend(pData);
 
-        // ==========================================
-        // 🌟 2. คำนวณข้อมูลรายสัปดาห์ (4 สัปดาห์ย้อนหลัง)
-        // ==========================================
+        // 🌟 2. คำนวณข้อมูลรายสัปดาห์ (แก้บั๊กตัวเลขต่อกัน)
         const wData = [];
         for (let w = 0; w < 4; w++) {
           let sum = 0;
@@ -151,19 +145,17 @@ const Trends: React.FC = () => {
             dateObj.setDate(dateObj.getDate() - (w * 7 + d));
             const dateStr = getLocalDateStr(dateObj);
             const meal = calData.meals.find((m: any) => m.date === dateStr);
-            if (meal) sum += meal.total_cal;
+            if (meal) sum += Number(meal.total_cal) || 0; // 🌟 บังคับเป็นตัวเลขก่อนบวก
           }
           const label = w === 0 ? "สัปดาห์นี้" : `${w} สัปดาห์ก่อน`;
           wData.unshift({
             name: label,
-            avgCal: Math.round(sum / 7), // หาร 7 เพื่อหาค่าเฉลี่ยต่อวันในสัปดาห์นั้น
+            avgCal: Math.round(sum / 7),
           });
         }
         setWeeklyTrend(wData);
 
-        // ==========================================
-        // 🌟 3. คำนวณข้อมูลรายเดือน (6 เดือนย้อนหลัง)
-        // ==========================================
+        // 🌟 3. คำนวณข้อมูลรายเดือน (แก้บั๊กตัวเลขต่อกัน)
         const monthNames = [
           "ม.ค.",
           "ก.พ.",
@@ -187,12 +179,12 @@ const Trends: React.FC = () => {
           const mealsInMonth = calData.meals.filter((m: any) =>
             m.date.startsWith(targetPrefix),
           );
+          // 🌟 บังคับเป็นตัวเลขก่อนบวกใน reduce
           const totalCal = mealsInMonth.reduce(
-            (acc: number, m: any) => acc + m.total_cal,
+            (acc: number, m: any) => acc + (Number(m.total_cal) || 0),
             0,
           );
 
-          // หาค่าเฉลี่ยเฉพาะวันที่บันทึก
           const avg =
             mealsInMonth.length > 0
               ? Math.round(totalCal / mealsInMonth.length)
@@ -205,9 +197,7 @@ const Trends: React.FC = () => {
         }
         setMonthlyAvgTrend(mData);
 
-        // ==========================================
-        // 4. ภาพรวม 30 วัน (กิน vs เบิร์น ของเดิม)
-        // ==========================================
+        // 🌟 4. ภาพรวม 30 วัน (กิน vs เบิร์น)
         const last30Days = [];
         for (let i = 29; i >= 0; i--) {
           const d = new Date();
@@ -220,8 +210,8 @@ const Trends: React.FC = () => {
 
           last30Days.push({
             date: displayDate,
-            total_cal: meal ? meal.total_cal : 0,
-            total_burned: ex ? ex.total_burned : 0,
+            total_cal: meal ? Number(meal.total_cal) || 0 : 0, // 🌟 บังคับเป็นตัวเลข
+            total_burned: ex ? Number(ex.total_burned) || 0 : 0, // 🌟 บังคับเป็นตัวเลข
           });
         }
         setMonthlyData(last30Days);
@@ -272,7 +262,7 @@ const Trends: React.FC = () => {
       </div>
 
       <div className={styles.dashboardGrid}>
-        {/* 🌟 NEW 1: กราฟโปรตีน 7 วันล่าสุด (มีเส้นเป้าหมาย 140g) */}
+        {/* กราฟโปรตีน 7 วันล่าสุด */}
         <div
           className={styles.chartCard}
           style={{ gridColumn: "1 / -1", backgroundColor: "#fff8e1" }}
@@ -372,7 +362,7 @@ const Trends: React.FC = () => {
           </ResponsiveContainer>
         </div>
 
-        {/* 🌟 NEW 2: แคลอรี่เฉลี่ยรายสัปดาห์ */}
+        {/* แคลอรี่เฉลี่ยรายสัปดาห์ */}
         <div className={styles.chartCard}>
           <h3 className={styles.chartTitle}>แคลอรี่เฉลี่ยรายสัปดาห์</h3>
           <ResponsiveContainer width="100%" height={250}>
@@ -393,7 +383,7 @@ const Trends: React.FC = () => {
           </ResponsiveContainer>
         </div>
 
-        {/* 🌟 NEW 3: แคลอรี่เฉลี่ยรายเดือน */}
+        {/* แคลอรี่เฉลี่ยรายเดือน */}
         <div className={styles.chartCard}>
           <h3 className={styles.chartTitle}>
             แคลอรี่เฉลี่ยรายเดือน (6 เดือนย้อนหลัง)
