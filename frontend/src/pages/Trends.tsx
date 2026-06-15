@@ -12,8 +12,6 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-  LineChart,
-  Line,
   CartesianGrid,
   AreaChart,
   Area,
@@ -111,7 +109,7 @@ const Trends: React.FC = () => {
         setData(trendsRes.data);
         const calData = calendarRes.data;
 
-        // 🌟 1. ดึงข้อมูลโปรตีนย้อนหลัง 7 วัน
+        // 1. ดึงข้อมูลโปรตีนย้อนหลัง 7 วัน
         const last7Dates = Array.from({ length: 7 }, (_, i) => {
           const d = new Date();
           d.setDate(d.getDate() - (6 - i));
@@ -131,12 +129,12 @@ const Trends: React.FC = () => {
           const d = new Date(date);
           return {
             date: `${d.getDate()}/${d.getMonth() + 1}`,
-            grams: Number(proteinResults[index].data.grams) || 0, // 🌟 บังคับเป็นตัวเลข
+            grams: Number(proteinResults[index].data.grams) || 0,
           };
         });
         setProteinTrend(pData);
 
-        // 🌟 2. คำนวณข้อมูลรายสัปดาห์ (แก้บั๊กตัวเลขต่อกัน)
+        // 2. คำนวณข้อมูลรายสัปดาห์ (บังคับเป็น Number แก้บั๊ก e+26 ยาวทะลุโลก)
         const wData = [];
         for (let w = 0; w < 4; w++) {
           let sum = 0;
@@ -145,7 +143,7 @@ const Trends: React.FC = () => {
             dateObj.setDate(dateObj.getDate() - (w * 7 + d));
             const dateStr = getLocalDateStr(dateObj);
             const meal = calData.meals.find((m: any) => m.date === dateStr);
-            if (meal) sum += Number(meal.total_cal) || 0; // 🌟 บังคับเป็นตัวเลขก่อนบวก
+            if (meal) sum += Number(meal.total_cal) || 0;
           }
           const label = w === 0 ? "สัปดาห์นี้" : `${w} สัปดาห์ก่อน`;
           wData.unshift({
@@ -155,7 +153,7 @@ const Trends: React.FC = () => {
         }
         setWeeklyTrend(wData);
 
-        // 🌟 3. คำนวณข้อมูลรายเดือน (แก้บั๊กตัวเลขต่อกัน)
+        // 3. คำนวณข้อมูลรายเดือน (บังคับเป็น Number)
         const monthNames = [
           "ม.ค.",
           "ก.พ.",
@@ -179,7 +177,6 @@ const Trends: React.FC = () => {
           const mealsInMonth = calData.meals.filter((m: any) =>
             m.date.startsWith(targetPrefix),
           );
-          // 🌟 บังคับเป็นตัวเลขก่อนบวกใน reduce
           const totalCal = mealsInMonth.reduce(
             (acc: number, m: any) => acc + (Number(m.total_cal) || 0),
             0,
@@ -197,7 +194,7 @@ const Trends: React.FC = () => {
         }
         setMonthlyAvgTrend(mData);
 
-        // 🌟 4. ภาพรวม 30 วัน (กิน vs เบิร์น)
+        // 4. ภาพรวม 30 วัน (กิน vs เบิร์น)
         const last30Days = [];
         for (let i = 29; i >= 0; i--) {
           const d = new Date();
@@ -210,8 +207,8 @@ const Trends: React.FC = () => {
 
           last30Days.push({
             date: displayDate,
-            total_cal: meal ? Number(meal.total_cal) || 0 : 0, // 🌟 บังคับเป็นตัวเลข
-            total_burned: ex ? Number(ex.total_burned) || 0 : 0, // 🌟 บังคับเป็นตัวเลข
+            total_cal: meal ? Number(meal.total_cal) || 0 : 0,
+            total_burned: ex ? Number(ex.total_burned) || 0 : 0,
           });
         }
         setMonthlyData(last30Days);
@@ -245,7 +242,6 @@ const Trends: React.FC = () => {
         <div style={{ width: "40px" }}></div>
       </header>
 
-      {/* สรุปแคลอรี่ */}
       <div className={styles.summaryGrid}>
         <div className={styles.summaryCard}>
           <div className={styles.summaryLabel}>แคลอรี่ที่กินวันนี้</div>
@@ -408,7 +404,7 @@ const Trends: React.FC = () => {
           </ResponsiveContainer>
         </div>
 
-        {/* กราฟวงกลม: สัดส่วนอาหาร */}
+        {/* สัดส่วนประเภทที่กิน */}
         <div className={styles.chartCard}>
           <h3 className={styles.chartTitle}>สัดส่วนประเภทที่กิน (7 วัน)</h3>
           <ResponsiveContainer width="100%" height={250}>
@@ -439,7 +435,7 @@ const Trends: React.FC = () => {
           </ResponsiveContainer>
         </div>
 
-        {/* กราฟแท่ง: น้ำดื่ม */}
+        {/* สถิติน้ำดื่ม 7 วัน */}
         <div className={styles.chartCard}>
           <h3 className={styles.chartTitle}>สถิติน้ำดื่ม 7 วัน</h3>
           <ResponsiveContainer width="100%" height={250}>
