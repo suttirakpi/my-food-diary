@@ -253,7 +253,7 @@ const MealHistory: React.FC = () => {
                     {/* 🌟 แถบหัวตารางของแต่ละวัน (รวมข้อมูลน้ำดื่ม) */}
                     <tr className={styles.dateHeaderRow}>
                       <td colSpan={6}>
-                        📅 {formattedDate} &nbsp;&nbsp;|&nbsp;&nbsp; 💧 ดื่มน้ำ:{" "}
+                        {formattedDate} &nbsp;&nbsp;|&nbsp;&nbsp; ดื่มน้ำ:{" "}
                         {glasses} แก้ว ({glasses * 22} oz /{" "}
                         {((glasses * 650) / 1000).toFixed(1)} L)
                       </td>
