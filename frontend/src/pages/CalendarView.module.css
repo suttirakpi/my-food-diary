@@ -1,5 +1,5 @@
 .pageContainer {
-  max-width: 900px;
+  max-width: 1200px; /* ขยายความกว้างเพื่อโชว์ข้อมูล */
   margin: 0 auto;
   padding: 32px 20px;
   min-height: 100vh;
@@ -17,19 +17,15 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background: none;
-  border: none;
+  background: white;
+  border: 1px solid var(--tertiary-fixed);
   color: var(--primary);
   font-family: var(--font-body);
   font-weight: 600;
   cursor: pointer;
   padding: 8px 16px;
-  border-radius: 8px;
-  transition: background-color 0.2s;
-}
-
-.backBtn:hover {
-  background-color: white;
+  border-radius: 12px;
+  transition: all 0.2s;
 }
 
 .title {
@@ -38,12 +34,11 @@
   color: var(--on-surface);
 }
 
-/* Calendar Card */
 .calendarCard {
   background-color: white;
-  border-radius: 20px;
-  padding: 32px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
   border: 1px solid var(--tertiary-fixed);
 }
 
@@ -52,13 +47,14 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
+  padding: 0 10px;
 }
 
 .calendarHeader h2 {
   margin: 0;
   font-family: var(--font-heading);
-  font-size: 24px;
-  color: var(--on-surface);
+  font-size: 28px;
+  color: var(--primary);
 }
 
 .navBtn {
@@ -66,12 +62,11 @@
   border: none;
   width: 44px;
   height: 44px;
-  border-radius: 50%;
+  border-radius: 12px;
   display: flex;
   justify-content: center;
   align-items: center;
   cursor: pointer;
-  color: var(--on-surface);
   transition: all 0.2s;
 }
 
@@ -80,106 +75,104 @@
   color: white;
 }
 
-/* Legend (อธิบายจุดสี) */
-.legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  justify-content: center;
-  margin-bottom: 32px;
-  padding: 16px;
-  background-color: #f8fafc;
-  border-radius: 12px;
-}
-
-.legendItem {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--on-surface-variant);
-}
-
-/* Grid Layout */
 .calendarGrid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 12px;
+  gap: 10px;
 }
 
 .dayName {
   text-align: center;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--on-surface-variant);
-  margin-bottom: 8px;
-}
-
-.blankCell {
-  min-height: 80px;
+  padding: 10px 0;
+  text-transform: uppercase;
+  font-size: 13px;
+  letter-spacing: 1px;
 }
 
 .dayCell {
-  aspect-ratio: 1 / 1;
-  border: 1px solid var(--tertiary-fixed);
-  border-radius: 12px;
+  min-height: 110px; /* เพิ่มความสูงให้ใส่ตัวเลขได้ */
+  background: #f8fafc;
+  border: 2px solid transparent; /* ค่าเริ่มต้นไม่มีขอบ */
+  border-radius: 16px;
   padding: 8px;
   display: flex;
   flex-direction: column;
-  align-items: center;
   transition: all 0.2s;
+  position: relative;
 }
 
-.dayCell:hover {
-  border-color: var(--primary);
-  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.1);
+/* 🌟 สถานะขอบสี */
+.borderGreen {
+  border-color: #4caf50 !important;
+  background-color: #f0fdf4;
+}
+.borderRed {
+  border-color: #f44336 !important;
+  background-color: #fef2f2;
+}
+.borderDefault {
+  border-color: #e2e8f0;
 }
 
 .today {
-  background-color: #f0fdf4;
-  border-color: #4caf50;
+  background-color: white;
+  box-shadow: 0 0 0 2px var(--primary) inset;
 }
 
 .dayNumber {
-  font-size: 16px;
-  font-weight: 600;
-  margin-bottom: auto; /* ดันตัวเลขขึ้นบนสุด */
+  font-size: 14px;
+  font-weight: 800;
+  color: #64748b;
+  margin-bottom: 6px;
 }
 
-.today .dayNumber {
-  color: #2e7d32;
-}
-
-/* Dots */
-.dotContainer {
+/* 🌟 สไตล์ตัวเลขสถิติในวัน */
+.statsGrid {
   display: flex;
-  gap: 4px;
-  margin-top: 8px;
-  flex-wrap: wrap;
-  justify-content: center;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  display: inline-block;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+.statItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
 }
 
-/* Responsive มือถือ */
+.labelCal {
+  color: #e65100;
+}
+.labelBurn {
+  color: #d32f2f;
+}
+.labelWater {
+  color: #0288d1;
+}
+.labelProtein {
+  color: #6d4c41;
+}
+
+.blankCell {
+  min-height: 110px;
+}
+
 @media (max-width: 768px) {
-  .calendarCard {
-    padding: 16px;
-  }
   .calendarGrid {
     gap: 4px;
   }
   .dayCell {
+    min-height: 95px;
     padding: 4px;
   }
-  .dot {
-    width: 6px;
-    height: 6px;
+  .statItem {
+    font-size: 9px;
+  }
+  .dayNumber {
+    font-size: 12px;
   }
 }

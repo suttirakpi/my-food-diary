@@ -331,6 +331,10 @@ app.get("/api/calendar", async (req: Request, res: Response) => {
       "SELECT exercise_date as date, SUM(calories_burned) as total_burned FROM exercises GROUP BY exercise_date",
     );
 
+    const [proteinRows]: any = await pool.query(
+      "SELECT DATE_FORMAT(log_date, '%Y-%m-%d') as date, total_grams FROM daily_protein",
+    );
+
     const formatDate = (dateValue: any) => {
       const d = new Date(dateValue);
       d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
