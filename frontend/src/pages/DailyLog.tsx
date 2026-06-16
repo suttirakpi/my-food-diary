@@ -275,7 +275,7 @@ const DailyLog: React.FC = () => {
     <div className={styles.appLayout}>
       {/* 🌟 Sidebar Navigation สไตล์ Premium */}
       <aside className={styles.sidebar}>
-        <div className={styles.brandLogo}>🌱</div>
+        <div className={styles.brandLogo}>❤️</div>
 
         <button
           className={`${styles.navItem} ${styles.navItemActive}`}
@@ -559,19 +559,6 @@ const DailyLog: React.FC = () => {
 
           {/* Actions Row (Quick Add & Water) */}
           <div className={styles.actionsRow}>
-            <div className={styles.quickAddSection}>
-              <div className={styles.quickAddLabel}>Quick Add & Search</div>
-              <div className={styles.searchBox}>
-                <input
-                  type="text"
-                  placeholder="Type to search history..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-                <button onClick={() => navigate("/add-meal")}>Add New</button>
-              </div>
-            </div>
-
             <div className={styles.waterTrackerSection}>
               <div className={styles.quickAddLabel}>
                 Water Tracker (Protein:{" "}
