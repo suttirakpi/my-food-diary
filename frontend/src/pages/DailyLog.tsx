@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import toast from "react-hot-toast";
 import styles from "./DailyLog.module.css";
+import AppLayout from "../components/AppLayout";
 
 interface MealOption {
   id: number;
@@ -252,393 +253,349 @@ const DailyLog: React.FC = () => {
   }
 
   return (
-    <div className={styles.appLayout}>
-      {/* 🌟 Sidebar Navigation */}
-      <aside className={styles.sidebar}>
-        <div className={styles.brandLogo}>❤️</div>
-
-        <button
-          className={`${styles.navItem} ${styles.navItemActive}`}
-          onClick={() => navigate("/")}
-        >
-          <span className="material-symbols-outlined">home</span>
-          Home
-        </button>
-        <button
-          className={styles.navItem}
-          onClick={() => navigate("/add-meal")}
-        >
-          <span className="material-symbols-outlined">restaurant_menu</span>
-          Meals
-        </button>
-        <button className={styles.navItem} onClick={() => navigate("/trends")}>
-          <span className="material-symbols-outlined">monitoring</span>
-          Trends
-        </button>
-        <button
-          className={styles.navItem}
-          onClick={() => navigate("/calendar")}
-        >
-          <span className="material-symbols-outlined">calendar_month</span>
-          Calendar
-        </button>
-        <button className={styles.navItem} onClick={() => navigate("/history")}>
-          <span className="material-symbols-outlined">history</span>
-          History
-        </button>
-        <button className={styles.navItem} onClick={() => navigate("/weight")}>
-          <span className="material-symbols-outlined">scale</span>
-          Weight
-        </button>
-      </aside>
-
-      <main className={styles.mainPanel}>
-        {isLoading && (
-          <div className={styles.loadingOverlay}>
-            <div className={styles.loadingCard}>
-              <div className={styles.loadingMascot}>🐹💨</div>
-              <h2 style={{ fontFamily: "var(--font-heading)" }}>
-                กำลังดึงข้อมูล...
-              </h2>
-            </div>
+    <AppLayout>
+      {/* 🌟 หน้าโหลดข้อมูล */}
+      {isLoading && (
+        <div className={styles.loadingOverlay}>
+          <div className={styles.loadingCard}>
+            <div className={styles.loadingMascot}>🐹💨</div>
+            <h2 style={{ fontFamily: "var(--font-heading)" }}>
+              กำลังดึงข้อมูล...
+            </h2>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* 📅 Date Picker */}
-        <div className={styles.topHeader}>
-          <div className={styles.datePickerWrapper}>
-            <span
-              className="material-symbols-outlined"
-              style={{ color: "#64748b" }}
-            >
-              calendar_today
+      {/* 📅 Date Picker */}
+      <div className={styles.topHeader}>
+        <div className={styles.datePickerWrapper}>
+          <span
+            className="material-symbols-outlined"
+            style={{ color: "#64748b" }}
+          >
+            calendar_today
+          </span>
+          <input
+            type="date"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+          />
+        </div>
+      </div>
+
+      {/* 📊 Top Stat Cards */}
+      <div className={styles.statGrid}>
+        <div className={styles.statCard}>
+          <div className={styles.statTitle}>Calories Consumed</div>
+          <div className={styles.statValue}>
+            {totalCalories} <span className={styles.statSub}>kcal</span>
+          </div>
+          <div className={`${styles.statIconWrapper} ${styles.bgBlue}`}>
+            <span className="material-symbols-outlined">restaurant</span>
+          </div>
+        </div>
+        <div className={styles.statCard}>
+          <div className={styles.statTitle}>Water Intake</div>
+          <div className={styles.statValue}>
+            {waterGlasses * 22} <span className={styles.statSub}>oz</span>
+          </div>
+          <div style={{ color: "#64748b", fontSize: "14px", marginTop: "4px" }}>
+            (~{((waterGlasses * 650) / 1000).toFixed(1)} L)
+          </div>
+          <div className={`${styles.statIconWrapper} ${styles.bgBlue}`}>
+            <span className="material-symbols-outlined">water_drop</span>
+          </div>
+        </div>
+        <div className={styles.statCard}>
+          <div className={styles.statTitle}>Calories Burned</div>
+          <div className={styles.statValue}>
+            {totalBurned} <span className={styles.statSub}>kcal</span>
+          </div>
+          <button
+            className={styles.actionBtnSmall}
+            onClick={() => setShowExerciseForm(!showExerciseForm)}
+          >
+            Log Exercise
+          </button>
+          <div className={`${styles.statIconWrapper} ${styles.bgRed}`}>
+            <span className="material-symbols-outlined">
+              local_fire_department
             </span>
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-            />
-          </div>
-        </div>
-
-        {/* 📊 Top Stat Cards */}
-        <div className={styles.statGrid}>
-          <div className={styles.statCard}>
-            <div className={styles.statTitle}>Calories Consumed</div>
-            <div className={styles.statValue}>
-              {totalCalories} <span className={styles.statSub}>kcal</span>
-            </div>
-            <div className={`${styles.statIconWrapper} ${styles.bgBlue}`}>
-              <span className="material-symbols-outlined">restaurant</span>
-            </div>
-          </div>
-          <div className={styles.statCard}>
-            <div className={styles.statTitle}>Water Intake</div>
-            <div className={styles.statValue}>
-              {waterGlasses * 22} <span className={styles.statSub}>oz</span>
-            </div>
-            <div
-              style={{ color: "#64748b", fontSize: "14px", marginTop: "4px" }}
-            >
-              (~{((waterGlasses * 650) / 1000).toFixed(1)} L)
-            </div>
-            <div className={`${styles.statIconWrapper} ${styles.bgBlue}`}>
-              <span className="material-symbols-outlined">water_drop</span>
-            </div>
-          </div>
-          <div className={styles.statCard}>
-            <div className={styles.statTitle}>Calories Burned</div>
-            <div className={styles.statValue}>
-              {totalBurned} <span className={styles.statSub}>kcal</span>
-            </div>
-            <button
-              className={styles.actionBtnSmall}
-              onClick={() => setShowExerciseForm(!showExerciseForm)}
-            >
-              Log Exercise
-            </button>
-            <div className={`${styles.statIconWrapper} ${styles.bgRed}`}>
-              <span className="material-symbols-outlined">
-                local_fire_department
-              </span>
-            </div>
-
-            {showExerciseForm && (
-              <div className={styles.exercisePanel}>
-                <input
-                  type="text"
-                  placeholder="Activity name..."
-                  value={exName}
-                  onChange={(e) => setExName(e.target.value)}
-                />
-                <input
-                  type="number"
-                  placeholder="Kcal burned..."
-                  value={exCal}
-                  onChange={(e) =>
-                    setExCal(
-                      e.target.value === "" ? "" : Number(e.target.value),
-                    )
-                  }
-                />
-                <button onClick={handleAddExercise}>Add</button>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* 🎯 Center Progress Card */}
-        <div className={styles.centerCard}>
-          <div className={styles.ringContainer} style={ringStyle}>
-            <div className={styles.ringInner}>
-              <div className={styles.ringLabel}>Net Calories:</div>
-              <div
-                className={styles.ringValue}
-                style={{ color: isOverGoal ? "#ef4444" : "#0f172a" }}
-              >
-                {netCalories}
-              </div>
-              <div className={styles.ringGoal}>/ {DAILY_CALORIE_GOAL} kcal</div>
-            </div>
           </div>
 
-          <div className={styles.macrosRow}>
-            <div className={styles.macroItem}>
-              <div className={styles.macroHeader}>
-                <span
-                  style={{
-                    color: "#34d399",
-                    display: "flex",
-                    gap: "8px",
-                    alignItems: "center",
-                  }}
-                >
-                  Protein
-                  <span
-                    style={{
-                      color: "#10b981",
-                      cursor: "pointer",
-                      textDecoration: "underline",
-                      fontSize: "13px",
-                    }}
-                    onClick={handleAddProtein}
-                  >
-                    +Add
-                  </span>
-                </span>
-                <span>
-                  {proteinGrams}g{" "}
-                  <span style={{ color: "#94a3b8" }}>/ {PROTEIN_GOAL}g</span>
-                </span>
-              </div>
-              <div className={styles.macroBarBg}>
-                <div
-                  className={`${styles.macroBarFill} ${styles.fillGreen}`}
-                  style={{
-                    width: `${Math.min((proteinGrams / PROTEIN_GOAL) * 100, 100)}%`,
-                  }}
-                ></div>
-              </div>
-            </div>
-            <div className={styles.macroItem}>
-              <div className={styles.macroHeader}>
-                <span style={{ color: "#fb923c" }}>Snacks/Sweets</span>
-                <span>
-                  {meals.filter((m) => m.item_type === "ขนม").length} items
-                </span>
-              </div>
-              <div className={styles.macroBarBg}>
-                <div
-                  className={`${styles.macroBarFill} ${styles.fillOrange}`}
-                  style={{
-                    width: `${Math.min((meals.filter((m) => m.item_type === "ขนม").length / 3) * 100, 100)}%`,
-                  }}
-                ></div>
-              </div>
-            </div>
-          </div>
-
-          {/* 🌟 Actions Row คลีนๆ จัดระเบียบใหม่ */}
-          <div className={styles.actionsRow}>
-            <div className={styles.quickAddSection}>
-              <div className={styles.quickAddLabel}>Quick Add</div>
-              <button
-                onClick={() => navigate("/add-meal")}
-                style={{
-                  width: "100%",
-                  height: "48px",
-                  backgroundColor: "#0f172a",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "12px",
-                  fontFamily: "var(--font-body)",
-                  fontWeight: 700,
-                  fontSize: "15px",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "8px",
-                  boxShadow: "0 4px 12px rgba(15, 23, 42, 0.15)",
-                  transition: "background-color 0.2s",
-                }}
-                onMouseOver={(e) =>
-                  (e.currentTarget.style.backgroundColor = "#1e293b")
+          {showExerciseForm && (
+            <div className={styles.exercisePanel}>
+              <input
+                type="text"
+                placeholder="Activity name..."
+                value={exName}
+                onChange={(e) => setExName(e.target.value)}
+              />
+              <input
+                type="number"
+                placeholder="Kcal burned..."
+                value={exCal}
+                onChange={(e) =>
+                  setExCal(e.target.value === "" ? "" : Number(e.target.value))
                 }
-                onMouseOut={(e) =>
-                  (e.currentTarget.style.backgroundColor = "#0f172a")
-                }
-              >
-                <span
-                  className="material-symbols-outlined"
-                  style={{ fontSize: "20px" }}
-                >
-                  add_circle
-                </span>
-                Add New Meal
-              </button>
-            </div>
-
-            <div className={styles.waterTrackerSection}>
-              <div className={styles.quickAddLabel}>Water Tracker</div>
-              <div className={styles.waterTrackerControls}>
-                <button
-                  className={styles.waterControlBtn}
-                  onClick={() => handleUpdateWater(waterGlasses + 1)}
-                >
-                  +
-                </button>
-                <span
-                  className={`material-symbols-outlined ${styles.waterGlassIcon}`}
-                >
-                  local_drink
-                </span>
-                <button
-                  className={styles.waterControlBtn}
-                  onClick={() => handleUpdateWater(waterGlasses - 1)}
-                >
-                  -
-                </button>
-                <span
-                  style={{
-                    marginLeft: "auto",
-                    fontWeight: 700,
-                    color: "#334155",
-                  }}
-                >
-                  {waterGlasses} glasses
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* 🥗 Meal Cards Grid */}
-        <div className={styles.mealCardsGrid}>
-          {meals.length > 0 ? (
-            groupsToRender.map((cat: string) => {
-              const mealsInCat = groupedMeals[cat];
-              if (!mealsInCat || mealsInCat.length === 0) return null;
-
-              const catCals = mealsInCat.reduce(
-                (s, m) => s + (m.calories || 0),
-                0,
-              );
-
-              return (
-                <div
-                  key={cat}
-                  className={`${styles.mealCardPremium} ${getThemeClass(cat)}`}
-                >
-                  <div className={styles.mealCardHeader}>
-                    <div className={styles.mealCardTitleGroup}>
-                      <div className={styles.mealIconBox}>
-                        <span className="material-symbols-outlined">
-                          {getIconForCat(cat)}
-                        </span>
-                      </div>
-                      <h3 className={styles.mealCardTitle}>{cat}</h3>
-                    </div>
-                    <div className={styles.mealCardCal}>{catCals} kcal</div>
-                  </div>
-
-                  <div className={styles.mealItemList}>
-                    {mealsInCat.map((meal) => (
-                      <div key={meal.id} className={styles.mealItem}>
-                        <span
-                          style={{
-                            maxWidth: "70%",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          {meal.main_dish}
-                          {meal.options && meal.options.length > 0 && (
-                            <span
-                              style={{
-                                color: "#94a3b8",
-                                fontSize: "12px",
-                                marginLeft: "4px",
-                              }}
-                            >
-                              (+{meal.options.length})
-                            </span>
-                          )}
-                        </span>
-                        <span style={{ fontWeight: 600 }}>
-                          {meal.calories > 0 ? `${meal.calories} kcal` : "-"}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className={styles.mealCardActions}>
-                    <button
-                      className={styles.actionBtnDelete}
-                      onClick={() => handleDelete(mealsInCat[0].id)}
-                    >
-                      <span
-                        className="material-symbols-outlined"
-                        style={{ fontSize: "18px" }}
-                      >
-                        delete
-                      </span>{" "}
-                      Delete
-                    </button>
-                    <button
-                      className={styles.actionBtnEdit}
-                      onClick={() => handleOpenEdit(mealsInCat[0])}
-                    >
-                      Edit
-                    </button>
-                  </div>
-                </div>
-              );
-            })
-          ) : (
-            <div
-              style={{
-                gridColumn: "1 / -1",
-                textAlign: "center",
-                padding: "40px",
-                backgroundColor: "white",
-                borderRadius: "24px",
-              }}
-            >
-              <span
-                className="material-symbols-outlined"
-                style={{ fontSize: "48px", color: "#cbd5e1" }}
-              >
-                restaurant
-              </span>
-              <p style={{ color: "#64748b", fontWeight: 500 }}>
-                No meals logged today.
-              </p>
+              />
+              <button onClick={handleAddExercise}>Add</button>
             </div>
           )}
         </div>
-      </main>
+      </div>
+
+      {/* 🎯 Center Progress Card */}
+      <div className={styles.centerCard}>
+        <div className={styles.ringContainer} style={ringStyle}>
+          <div className={styles.ringInner}>
+            <div className={styles.ringLabel}>Net Calories:</div>
+            <div
+              className={styles.ringValue}
+              style={{ color: isOverGoal ? "#ef4444" : "#0f172a" }}
+            >
+              {netCalories}
+            </div>
+            <div className={styles.ringGoal}>/ {DAILY_CALORIE_GOAL} kcal</div>
+          </div>
+        </div>
+
+        <div className={styles.macrosRow}>
+          <div className={styles.macroItem}>
+            <div className={styles.macroHeader}>
+              <span
+                style={{
+                  color: "#34d399",
+                  display: "flex",
+                  gap: "8px",
+                  alignItems: "center",
+                }}
+              >
+                Protein
+                <span
+                  style={{
+                    color: "#10b981",
+                    cursor: "pointer",
+                    textDecoration: "underline",
+                    fontSize: "13px",
+                  }}
+                  onClick={handleAddProtein}
+                >
+                  +Add
+                </span>
+              </span>
+              <span>
+                {proteinGrams}g{" "}
+                <span style={{ color: "#94a3b8" }}>/ {PROTEIN_GOAL}g</span>
+              </span>
+            </div>
+            <div className={styles.macroBarBg}>
+              <div
+                className={`${styles.macroBarFill} ${styles.fillGreen}`}
+                style={{
+                  width: `${Math.min((proteinGrams / PROTEIN_GOAL) * 100, 100)}%`,
+                }}
+              ></div>
+            </div>
+          </div>
+          <div className={styles.macroItem}>
+            <div className={styles.macroHeader}>
+              <span style={{ color: "#fb923c" }}>Snacks/Sweets</span>
+              <span>
+                {meals.filter((m) => m.item_type === "ขนม").length} items
+              </span>
+            </div>
+            <div className={styles.macroBarBg}>
+              <div
+                className={`${styles.macroBarFill} ${styles.fillOrange}`}
+                style={{
+                  width: `${Math.min((meals.filter((m) => m.item_type === "ขนม").length / 3) * 100, 100)}%`,
+                }}
+              ></div>
+            </div>
+          </div>
+        </div>
+
+        {/* 🌟 Actions Row คลีนๆ จัดระเบียบใหม่ */}
+        <div className={styles.actionsRow}>
+          <div className={styles.quickAddSection}>
+            <div className={styles.quickAddLabel}>Quick Add</div>
+            <button
+              onClick={() => navigate("/add-meal")}
+              style={{
+                width: "100%",
+                height: "48px",
+                backgroundColor: "#0f172a",
+                color: "white",
+                border: "none",
+                borderRadius: "12px",
+                fontFamily: "var(--font-body)",
+                fontWeight: 700,
+                fontSize: "15px",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "8px",
+                boxShadow: "0 4px 12px rgba(15, 23, 42, 0.15)",
+                transition: "background-color 0.2s",
+              }}
+              onMouseOver={(e) =>
+                (e.currentTarget.style.backgroundColor = "#1e293b")
+              }
+              onMouseOut={(e) =>
+                (e.currentTarget.style.backgroundColor = "#0f172a")
+              }
+            >
+              <span
+                className="material-symbols-outlined"
+                style={{ fontSize: "20px" }}
+              >
+                add_circle
+              </span>
+              Add New Meal
+            </button>
+          </div>
+
+          <div className={styles.waterTrackerSection}>
+            <div className={styles.quickAddLabel}>Water Tracker</div>
+            <div className={styles.waterTrackerControls}>
+              <button
+                className={styles.waterControlBtn}
+                onClick={() => handleUpdateWater(waterGlasses + 1)}
+              >
+                +
+              </button>
+              <span
+                className={`material-symbols-outlined ${styles.waterGlassIcon}`}
+              >
+                local_drink
+              </span>
+              <button
+                className={styles.waterControlBtn}
+                onClick={() => handleUpdateWater(waterGlasses - 1)}
+              >
+                -
+              </button>
+              <span
+                style={{
+                  marginLeft: "auto",
+                  fontWeight: 700,
+                  color: "#334155",
+                }}
+              >
+                {waterGlasses} glasses
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 🥗 Meal Cards Grid */}
+      <div className={styles.mealCardsGrid}>
+        {meals.length > 0 ? (
+          groupsToRender.map((cat: string) => {
+            const mealsInCat = groupedMeals[cat];
+            if (!mealsInCat || mealsInCat.length === 0) return null;
+
+            const catCals = mealsInCat.reduce(
+              (s, m) => s + (m.calories || 0),
+              0,
+            );
+
+            return (
+              <div
+                key={cat}
+                className={`${styles.mealCardPremium} ${getThemeClass(cat)}`}
+              >
+                <div className={styles.mealCardHeader}>
+                  <div className={styles.mealCardTitleGroup}>
+                    <div className={styles.mealIconBox}>
+                      <span className="material-symbols-outlined">
+                        {getIconForCat(cat)}
+                      </span>
+                    </div>
+                    <h3 className={styles.mealCardTitle}>{cat}</h3>
+                  </div>
+                  <div className={styles.mealCardCal}>{catCals} kcal</div>
+                </div>
+
+                <div className={styles.mealItemList}>
+                  {mealsInCat.map((meal) => (
+                    <div key={meal.id} className={styles.mealItem}>
+                      <span
+                        style={{
+                          maxWidth: "70%",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {meal.main_dish}
+                        {meal.options && meal.options.length > 0 && (
+                          <span
+                            style={{
+                              color: "#94a3b8",
+                              fontSize: "12px",
+                              marginLeft: "4px",
+                            }}
+                          >
+                            (+{meal.options.length})
+                          </span>
+                        )}
+                      </span>
+                      <span style={{ fontWeight: 600 }}>
+                        {meal.calories > 0 ? `${meal.calories} kcal` : "-"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className={styles.mealCardActions}>
+                  <button
+                    className={styles.actionBtnDelete}
+                    onClick={() => handleDelete(mealsInCat[0].id)}
+                  >
+                    <span
+                      className="material-symbols-outlined"
+                      style={{ fontSize: "18px" }}
+                    >
+                      delete
+                    </span>{" "}
+                    Delete
+                  </button>
+                  <button
+                    className={styles.actionBtnEdit}
+                    onClick={() => handleOpenEdit(mealsInCat[0])}
+                  >
+                    Edit
+                  </button>
+                </div>
+              </div>
+            );
+          })
+        ) : (
+          <div
+            style={{
+              gridColumn: "1 / -1",
+              textAlign: "center",
+              padding: "40px",
+              backgroundColor: "white",
+              borderRadius: "24px",
+            }}
+          >
+            <span
+              className="material-symbols-outlined"
+              style={{ fontSize: "48px", color: "#cbd5e1" }}
+            >
+              restaurant
+            </span>
+            <p style={{ color: "#64748b", fontWeight: 500 }}>
+              No meals logged today.
+            </p>
+          </div>
+        )}
+      </div>
 
       {/* Modal แก้ไขอาหาร */}
       {editingMeal && (
@@ -703,7 +660,7 @@ const DailyLog: React.FC = () => {
           {mascotEmoji}
         </div>
       </div>
-    </div>
+    </AppLayout>
   );
 };
 

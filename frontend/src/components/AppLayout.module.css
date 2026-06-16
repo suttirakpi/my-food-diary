@@ -1,0 +1,112 @@
+/* src/components/AppLayout.module.css */
+.appLayout {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f2fcf5;
+  font-family: var(--font-body);
+}
+
+.sidebar {
+  width: 110px;
+  background-color: #a7f3d0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 0;
+  gap: 32px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.04);
+  z-index: 50;
+}
+
+.brandLogo {
+  width: 48px;
+  height: 48px;
+  background-color: white;
+  color: #10b981;
+  border-radius: 16px 4px 16px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: bold;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+  margin-bottom: 16px;
+}
+
+.navItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: #065f46;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.2s;
+  width: 100%;
+  padding: 8px 0;
+}
+
+.navItem:hover,
+.navItemActive {
+  color: #047857;
+  transform: translateY(-2px);
+}
+
+.navItem .material-symbols-outlined {
+  font-size: 28px;
+  background-color: rgba(255, 255, 255, 0.4);
+  padding: 12px;
+  border-radius: 16px;
+  transition: all 0.2s;
+}
+
+.navItem:hover .material-symbols-outlined,
+.navItemActive .material-symbols-outlined {
+  background-color: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.mainPanel {
+  flex: 1;
+  padding: 32px 48px;
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+@media (max-width: 768px) {
+  .appLayout {
+    flex-direction: column;
+  }
+  .sidebar {
+    width: 100%;
+    height: auto;
+    flex-direction: row;
+    padding: 16px;
+    position: relative;
+    border-radius: 0;
+    overflow-x: auto;
+    gap: 16px;
+    justify-content: flex-start;
+  }
+  .brandLogo {
+    margin-bottom: 0;
+    min-width: 48px;
+  }
+  .navItem {
+    padding: 4px;
+    min-width: 70px;
+  }
+  .mainPanel {
+    padding: 16px;
+  }
+}
