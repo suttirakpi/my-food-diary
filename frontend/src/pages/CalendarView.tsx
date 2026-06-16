@@ -1,17 +1,17 @@
+// frontend/src/pages/CalendarView.tsx
 import React, { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import styles from "./CalendarView.module.css";
+import AppLayout from "../components/AppLayout"; // 🌟 Import Layout
 
 interface CalendarData {
   meals: { date: string; total_cal: number }[];
   water: { date: string; glasses: number }[];
   exercises: { date: string; total_burned: number }[];
-  protein: { date: string; total_grams: number }[]; // 🌟 เพิ่มโปรตีน
+  protein: { date: string; total_grams: number }[];
 }
 
 const CalendarView: React.FC = () => {
-  const navigate = useNavigate();
   const [data, setData] = useState<CalendarData | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -21,7 +21,6 @@ const CalendarView: React.FC = () => {
   useEffect(() => {
     const fetchCalendarData = async () => {
       try {
-        // ดึงข้อมูลรวม (Backend ต้องส่ง protein มาใน /api/calendar ด้วยนะครับ)
         const res = await axios.get(
           "https://my-food-diary-n1tf.onrender.com/api/calendar",
         );
@@ -54,7 +53,6 @@ const CalendarView: React.FC = () => {
     return { blanks, days, year, month };
   }, [currentDate]);
 
-  // 🌟 ฟังก์ชันดึงตัวเลขสถิติรายวัน
   const getDayStats = (day: number) => {
     if (!data) return null;
 
@@ -98,91 +96,127 @@ const CalendarView: React.FC = () => {
   ];
   const dayNames = ["อา.", "จ.", "อ.", "พ.", "พฤ.", "ศ.", "ส."];
 
-  if (loading)
-    return <div className={styles.pageContainer}>กำลังโหลดปฏิทิน...</div>;
-
   return (
-    <div className={styles.pageContainer}>
-      <header className={styles.header}>
-        <button className={styles.backBtn} onClick={() => navigate("/")}>
-          <span className="material-symbols-outlined">arrow_back</span>{" "}
-          กลับหน้าหลัก
-        </button>
-        <h1 className={styles.title}>สถิติรายวัน</h1>
-        <div style={{ width: "40px" }}></div>
-      </header>
-
-      <div className={styles.calendarCard}>
-        <div className={styles.calendarHeader}>
-          <button onClick={prevMonth} className={styles.navBtn}>
-            <span className="material-symbols-outlined">chevron_left</span>
-          </button>
-          <h2>
-            {monthNames[calendarGrid.month]} {calendarGrid.year + 543}
-          </h2>
-          <button onClick={nextMonth} className={styles.navBtn}>
-            <span className="material-symbols-outlined">chevron_right</span>
-          </button>
-        </div>
-
-        <div className={styles.calendarGrid}>
-          {dayNames.map((day) => (
-            <div key={day} className={styles.dayName}>
-              {day}
+    <AppLayout>
+      {/* 🌟 หน้าจอ Loading ระหว่างรอเซิร์ฟเวอร์ดึงข้อมูล */}
+      {loading && (
+        <div className={styles.loadingOverlay}>
+          <div className={styles.loadingCard}>
+            <div className={styles.loadingMascot}>🐹💨</div>
+            <h2
+              style={{
+                fontFamily: "var(--font-heading)",
+                margin: "0 0 8px 0",
+                color: "#0f172a",
+              }}
+            >
+              กำลังโหลดปฏิทิน...
+            </h2>
+            <p
+              style={{
+                color: "#64748b",
+                margin: 0,
+                fontSize: "14px",
+                lineHeight: "1.6",
+              }}
+            >
+              รอแป๊บนะฮะ ไวท์มอลกำลังกางปฏิทินให้อยู่!
+              <br />
+              (อาจใช้เวลาสักครู่หากเซิร์ฟเวอร์หลับ)
+            </p>
+            <div className={styles.loadingBarContainer}>
+              <div className={styles.loadingBar}></div>
             </div>
-          ))}
-
-          {calendarGrid.blanks.map((_, i) => (
-            <div key={`blank-${i}`} className={styles.blankCell}></div>
-          ))}
-
-          {calendarGrid.days.map((day) => {
-            const stats = getDayStats(day);
-            const isToday =
-              new Date().getDate() === day &&
-              new Date().getMonth() === calendarGrid.month &&
-              new Date().getFullYear() === calendarGrid.year;
-
-            // 🌟 ตัดสินใจเรื่องสีขอบ
-            let borderClass = styles.borderDefault;
-            if (stats?.hasData) {
-              borderClass =
-                stats.netCal > DAILY_GOAL
-                  ? styles.borderRed
-                  : styles.borderGreen;
-            }
-
-            return (
-              <div
-                key={day}
-                className={`${styles.dayCell} ${borderClass} ${isToday ? styles.today : ""}`}
-              >
-                <span className={styles.dayNumber}>{day}</span>
-
-                {stats && (
-                  <div className={styles.statsGrid}>
-                    <div className={`${styles.statItem} ${styles.labelCal}`}>
-                      <span>กิน:</span> <span>{stats.cal}</span>
-                    </div>
-                    <div className={`${styles.statItem} ${styles.labelBurn}`}>
-                      <span>เบิร์น:</span> <span>{stats.burn}</span>
-                    </div>
-                    <div className={`${styles.statItem} ${styles.labelWater}`}>
-                      <span>น้ำ:</span> <span>{stats.water}ก.</span>
-                    </div>
-                    <div
-                      className={`${styles.statItem} ${styles.labelProtein}`}
-                    >
-                      <span>โปร:</span> <span>{stats.protein}g</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+          </div>
         </div>
-      </div>
-    </div>
+      )}
+
+      {/* เนื้อหาหน้าเว็บ */}
+      {!loading && (
+        <div className={styles.contentWrapper}>
+          <div className={styles.pageHeader}>
+            <h1>Your Calendar</h1>
+            <p>Review your daily nourishment history 📅</p>
+          </div>
+
+          <div className={styles.calendarCard}>
+            <div className={styles.calendarHeader}>
+              <button onClick={prevMonth} className={styles.navBtn}>
+                <span className="material-symbols-outlined">chevron_left</span>
+              </button>
+              <h2>
+                {monthNames[calendarGrid.month]} {calendarGrid.year + 543}
+              </h2>
+              <button onClick={nextMonth} className={styles.navBtn}>
+                <span className="material-symbols-outlined">chevron_right</span>
+              </button>
+            </div>
+
+            <div className={styles.calendarGrid}>
+              {dayNames.map((day) => (
+                <div key={day} className={styles.dayName}>
+                  {day}
+                </div>
+              ))}
+
+              {calendarGrid.blanks.map((_, i) => (
+                <div key={`blank-${i}`} className={styles.blankCell}></div>
+              ))}
+
+              {calendarGrid.days.map((day) => {
+                const stats = getDayStats(day);
+                const isToday =
+                  new Date().getDate() === day &&
+                  new Date().getMonth() === calendarGrid.month &&
+                  new Date().getFullYear() === calendarGrid.year;
+
+                let borderClass = styles.borderDefault;
+                if (stats?.hasData) {
+                  borderClass =
+                    stats.netCal > DAILY_GOAL
+                      ? styles.borderRed
+                      : styles.borderGreen;
+                }
+
+                return (
+                  <div
+                    key={day}
+                    className={`${styles.dayCell} ${borderClass} ${isToday ? styles.today : ""}`}
+                  >
+                    <span className={styles.dayNumber}>{day}</span>
+
+                    {stats && stats.hasData && (
+                      <div className={styles.statsGrid}>
+                        <div
+                          className={`${styles.statItem} ${styles.labelCal}`}
+                        >
+                          <span>กิน:</span> <span>{stats.cal}</span>
+                        </div>
+                        <div
+                          className={`${styles.statItem} ${styles.labelBurn}`}
+                        >
+                          <span>เบิร์น:</span> <span>{stats.burn}</span>
+                        </div>
+                        <div
+                          className={`${styles.statItem} ${styles.labelWater}`}
+                        >
+                          <span>น้ำ:</span> <span>{stats.water}ก.</span>
+                        </div>
+                        <div
+                          className={`${styles.statItem} ${styles.labelProtein}`}
+                        >
+                          <span>โปร:</span> <span>{stats.protein}g</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+    </AppLayout>
   );
 };
 
