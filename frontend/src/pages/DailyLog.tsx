@@ -460,14 +460,19 @@ const DailyLog: React.FC = () => {
           </button>
 
           <button
-            className={
-              styles.actionBtn
-            } /* 🌟 เปลี่ยนชื่อคลาสให้ตรงกับปุ่มอื่นของตูน (เช่น styles.navBtn หรือ styles.outlineBtn) */
             onClick={() => navigate("/weight")}
             style={{
-              borderColor: "#9c27b0",
+              background: "white",
+              border: "1px solid #9c27b0",
               color: "#9c27b0",
-            }} /* สีม่วงให้ดูแตกต่าง */
+              padding: "10px 16px",
+              borderRadius: "12px",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              fontWeight: 600,
+            }}
           >
             <span className="material-symbols-outlined">scale</span> Weight
           </button>
