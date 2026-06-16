@@ -428,7 +428,28 @@ const DailyLog: React.FC = () => {
           <div className={styles.macrosRow}>
             <div className={styles.macroItem}>
               <div className={styles.macroHeader}>
-                <span style={{ color: "#34d399" }}>Protein</span>
+                {/* 🌟 ย้ายปุ่ม +Add มาไว้ตรงนี้ข้างๆ คำว่า Protein */}
+                <span
+                  style={{
+                    color: "#34d399",
+                    display: "flex",
+                    gap: "8px",
+                    alignItems: "center",
+                  }}
+                >
+                  Protein
+                  <span
+                    style={{
+                      color: "#10b981",
+                      cursor: "pointer",
+                      textDecoration: "underline",
+                      fontSize: "13px",
+                    }}
+                    onClick={handleAddProtein}
+                  >
+                    +Add
+                  </span>
+                </span>
                 <span>
                   {proteinGrams}g{" "}
                   <span style={{ color: "#94a3b8" }}>/ {PROTEIN_GOAL}g</span>
@@ -443,7 +464,6 @@ const DailyLog: React.FC = () => {
                 ></div>
               </div>
             </div>
-            {/* สามารถจำลอง Carbs / Fat ไว้ให้หน้าตาเหมือนรูปได้ที่นี่ (ถ้ามีข้อมูล) */}
             <div className={styles.macroItem}>
               <div className={styles.macroHeader}>
                 <span style={{ color: "#fb923c" }}>Snacks/Sweets</span>
@@ -458,6 +478,81 @@ const DailyLog: React.FC = () => {
                     width: `${Math.min((meals.filter((m) => m.item_type === "ขนม").length / 3) * 100, 100)}%`,
                   }}
                 ></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Actions Row (Quick Add & Water) */}
+          <div className={styles.actionsRow}>
+            {/* 🌟 เปลี่ยนจากช่อง Search เป็นปุ่ม Add แบบเต็มกรอบ */}
+            <div className={styles.quickAddSection}>
+              <div className={styles.quickAddLabel}>Quick Add</div>
+              <button
+                onClick={() => navigate("/add-meal")}
+                style={{
+                  width: "100%",
+                  height: "48px",
+                  backgroundColor: "#0f172a",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "12px",
+                  fontFamily: "var(--font-body)",
+                  fontWeight: 700,
+                  fontSize: "15px",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "8px",
+                  boxShadow: "0 4px 12px rgba(15, 23, 42, 0.15)",
+                  transition: "background-color 0.2s",
+                }}
+                onMouseOver={(e) =>
+                  (e.currentTarget.style.backgroundColor = "#1e293b")
+                }
+                onMouseOut={(e) =>
+                  (e.currentTarget.style.backgroundColor = "#0f172a")
+                }
+              >
+                <span
+                  className="material-symbols-outlined"
+                  style={{ fontSize: "20px" }}
+                >
+                  add_circle
+                </span>
+                Add New Meal
+              </button>
+            </div>
+
+            <div className={styles.waterTrackerSection}>
+              <div className={styles.quickAddLabel}>Water Tracker</div>
+              <div className={styles.waterTrackerControls}>
+                <button
+                  className={styles.waterControlBtn}
+                  onClick={() => handleUpdateWater(waterGlasses + 1)}
+                >
+                  +
+                </button>
+                <span
+                  className={`material-symbols-outlined ${styles.waterGlassIcon}`}
+                >
+                  local_drink
+                </span>
+                <button
+                  className={styles.waterControlBtn}
+                  onClick={() => handleUpdateWater(waterGlasses - 1)}
+                >
+                  -
+                </button>
+                <span
+                  style={{
+                    marginLeft: "auto",
+                    fontWeight: 700,
+                    color: "#334155",
+                  }}
+                >
+                  {waterGlasses} glasses
+                </span>
               </div>
             </div>
           </div>
