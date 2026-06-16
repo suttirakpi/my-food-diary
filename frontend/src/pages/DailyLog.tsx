@@ -37,12 +37,10 @@ const DailyLog: React.FC = () => {
   const [editingMeal, setEditingMeal] = useState<MealEntry | null>(null);
   const [exercises, setExercises] = useState<ExerciseEntry[]>([]);
 
-  // States สำหรับกล่องเพิ่มข้อมูลด่วน
+  // States สำหรับฟอร์มออกกำลังกาย
   const [showExerciseForm, setShowExerciseForm] = useState(false);
   const [exName, setExName] = useState("");
   const [exCal, setExCal] = useState<number | "">("");
-  const [searchQuery, setSearchQuery] = useState("");
-  const isSearching = searchQuery.trim() !== "";
 
   // มาสคอต
   const [isPetting, setIsPetting] = useState(false);
@@ -83,23 +81,11 @@ const DailyLog: React.FC = () => {
     }
   };
 
+  // ดึงข้อมูลเมื่อเปลี่ยนวันที่
   useEffect(() => {
-    if (!isSearching) {
-      fetchData();
-      return;
-    }
-    const searchTimer = setTimeout(async () => {
-      try {
-        const res = await axios.get(
-          `https://my-food-diary-n1tf.onrender.com/api/search?q=${searchQuery}`,
-        );
-        setMeals(res.data);
-      } catch (error) {
-        console.error("ค้นหาล้มเหลว", error);
-      }
-    }, 500);
-    return () => clearTimeout(searchTimer);
-  }, [searchQuery, selectedDate]);
+    fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDate]);
 
   const handleUpdateWater = async (newAmount: number) => {
     if (newAmount < 0) return;
@@ -199,20 +185,14 @@ const DailyLog: React.FC = () => {
 
   const groupedMeals = useMemo(() => {
     return meals.reduce((acc: Record<string, MealEntry[]>, meal: MealEntry) => {
-      const groupKey = isSearching
-        ? meal.meal_date.split("T")[0]
-        : meal.category || "อื่นๆ";
+      const groupKey = meal.category || "อื่นๆ";
       if (!acc[groupKey]) acc[groupKey] = [];
       acc[groupKey].push(meal);
       return acc;
     }, {});
-  }, [meals, isSearching]);
+  }, [meals]);
 
-  const groupsToRender = isSearching
-    ? Object.keys(groupedMeals).sort(
-        (a, b) => new Date(b).getTime() - new Date(a).getTime(),
-      )
-    : ["มื้อเช้า", "มื้อกลางวัน", "มื้อเย็น", "ระหว่างวัน"];
+  const groupsToRender = ["มื้อเช้า", "มื้อกลางวัน", "มื้อเย็น", "ระหว่างวัน"];
 
   const getThemeClass = (cat: string) => {
     if (cat === "มื้อเช้า") return styles.themeBreakfast;
@@ -239,7 +219,7 @@ const DailyLog: React.FC = () => {
   const netCalories = totalCalories - totalBurned;
 
   const DAILY_CALORIE_GOAL = 1400;
-  const PROTEIN_GOAL = 140; // อิงตามที่ตูนตั้งไว้
+  const PROTEIN_GOAL = 140;
 
   // คำนวณวงแหวน (Ring Chart)
   const isOverGoal = netCalories > DAILY_CALORIE_GOAL;
@@ -273,7 +253,7 @@ const DailyLog: React.FC = () => {
 
   return (
     <div className={styles.appLayout}>
-      {/* 🌟 Sidebar Navigation สไตล์ Premium */}
+      {/* 🌟 Sidebar Navigation */}
       <aside className={styles.sidebar}>
         <div className={styles.brandLogo}>❤️</div>
 
@@ -324,7 +304,7 @@ const DailyLog: React.FC = () => {
           </div>
         )}
 
-        {/* 📅 Date Picker (Top Right) */}
+        {/* 📅 Date Picker */}
         <div className={styles.topHeader}>
           <div className={styles.datePickerWrapper}>
             <span
@@ -341,7 +321,7 @@ const DailyLog: React.FC = () => {
           </div>
         </div>
 
-        {/* 📊 Top Stat Cards (3 กล่องบน) */}
+        {/* 📊 Top Stat Cards */}
         <div className={styles.statGrid}>
           <div className={styles.statCard}>
             <div className={styles.statTitle}>Calories Consumed</div>
@@ -383,7 +363,6 @@ const DailyLog: React.FC = () => {
               </span>
             </div>
 
-            {/* ฟอร์มเพิ่มการออกกำลังกายแบบ Dropdown */}
             {showExerciseForm && (
               <div className={styles.exercisePanel}>
                 <input
@@ -410,7 +389,6 @@ const DailyLog: React.FC = () => {
 
         {/* 🎯 Center Progress Card */}
         <div className={styles.centerCard}>
-          {/* Circular Progress */}
           <div className={styles.ringContainer} style={ringStyle}>
             <div className={styles.ringInner}>
               <div className={styles.ringLabel}>Net Calories:</div>
@@ -424,11 +402,9 @@ const DailyLog: React.FC = () => {
             </div>
           </div>
 
-          {/* Macros Row (Protein) */}
           <div className={styles.macrosRow}>
             <div className={styles.macroItem}>
               <div className={styles.macroHeader}>
-                {/* 🌟 ย้ายปุ่ม +Add มาไว้ตรงนี้ข้างๆ คำว่า Protein */}
                 <span
                   style={{
                     color: "#34d399",
@@ -482,9 +458,8 @@ const DailyLog: React.FC = () => {
             </div>
           </div>
 
-          {/* Actions Row (Quick Add & Water) */}
+          {/* 🌟 Actions Row คลีนๆ จัดระเบียบใหม่ */}
           <div className={styles.actionsRow}>
-            {/* 🌟 เปลี่ยนจากช่อง Search เป็นปุ่ม Add แบบเต็มกรอบ */}
             <div className={styles.quickAddSection}>
               <div className={styles.quickAddLabel}>Quick Add</div>
               <button
@@ -526,54 +501,6 @@ const DailyLog: React.FC = () => {
 
             <div className={styles.waterTrackerSection}>
               <div className={styles.quickAddLabel}>Water Tracker</div>
-              <div className={styles.waterTrackerControls}>
-                <button
-                  className={styles.waterControlBtn}
-                  onClick={() => handleUpdateWater(waterGlasses + 1)}
-                >
-                  +
-                </button>
-                <span
-                  className={`material-symbols-outlined ${styles.waterGlassIcon}`}
-                >
-                  local_drink
-                </span>
-                <button
-                  className={styles.waterControlBtn}
-                  onClick={() => handleUpdateWater(waterGlasses - 1)}
-                >
-                  -
-                </button>
-                <span
-                  style={{
-                    marginLeft: "auto",
-                    fontWeight: 700,
-                    color: "#334155",
-                  }}
-                >
-                  {waterGlasses} glasses
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Actions Row (Quick Add & Water) */}
-          <div className={styles.actionsRow}>
-            <div className={styles.waterTrackerSection}>
-              <div className={styles.quickAddLabel}>
-                Water Tracker (Protein:{" "}
-                <span
-                  style={{
-                    color: "#10b981",
-                    cursor: "pointer",
-                    textDecoration: "underline",
-                  }}
-                  onClick={handleAddProtein}
-                >
-                  +Add
-                </span>
-                )
-              </div>
               <div className={styles.waterTrackerControls}>
                 <button
                   className={styles.waterControlBtn}
@@ -667,7 +594,6 @@ const DailyLog: React.FC = () => {
                   </div>
 
                   <div className={styles.mealCardActions}>
-                    {/* เราจับเอา id ของเมนูแรกในกลุ่มมาใช้แก้ไข/ลบ หรือจะทำปุ่มเดียวไปหน้า Add Meal ก็ได้ แต่เพื่อความสมบูรณ์ เอาปุ่ม Edit/Delete ใส่ไว้ */}
                     <button
                       className={styles.actionBtnDelete}
                       onClick={() => handleDelete(mealsInCat[0].id)}
@@ -714,12 +640,11 @@ const DailyLog: React.FC = () => {
         </div>
       </main>
 
-      {/* Modal แก้ไขอาหาร (ใช้โค้ดเดิม) */}
+      {/* Modal แก้ไขอาหาร */}
       {editingMeal && (
         <div className={styles.modalOverlay}>
           <div className={styles.modalContent}>
             <h2 className={styles.modalTitle}>แก้ไขมื้ออาหาร</h2>
-            {/* โค้ดฟอร์มแก้ไขเหมือนเดิม */}
             <div className={styles.modalInputGroup}>
               <label>ชื่อเมนู</label>
               <input
