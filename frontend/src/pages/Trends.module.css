@@ -1,35 +1,27 @@
-.pageContainer {
+/* frontend/src/pages/Trends.module.css */
+.contentWrapper {
   max-width: 1000px;
   margin: 0 auto;
-  padding: 32px 20px;
-  min-height: 100vh;
-  background-color: var(--background);
+  width: 100%;
 }
 
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.pageHeader {
   margin-bottom: 32px;
 }
 
-.backBtn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: none;
-  border: none;
-  color: var(--primary);
-  font-family: var(--font-body);
-  font-weight: 600;
-  cursor: pointer;
-  padding: 8px 16px;
-  border-radius: 8px;
-  transition: background-color 0.2s;
+.pageHeader h1 {
+  font-family: var(--font-heading);
+  font-size: 32px;
+  color: #0f172a;
+  margin-top: 0;
+  margin-bottom: 8px;
 }
 
-.backBtn:hover {
-  background-color: var(--surface);
+.pageHeader p {
+  color: #64748b;
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
 }
 
 .dashboardGrid {
@@ -46,76 +38,72 @@
 
 .chartCard {
   background-color: white;
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-  border: 1px solid var(--tertiary-fixed);
+  border-radius: 24px;
+  padding: 32px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  border: 1px solid #f1f5f9;
 }
 
 .chartTitle {
   font-family: var(--font-heading);
   margin-top: 0;
   margin-bottom: 24px;
-  color: var(--on-surface);
+  color: #0f172a;
   text-align: center;
+  font-size: 18px;
 }
 
 .summaryGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 20px;
+  gap: 24px;
   margin-bottom: 32px;
 }
 
 .summaryCard {
-  background: linear-gradient(135deg, var(--surface), white);
-  border: 1px solid var(--tertiary-fixed);
-  border-radius: 16px;
-  padding: 24px;
+  background: linear-gradient(135deg, #ffffff, #f8fafc);
+  border: 1px solid #e2e8f0;
+  border-radius: 24px;
+  padding: 32px;
   text-align: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
-  transition: transform 0.2s;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
 }
 
 .summaryCard:hover {
-  transform: translateY(-5px);
-}
-
-.summaryIcon {
-  font-size: 32px;
-  margin-bottom: 12px;
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
 }
 
 .summaryValue {
-  font-size: 36px;
-  font-weight: 700;
+  font-size: 40px;
+  font-weight: 800;
   font-family: var(--font-heading);
-  color: var(--on-surface);
-  margin: 8px 0;
+  color: #0f172a;
+  margin: 12px 0;
 }
 
 .summaryValue span {
   font-size: 16px;
-  font-weight: 400;
-  color: var(--on-surface-variant);
+  font-weight: 500;
+  color: #64748b;
 }
 
 .summaryLabel {
   font-size: 14px;
-  color: var(--on-surface-variant);
-  font-weight: 600;
+  color: #64748b;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.05em;
 }
 
 @media (max-width: 768px) {
-  .header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
-  }
-
   .summaryGrid {
     grid-template-columns: 1fr;
+  }
+  .chartCard {
+    padding: 20px;
   }
 }
