@@ -36,41 +36,53 @@
   margin-bottom: 16px;
 }
 
+/* src/components/AppLayout.module.css */
+
+/* 🌟 สไตล์ปุ่มเมนูพื้นฐาน */
 .navItem {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  gap: 6px;
   color: #065f46;
   background: transparent;
   border: none;
   cursor: pointer;
   font-family: var(--font-body);
   font-size: 13px;
-  font-weight: 600;
-  transition: all 0.2s;
-  width: 100%;
-  padding: 8px 0;
+  font-weight: 700;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 85px; /* ทำเป็นกล่องสี่เหลี่ยมโค้งมน */
+  height: 85px;
+  border-radius: 20px;
 }
 
-.navItem:hover,
-.navItemActive {
-  color: #047857;
-  transform: translateY(-2px);
-}
-
-.navItem .material-symbols-outlined {
-  font-size: 28px;
+/* 🌟 เอฟเฟกต์เวลาเอาเมาส์ชี้ (Hover) */
+.navItem:hover {
   background-color: rgba(255, 255, 255, 0.4);
-  padding: 12px;
-  border-radius: 16px;
-  transition: all 0.2s;
+  color: #047857;
+  transform: translateY(-4px);
 }
 
+/* 🌟 เอฟเฟกต์เวลาอยู่หน้านั้นๆ (Active) */
+.navItemActive {
+  background-color: white !important;
+  color: #10b981 !important; /* ไอคอนกับตัวหนังสือกลายเป็นสีมิ้นต์ */
+  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.25);
+  transform: translateY(-4px);
+}
+
+/* ปรับแต่งไอคอนด้านใน */
+.navItem .material-symbols-outlined {
+  font-size: 30px;
+  transition: all 0.3s;
+}
+
+/* ให้ไอคอนขยายขึ้นนิดนึงเวลา Hover หรือ Active */
 .navItem:hover .material-symbols-outlined,
 .navItemActive .material-symbols-outlined {
-  background-color: white;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transform: scale(1.15);
 }
 
 .mainPanel {
