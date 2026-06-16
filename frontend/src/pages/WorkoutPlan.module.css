@@ -1,35 +1,27 @@
-.pageContainer {
+/* frontend/src/pages/WorkoutPlan.module.css */
+.contentWrapper {
   max-width: 1000px;
   margin: 0 auto;
-  padding: 32px 20px;
-  min-height: 100vh;
+  width: 100%;
 }
 
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.pageHeader {
   margin-bottom: 32px;
 }
 
-.backBtn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: none;
-  border: none;
-  color: var(--primary);
-  font-weight: 600;
-  cursor: pointer;
-  padding: 8px 16px;
-  border-radius: 8px;
+.pageHeader h1 {
+  font-family: var(--font-heading);
+  font-size: 32px;
+  color: #0f172a;
+  margin-top: 0;
+  margin-bottom: 8px;
 }
 
-.title {
-  font-family: var(--font-heading);
-  font-size: 24px;
+.pageHeader p {
+  color: #64748b;
   margin: 0;
-  color: var(--on-surface);
+  font-size: 16px;
+  font-weight: 500;
 }
 
 .layoutGrid {
@@ -40,53 +32,63 @@
 
 @media (min-width: 768px) {
   .layoutGrid {
-    grid-template-columns: 200px 1fr;
+    grid-template-columns: 220px 1fr; /* แบ่ง Sidebar เล็กๆ ข้างในสำหรับเลือกวัน */
   }
 }
 
-.sidebar {
+/* 📅 ปุ่มเลือกวัน (จันทร์-อาทิตย์) */
+.daysSidebar {
   display: flex;
   flex-direction: row;
-  gap: 8px;
+  gap: 12px;
   overflow-x: auto;
   padding-bottom: 8px;
 }
 
 @media (min-width: 768px) {
-  .sidebar {
+  .daysSidebar {
     flex-direction: column;
     overflow-x: visible;
-    border-right: 1px solid var(--tertiary-fixed);
-    padding-right: 16px;
   }
 }
 
 .dayTab {
-  padding: 12px 16px;
-  border: 1px solid var(--tertiary-fixed);
+  padding: 16px;
+  border: 1px solid #e2e8f0;
   background: white;
-  border-radius: 8px;
+  border-radius: 16px;
   cursor: pointer;
-  font-weight: 600;
-  text-align: left;
+  font-weight: 700;
+  font-family: var(--font-body);
+  text-align: center;
   white-space: nowrap;
+  color: #475569;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+
+.dayTab:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .activeTab {
-  background-color: var(--primary);
+  background-color: #10b981; /* Mint Green */
   color: white;
-  border-color: var(--primary);
+  border-color: #10b981;
+  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.25);
 }
 
-.mainContent {
+/* 🏋️‍♂️ การ์ดเนื้อหาการฝึก */
+.workoutCard {
   background: white;
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-  border: 1px solid var(--tertiary-fixed);
+  border-radius: 24px;
+  padding: 32px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  border: 1px solid #f1f5f9;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
 }
 
 .inputGroup {
@@ -95,103 +97,152 @@
   gap: 8px;
 }
 
-.inputGroup label {
-  font-weight: 600;
-  font-size: 14px;
-  color: var(--on-surface-variant);
+.formLabel {
+  font-size: 13px;
+  font-weight: 700;
+  color: #334155;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
-.inputGroup input {
-  padding: 12px;
-  border: 1px solid var(--tertiary-fixed);
-  border-radius: 8px;
+.formInput {
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  font-size: 15px;
+  font-family: var(--font-body);
   outline: none;
-  font-size: 16px;
+  background-color: #f8fafc;
+  color: #0f172a;
+  transition: all 0.2s;
+}
+
+.formInput:focus {
+  background-color: white;
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
 }
 
 .taskListContainer h4 {
-  margin: 0 0 12px 0;
+  margin: 0 0 16px 0;
+  font-family: var(--font-heading);
+  font-size: 20px;
+  color: #0f172a;
 }
 
 .emptyText {
-  color: var(--on-surface-variant);
-  font-size: 14px;
+  color: #64748b;
+  font-size: 15px;
   font-style: italic;
+  text-align: center;
+  padding: 32px 0;
+  background-color: #f8fafc;
+  border-radius: 16px;
+  border: 1px dashed #cbd5e1;
 }
 
 .taskList {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
 }
 
 .taskItem {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
-  background-color: #f8fafc;
-  border-radius: 8px;
+  padding: 16px 20px;
+  border-radius: 16px;
   border: 1px solid #e2e8f0;
+  background-color: #f8fafc;
+  transition: all 0.2s;
+}
+
+.taskItemCompleted {
+  background-color: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+}
+
+.checkbox {
+  width: 22px;
+  height: 22px;
+  cursor: pointer;
+  accent-color: #10b981;
+  margin-right: 16px;
 }
 
 .taskText {
-  font-size: 15px;
+  font-size: 16px;
   color: #334155;
-}
-
-.deleteBtn {
-  background: none;
-  border: none;
-  color: #ef4444;
-  cursor: pointer;
-  display: flex;
-}
-
-.addTaskForm {
-  display: flex;
-  gap: 8px;
-  margin-top: 12px;
-}
-
-.addTaskForm input {
+  font-weight: 600;
   flex: 1;
-  padding: 12px;
-  border: 1px solid var(--tertiary-fixed);
-  border-radius: 8px;
-  outline: none;
-}
-
-.addBtnSubmit {
-  background-color: var(--primary);
-  color: white;
-  border: none;
-  padding: 0 20px;
-  border-radius: 8px;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-/* --- Checkbox Styles --- */
-.checkbox {
-  width: 20px;
-  height: 20px;
-  cursor: pointer;
-  accent-color: #4caf50;
-  margin-right: 12px;
+  transition: all 0.2s;
 }
 
 .taskTextCompleted {
-  font-size: 15px;
+  font-size: 16px;
   color: #94a3b8;
   text-decoration: line-through;
   flex: 1;
   transition: all 0.2s;
 }
 
-.taskText {
-  font-size: 15px;
-  color: #334155;
-  flex: 1;
+.deleteBtn {
+  background: white;
+  border: 1px solid #e2e8f0;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 12px;
   transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.deleteBtn:hover {
+  color: #ef4444;
+  border-color: #fca5a5;
+  background-color: #fef2f2;
+}
+
+.addTaskForm {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+  padding-top: 24px;
+  border-top: 1px dashed #e2e8f0;
+}
+
+.addBtnSubmit {
+  background-color: #0f172a;
+  color: white;
+  border: none;
+  padding: 0 24px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  font-family: var(--font-body);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.addBtnSubmit:hover {
+  background-color: #1e293b;
+  transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+  .addTaskForm {
+    flex-direction: column;
+  }
+  .addBtnSubmit {
+    height: 50px;
+    justify-content: center;
+  }
 }

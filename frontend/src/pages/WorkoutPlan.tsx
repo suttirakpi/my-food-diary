@@ -1,8 +1,9 @@
+// frontend/src/pages/WorkoutPlan.tsx
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import toast from "react-hot-toast";
 import styles from "./WorkoutPlan.module.css";
+import AppLayout from "../components/AppLayout"; // 🌟 Import Layout
 
 interface TaskItem {
   text: string;
@@ -16,15 +17,14 @@ interface WorkoutDay {
 }
 
 const WorkoutPlan: React.FC = () => {
-  const navigate = useNavigate();
-  const [activeDay, setActiveDay] = useState<number>(new Date().getDay()); // เริ่มที่วันปัจจุบัน
+  const [activeDay, setActiveDay] = useState<number>(new Date().getDay());
   const [workoutPlans, setWorkoutPlans] = useState<Record<number, WorkoutDay>>(
     {},
   );
   const [newTaskText, setNewTaskText] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
 
-  // 🌟 โหลดข้อมูลจาก Database ทันทีที่เข้าหน้าเว็บ
+  // โหลดข้อมูลจาก Database ทันทีที่เข้าหน้าเว็บ
   useEffect(() => {
     const fetchPlans = async () => {
       try {
@@ -32,17 +32,17 @@ const WorkoutPlan: React.FC = () => {
           "https://my-food-diary-n1tf.onrender.com/api/workout-plans",
         );
 
-        // สร้างโครงร่างเปล่าๆ กันบั๊กหน้าขาวเผื่อ DB ไม่มีข้อมูล
+        // สร้างโครงร่างเปล่าๆ
         const loadedPlans: Record<number, WorkoutDay> = {};
         for (let i = 0; i <= 6; i++) {
           loadedPlans[i] = {
-            title: "ยังไม่มีชื่อแผน",
-            target: "ยังไม่ได้กำหนด",
+            title: "",
+            target: "",
             tasks: [],
           };
         }
 
-        // เอาข้อมูลจาก DB มายัดใส่โครงร่าง
+        // เอาข้อมูลจาก DB มาใส่
         if (res.data && res.data.length > 0) {
           res.data.forEach((row: any) => {
             const parsed =
@@ -64,7 +64,7 @@ const WorkoutPlan: React.FC = () => {
     fetchPlans();
   }, []);
 
-  // 🌟 ฟังก์ชันเซฟลง Database (เรียกใช้ตอนข้อมูลเปลี่ยน)
+  // ฟังก์ชันเซฟลง Database
   const savePlanToDB = async (dayIdx: number, planData: WorkoutDay) => {
     try {
       await axios.post(
@@ -79,7 +79,6 @@ const WorkoutPlan: React.FC = () => {
     }
   };
 
-  // 🌟 ติ๊กถูก / เอาติ๊กออก
   const handleToggleTask = (taskIndex: number) => {
     const updated = { ...workoutPlans };
     updated[activeDay].tasks[taskIndex].done =
@@ -121,7 +120,6 @@ const WorkoutPlan: React.FC = () => {
     setWorkoutPlans(updated);
   };
 
-  // 🌟 เซฟ Title/Target เมื่อคลิกออกไปที่อื่น (onBlur)
   const handleBlurInfo = () => {
     savePlanToDB(activeDay, workoutPlans[activeDay]);
     toast.success("บันทึกข้อมูลตารางแล้ว");
@@ -138,131 +136,162 @@ const WorkoutPlan: React.FC = () => {
   };
   const daysOrder = [1, 2, 3, 4, 5, 6, 0];
 
-  // ถ้ายังดึงข้อมูลจาก DB ไม่เสร็จ ให้โชว์หน้าโหลดไปก่อน
-  if (isLoading || Object.keys(workoutPlans).length === 0) {
-    return (
-      <div
-        className={styles.pageContainer}
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-        }}
-      >
-        <h2>กำลังดึงตารางออกกำลังกายจาก Database... 🏃‍♂️💨</h2>
-      </div>
-    );
-  }
-
   return (
-    <div className={styles.pageContainer}>
-      <header className={styles.header}>
-        <button className={styles.backBtn} onClick={() => navigate("/")}>
-          <span className="material-symbols-outlined">arrow_back</span>{" "}
-          กลับหน้าหลัก
-        </button>
-        <h1 className={styles.title}>Workout Planner</h1>
-        <div style={{ width: "40px" }}></div>
-      </header>
-
-      <div className={styles.layoutGrid}>
-        <div className={styles.sidebar}>
-          {daysOrder.map((dayNum: number) => (
-            <button
-              key={dayNum}
-              className={`${styles.dayTab} ${activeDay === dayNum ? styles.activeTab : ""}`}
-              onClick={() => setActiveDay(dayNum)}
+    <AppLayout>
+      {/* 🌟 หน้าจอ Loading ระหว่างรอเซิร์ฟเวอร์ดึงข้อมูล */}
+      {isLoading && (
+        <div className="loadingOverlay">
+          <div className="loadingCard">
+            <div className="loadingMascot">🐹💨</div>
+            <h2
+              style={{
+                fontFamily: "var(--font-heading)",
+                margin: "0 0 8px 0",
+                color: "#0f172a",
+              }}
             >
-              วัน{dayNames[dayNum]}
-            </button>
-          ))}
+              กำลังโหลดตาราง...
+            </h2>
+            <p
+              style={{
+                color: "#64748b",
+                margin: 0,
+                fontSize: "14px",
+                lineHeight: "1.6",
+              }}
+            >
+              รอแป๊บนะฮะ ไวท์มอลกำลังเตรียมดัมเบลให้อยู่!
+            </p>
+            <div className="loadingBarContainer">
+              <div className="loadingBar"></div>
+            </div>
+          </div>
         </div>
+      )}
 
-        <div className={styles.mainContent}>
-          <div className={styles.inputGroup}>
-            <label>ชื่อธีมการฝึกประจำวัน</label>
-            <input
-              type="text"
-              value={workoutPlans[activeDay].title}
-              onChange={(e) => handleUpdateTitle(e.target.value)}
-              onBlur={handleBlurInfo} // เซฟลง DB ตอนคลิกออก
-              placeholder="เช่น วันวิ่งระเบิดไขมัน"
-            />
+      {/* เนื้อหาหน้าเว็บ */}
+      {!isLoading && Object.keys(workoutPlans).length > 0 && (
+        <div className={styles.contentWrapper}>
+          <div className={styles.pageHeader}>
+            <h1>Workout Planner</h1>
+            <p>Design and track your weekly fitness routine 🏋️‍♂️</p>
           </div>
 
-          <div className={styles.inputGroup}>
-            <label>เป้าหมายการฝึก</label>
-            <input
-              type="text"
-              value={workoutPlans[activeDay].target}
-              onChange={(e) => handleUpdateTarget(e.target.value)}
-              onBlur={handleBlurInfo} // เซฟลง DB ตอนคลิกออก
-              placeholder="เช่น เน้น Cardio สร้าง Afterburn"
-            />
-          </div>
+          <div className={styles.layoutGrid}>
+            {/* 📅 Sidebar สำหรับเลือกวัน (ภายในหน้า) */}
+            <div className={styles.daysSidebar}>
+              {daysOrder.map((dayNum: number) => (
+                <button
+                  key={dayNum}
+                  className={`${styles.dayTab} ${activeDay === dayNum ? styles.activeTab : ""}`}
+                  onClick={() => setActiveDay(dayNum)}
+                >
+                  วัน{dayNames[dayNum]}
+                </button>
+              ))}
+            </div>
 
-          <div className={styles.taskListContainer}>
-            <h4>รายการกิจกรรมและท่าที่ต้องทำ</h4>
-            {workoutPlans[activeDay].tasks.length === 0 ? (
-              <p className={styles.emptyText}>
-                วันนี้ยังไม่มีรายการกิจกรรม พิมพ์เพิ่มได้เลยฮะ!
-              </p>
-            ) : (
-              <div className={styles.taskList}>
-                {workoutPlans[activeDay].tasks.map(
-                  (task: TaskItem, index: number) => (
-                    <div
-                      key={index}
-                      className={styles.taskItem}
-                      style={{
-                        backgroundColor: task.done ? "#f1f8e9" : "#f8fafc",
-                      }}
-                    >
-                      <input
-                        type="checkbox"
-                        className={styles.checkbox}
-                        checked={task.done}
-                        onChange={() => handleToggleTask(index)}
-                      />
+            {/* 🏋️‍♂️ การ์ดเนื้อหาการฝึก */}
+            <div className={styles.workoutCard}>
+              <div className={styles.inputGroup}>
+                <label className={styles.formLabel}>
+                  ชื่อธีมการฝึกประจำวัน
+                </label>
+                <input
+                  type="text"
+                  className={styles.formInput}
+                  value={workoutPlans[activeDay].title}
+                  onChange={(e) => handleUpdateTitle(e.target.value)}
+                  onBlur={handleBlurInfo}
+                  placeholder="เช่น วันวิ่งระเบิดไขมัน หรือ Leg Day..."
+                />
+              </div>
 
-                      <span
-                        className={
-                          task.done ? styles.taskTextCompleted : styles.taskText
-                        }
-                      >
-                        {task.text}
-                      </span>
+              <div className={styles.inputGroup}>
+                <label className={styles.formLabel}>เป้าหมายการฝึก</label>
+                <input
+                  type="text"
+                  className={styles.formInput}
+                  value={workoutPlans[activeDay].target}
+                  onChange={(e) => handleUpdateTarget(e.target.value)}
+                  onBlur={handleBlurInfo}
+                  placeholder="เช่น เน้น Cardio สร้าง Afterburn..."
+                />
+              </div>
 
-                      <button
-                        className={styles.deleteBtn}
-                        onClick={() => handleDeleteTask(index)}
-                      >
-                        <span className="material-symbols-outlined">
-                          delete
-                        </span>
-                      </button>
-                    </div>
-                  ),
+              <div className={styles.taskListContainer}>
+                <h4>รายการกิจกรรมและท่าที่ต้องทำ</h4>
+                {workoutPlans[activeDay].tasks.length === 0 ? (
+                  <p className={styles.emptyText}>
+                    วันนี้ยังไม่มีรายการกิจกรรม
+                    พิมพ์เพิ่มที่ช่องด้านล่างได้เลยฮะ!
+                  </p>
+                ) : (
+                  <div className={styles.taskList}>
+                    {workoutPlans[activeDay].tasks.map(
+                      (task: TaskItem, index: number) => (
+                        <div
+                          key={index}
+                          className={`${styles.taskItem} ${task.done ? styles.taskItemCompleted : ""}`}
+                        >
+                          <input
+                            type="checkbox"
+                            className={styles.checkbox}
+                            checked={task.done}
+                            onChange={() => handleToggleTask(index)}
+                          />
+                          <span
+                            className={
+                              task.done
+                                ? styles.taskTextCompleted
+                                : styles.taskText
+                            }
+                          >
+                            {task.text}
+                          </span>
+                          <button
+                            className={styles.deleteBtn}
+                            onClick={() => handleDeleteTask(index)}
+                          >
+                            <span
+                              className="material-symbols-outlined"
+                              style={{ fontSize: "18px" }}
+                            >
+                              delete
+                            </span>
+                          </button>
+                        </div>
+                      ),
+                    )}
+                  </div>
                 )}
               </div>
-            )}
-          </div>
 
-          <div className={styles.addTaskForm}>
-            <input
-              type="text"
-              value={newTaskText}
-              onChange={(e) => setNewTaskText(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleAddTask()}
-              placeholder="พิมพ์ท่าออกกำลังกายใหม่ เช่น วิดพื้น 20 ที..."
-            />
-            <button onClick={handleAddTask} className={styles.addBtnSubmit}>
-              เพิ่มรายการ
-            </button>
+              <div className={styles.addTaskForm}>
+                <input
+                  type="text"
+                  className={styles.formInput}
+                  style={{ flex: 1 }}
+                  value={newTaskText}
+                  onChange={(e) => setNewTaskText(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleAddTask()}
+                  placeholder="พิมพ์ท่าออกกำลังกายใหม่ เช่น วิดพื้น 20 ที..."
+                />
+                <button onClick={handleAddTask} className={styles.addBtnSubmit}>
+                  <span
+                    className="material-symbols-outlined"
+                    style={{ fontSize: "20px" }}
+                  >
+                    add_task
+                  </span>
+                  เพิ่มรายการ
+                </button>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
+      )}
+    </AppLayout>
   );
 };
 

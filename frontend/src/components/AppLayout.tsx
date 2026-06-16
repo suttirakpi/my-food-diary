@@ -4,21 +4,19 @@ import { useNavigate, useLocation } from "react-router-dom";
 import styles from "./AppLayout.module.css";
 
 interface AppLayoutProps {
-  children: React.ReactNode; // 🌟 รับเนื้อหาตรงกลางเข้ามาแทรก
+  children: React.ReactNode;
 }
 
 const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const navigate = useNavigate();
-  const location = useLocation(); // 🌟 ใช้เช็คว่าตอนนี้อยู่หน้าไหน (URL อะไร)
+  const location = useLocation();
 
-  // ฟังก์ชันเช็คว่าปุ่มไหนควรเป็น Active
   const checkActive = (path: string) => {
     return location.pathname === path ? styles.navItemActive : "";
   };
 
   return (
     <div className={styles.appLayout}>
-      {/* 🌟 Sidebar Navigation */}
       <aside className={styles.sidebar}>
         <div className={styles.brandLogo}>❤️</div>
 
@@ -43,6 +41,16 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           <span className="material-symbols-outlined">monitoring</span>
           Trends
         </button>
+
+        {/* 🌟 เพิ่มปุ่ม Workout Plan ตรงนี้ครับ! */}
+        <button
+          className={`${styles.navItem} ${checkActive("/workout-plan")}`}
+          onClick={() => navigate("/workout-plan")}
+        >
+          <span className="material-symbols-outlined">fitness_center</span>
+          Workout
+        </button>
+
         <button
           className={`${styles.navItem} ${checkActive("/calendar")}`}
           onClick={() => navigate("/calendar")}
@@ -66,7 +74,6 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         </button>
       </aside>
 
-      {/* 🌟 Main Content Area (เอาเนื้อหาจากแต่ละหน้ามาหยอดใส่ตรงนี้) */}
       <main className={styles.mainPanel}>{children}</main>
     </div>
   );
