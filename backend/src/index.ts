@@ -300,6 +300,22 @@ app.post("/api/exercises", async (req, res) => {
   }
 });
 
+// 🌟 เพิ่ม API สำหรับการแก้ไขการออกกำลังกาย (PUT) ตรงนี้
+app.put("/api/exercises/:id", async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { activityName, caloriesBurned } = req.body;
+  try {
+    await pool.query(
+      "UPDATE exercises SET activity_name = ?, calories_burned = ? WHERE id = ?",
+      [activityName, caloriesBurned, id],
+    );
+    res.json({ message: "อัปเดตข้อมูลสำเร็จ" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "อัปเดตล้มเหลว" });
+  }
+});
+
 app.delete("/api/exercises/:id", async (req, res) => {
   const { id } = req.params;
   try {
