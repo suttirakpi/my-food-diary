@@ -1,379 +1,578 @@
-/* Layout หลัก */
-.pageContainer {
+/* =========================================
+   Premium Dashboard Layout
+   ========================================= */
+.appLayout {
+  display: flex;
   min-height: 100vh;
+  background-color: #f2fcf5; /* โทนสีพื้นหลังเขียวอ่อนสุดๆ */
+  font-family: var(--font-body);
+}
+
+/* --- Sidebar --- */
+.sidebar {
+  width: 110px;
+  background-color: #a7f3d0; /* สี Mint Green แบบในรูป */
   display: flex;
   flex-direction: column;
-  background-color: var(--background);
-}
-
-/* --- Header --- */
-.header {
-  display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 16px 40px;
-  background-color: var(--surface);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  padding: 32px 0;
+  gap: 32px;
   position: sticky;
   top: 0;
-  z-index: 10;
+  height: 100vh;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.04);
+  z-index: 50;
 }
 
-.logo {
-  font-family: var(--font-heading);
-  font-size: 24px;
-  color: var(--primary);
-}
-
-.addBtn {
+.brandLogo {
+  width: 48px;
+  height: 48px;
+  background-color: white;
+  color: #10b981;
+  border-radius: 16px 4px 16px 16px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  background-color: var(--primary);
-  color: white;
-  border: none;
-  padding: 10px 24px;
-  border-radius: 50px;
-  font-family: var(--font-body);
-  cursor: pointer;
-  transition: opacity 0.2s;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: bold;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+  margin-bottom: 16px;
 }
 
-.addBtn:hover {
-  opacity: 0.9;
+.navItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: #065f46;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.2s;
+  width: 100%;
+  padding: 8px 0;
+}
+
+.navItem:hover,
+.navItemActive {
+  color: #047857;
+  transform: translateY(-2px);
+}
+
+.navItem .material-symbols-outlined {
+  font-size: 28px;
+  background-color: rgba(255, 255, 255, 0.4);
+  padding: 12px;
+  border-radius: 16px;
+  transition: all 0.2s;
+}
+
+.navItem:hover .material-symbols-outlined,
+.navItemActive .material-symbols-outlined {
+  background-color: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 /* --- Main Content --- */
-.mainContent {
-  max-width: 1000px;
+.mainPanel {
+  flex: 1;
+  padding: 32px 48px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 40px 20px;
-  width: 100%;
-  flex-grow: 1;
-  box-sizing: border-box;
-}
-
-.sectionHeader {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-}
-
-.sectionHeader h2 {
-  font-family: var(--font-heading);
-  margin: 0;
-}
-
-/* --- Meal Card --- */
-.mealCard {
-  background-color: var(--surface);
-  border-radius: 12px;
-  border-left: none;
-  padding: 24px;
-  margin-bottom: 24px;
-  box-shadow: 0 4px 12px rgba(0, 109, 59, 0.04);
-}
-
-.cardHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 16px;
-}
-
-.timeTag {
-  font-size: 12px;
-  color: var(--on-surface-variant);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-.dishTitle {
-  font-family: var(--font-heading);
-  font-size: 20px;
-  margin: 4px 0 0 0;
-}
-
-.cardBody {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  flex-direction: column;
   gap: 24px;
-  margin-top: 16px;
 }
 
-.detailLabel {
-  font-size: 14px;
-  color: var(--on-surface-variant);
-  margin-bottom: 4px;
+.topHeader {
+  display: flex;
+  justify-content: flex-end; /* ดัน Date Picker ไปขวาสุด */
+  align-items: center;
 }
 
-.detailColumn ul {
-  margin: 0;
-  padding-left: 20px;
-}
-
-/* --- กล่องครอบแต่ละมื้ออาหาร (Themes) --- */
-.categorySection {
-  margin-bottom: 32px;
-  padding: 24px;
-  border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-}
-
-.themeOrange {
-  background-color: #fff4e6;
-  border-left: 6px solid #ff9800;
-}
-.themeRed {
-  background-color: #ffebee;
-  border-left: 6px solid #f44336;
-}
-.themeYellow {
-  background-color: #fffde7;
-  border-left: 6px solid #fbc02d;
-}
-.themeBlue {
-  background-color: #e3f2fd;
-  border-left: 6px solid #2196f3;
-}
-
-.categoryTitle {
-  font-family: var(--font-heading);
-  font-size: 22px;
-  margin-top: 0;
-  margin-bottom: 16px;
-  color: var(--on-surface);
+.datePickerWrapper {
+  background-color: white;
+  border: 1px solid #e2e8f0;
+  padding: 8px 16px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
-  gap: 8px;
-}
-
-.mealGrid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 16px;
-}
-
-@media (min-width: 768px) {
-  .mealGrid {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-.mealGrid .mealCard {
-  margin-bottom: 0;
+  gap: 12px;
+  font-weight: 600;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
 }
 
-/* --- Top Summary Dashboard --- */
-.topSummary {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
-  margin-bottom: 32px;
-}
-
-.summaryCard {
-  background: white;
-  padding: 20px;
-  border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-  text-align: center;
-  border: 1px solid var(--tertiary-fixed);
-}
-
-.summaryValue {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--primary);
-  display: block;
-}
-
-.summaryLabel {
-  font-size: 14px;
-  color: var(--on-surface-variant);
-}
-
-/* --- Daily Goal Progress Bar --- */
-.goalContainer {
-  background-color: white;
-  border-radius: 16px;
-  padding: 24px;
-  margin-bottom: 32px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-  border: 1px solid var(--tertiary-fixed);
-}
-
-.goalHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.goalTitle {
-  font-family: var(--font-heading);
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--on-surface);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.goalText {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--on-surface-variant);
-}
-
-.progressBarBg {
-  width: 100%;
-  height: 24px;
-  background-color: #f1f5f9;
-  border-radius: 12px;
-  overflow: hidden;
-  position: relative;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.progressBarFill {
-  height: 100%;
-  border-radius: 12px;
-  transition:
-    width 0.8s cubic-bezier(0.4, 0, 0.2, 1),
-    background-color 0.5s;
-  background-image: linear-gradient(
-    45deg,
-    rgba(255, 255, 255, 0.15) 25%,
-    transparent 25%,
-    transparent 50%,
-    rgba(255, 255, 255, 0.15) 50%,
-    rgba(255, 255, 255, 0.15) 75%,
-    transparent 75%,
-    transparent
-  );
-  background-size: 1rem 1rem;
-}
-
-.goalMessage {
-  margin-top: 12px;
-  font-size: 14px;
-  text-align: right;
+.datePickerWrapper input {
+  border: none;
+  outline: none;
+  font-family: var(--font-body);
   font-weight: 600;
+  color: #334155;
+  font-size: 15px;
 }
 
-/* --- Water Widget --- */
-.waterWidget {
-  background-color: #e3f2fd;
-  border-radius: 16px;
+/* --- Top Stat Cards --- */
+.statGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 24px;
+}
+
+.statCard {
+  background-color: white;
+  border-radius: 24px;
   padding: 24px;
-  margin-bottom: 32px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
   display: flex;
+  flex-direction: column;
   justify-content: space-between;
-  align-items: center;
-  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.1);
-  border-left: 6px solid #2196f3;
+  border: 1px solid #f1f5f9;
+  position: relative;
+  overflow: hidden;
 }
 
-.waterInfo h3 {
-  margin: 0 0 8px 0;
-  color: #0d47a1;
+.statTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 12px;
+}
+
+.statValue {
   font-family: var(--font-heading);
+  font-size: 32px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.statSub {
+  font-size: 16px;
+  color: #64748b;
+  font-weight: 500;
+  margin-left: 4px;
+}
+
+.statIconWrapper {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  font-size: 24px;
 }
 
-.waterInfo p {
-  margin: 0;
-  color: #1565c0;
-  font-size: 14px;
+.bgBlue {
+  background-color: #e0f2fe;
+  color: #0284c7;
+}
+.bgRed {
+  background-color: #fee2e2;
+  color: #ef4444;
+}
+
+.actionBtnSmall {
+  margin-top: 16px;
+  padding: 8px 16px;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  width: 100%;
+  transition: all 0.2s;
+}
+
+.actionBtnSmall:hover {
+  background-color: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+/* --- Center Dashboard Card (Progress) --- */
+.centerCard {
+  background-color: white;
+  border-radius: 32px;
+  padding: 40px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.03);
+  border: 1px solid #f1f5f9;
+}
+
+.ringContainer {
+  width: 240px;
+  height: 240px;
+  border-radius: 50%;
+  margin: 0 auto 40px auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  /* background conic-gradient ถูกเซ็ตผ่าน style ใน TSX */
+}
+
+.ringInner {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background-color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 2px 12px rgba(0, 0, 0, 0.02);
+}
+
+.ringLabel {
+  font-size: 16px;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 4px;
+}
+
+.ringValue {
+  font-family: var(--font-heading);
+  font-size: 48px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1;
+}
+
+.ringGoal {
+  font-size: 15px;
+  color: #94a3b8;
+  margin-top: 8px;
   font-weight: 500;
 }
 
-.waterControls {
+/* --- Macros & Actions Row --- */
+.macrosRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+  padding-bottom: 32px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.macroItem {
+  flex: 1;
+  padding: 0 16px;
+}
+
+.macroHeader {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 700;
+  margin-bottom: 8px;
+  font-size: 15px;
+}
+
+.macroBarBg {
+  height: 8px;
+  background-color: #f1f5f9;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.macroBarFill {
+  height: 100%;
+  border-radius: 4px;
+}
+
+.fillGreen {
+  background-color: #34d399;
+}
+.fillOrange {
+  background-color: #fb923c;
+}
+
+.actionsRow {
+  display: flex;
+  gap: 32px;
+}
+
+.quickAddSection {
+  flex: 2;
+}
+
+.quickAddLabel {
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: #0f172a;
+}
+
+.searchBox {
+  display: flex;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+  height: 48px;
+}
+
+.searchBox input {
+  flex: 1;
+  padding: 0 16px;
+  border: none;
+  outline: none;
+  font-family: var(--font-body);
+  font-size: 15px;
+}
+
+.searchBox button {
+  background-color: #0f172a;
+  color: white;
+  border: none;
+  padding: 0 24px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.waterTrackerSection {
+  flex: 1;
+}
+
+.waterTrackerControls {
   display: flex;
   align-items: center;
   gap: 16px;
+  background-color: #f8fafc;
+  padding: 8px;
+  border-radius: 12px;
 }
 
-.waterBtn {
-  background-color: white;
-  color: #2196f3;
-  border: 1px solid #90caf9;
+.waterControlBtn {
+  background-color: #a7f3d0;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  font-size: 20px;
+  color: #065f46;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.waterControlBtn:hover {
+  background-color: #6ee7b7;
+}
+
+.waterGlassIcon {
+  font-size: 28px;
+  color: #38bdf8;
+}
+
+/* --- Meal Cards Grid --- */
+.mealCardsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+.mealCardPremium {
+  border-radius: 24px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+  min-height: 250px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Gradient Backgrounds แบบในรูป */
+.themeBreakfast {
+  background: linear-gradient(135deg, #e6fcf5 0%, #ffffff 100%);
+  border: 1px solid #a7f3d0;
+}
+.themeLunch {
+  background: linear-gradient(135deg, #fff7ed 0%, #ffffff 100%);
+  border: 1px solid #fed7aa;
+}
+.themeDinner {
+  background: linear-gradient(135deg, #f3f0ff 0%, #ffffff 100%);
+  border: 1px solid #d8b4fe;
+}
+.themeSnack {
+  background: linear-gradient(135deg, #f0f9ff 0%, #ffffff 100%);
+  border: 1px solid #bae6fd;
+}
+
+.mealCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.mealCardTitleGroup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mealIconBox {
   width: 40px;
   height: 40px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s;
+  background-color: rgba(255, 255, 255, 0.6);
+  color: #334155;
 }
 
-.waterBtn:hover {
-  background-color: #2196f3;
-  color: white;
-}
-
-.waterCount {
-  font-size: 28px;
+.mealCardTitle {
   font-family: var(--font-heading);
+  font-size: 20px;
   font-weight: 700;
-  color: #0d47a1;
-  min-width: 30px;
-  text-align: center;
+  margin: 0;
+  color: #0f172a;
 }
 
-/* --- Search Bar --- */
-.searchContainer {
-  position: relative;
-  margin-bottom: 24px;
-}
-
-.searchInput {
-  width: 100%;
-  padding: 16px 20px 16px 52px;
-  border-radius: 12px;
-  border: 1px solid var(--tertiary-fixed);
-  font-family: var(--font-body);
+.mealCardCal {
+  font-weight: 700;
   font-size: 16px;
-  color: var(--on-surface);
-  outline: none;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-  transition:
-    border-color 0.2s,
-    box-shadow 0.2s;
-  box-sizing: border-box;
+  color: #0f172a;
 }
 
-.searchInput:focus {
-  border-color: var(--primary);
-  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.15);
+.mealItemList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-grow: 1;
 }
 
-.searchIcon {
-  position: absolute;
-  left: 18px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--on-surface-variant);
-  font-size: 24px;
+.mealItem {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  color: #334155;
+  font-weight: 500;
 }
 
-.searchBadge {
-  background-color: var(--primary);
-  color: white;
-  padding: 4px 12px;
+.mealCardActions {
+  display: flex;
+  gap: 12px;
+  margin-top: auto;
+}
+
+.actionBtnDelete,
+.actionBtnEdit {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px;
   border-radius: 12px;
-  font-size: 12px;
-  font-weight: bold;
-  margin-left: 12px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  border: 1px solid;
 }
 
-/* --- Edit Modal (Popup) --- */
+.actionBtnDelete {
+  background: transparent;
+  border-color: #cbd5e1;
+  color: #475569;
+}
+.actionBtnDelete:hover {
+  background: white;
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+.actionBtnEdit {
+  background: #0f172a;
+  border-color: #0f172a;
+  color: white;
+}
+.actionBtnEdit:hover {
+  background: #1e293b;
+}
+
+/* Exercise Input Panel (ซ่อน/โชว์) */
+.exercisePanel {
+  background-color: #f8fafc;
+  border-radius: 16px;
+  padding: 16px;
+  margin-top: 16px;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.exercisePanel input {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  outline: none;
+}
+.exercisePanel button {
+  background-color: #ef4444;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .macrosRow,
+  .actionsRow {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 24px;
+  }
+  .centerCard {
+    padding: 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  .appLayout {
+    flex-direction: column;
+  }
+  .sidebar {
+    width: 100%;
+    height: auto;
+    flex-direction: row;
+    padding: 16px;
+    position: relative;
+    border-radius: 0;
+    overflow-x: auto;
+    gap: 16px;
+    justify-content: flex-start;
+  }
+  .brandLogo {
+    margin-bottom: 0;
+    min-width: 48px;
+  }
+  .navItem {
+    padding: 4px;
+    min-width: 70px;
+  }
+  .mainPanel {
+    padding: 16px;
+  }
+  .topHeader {
+    justify-content: center;
+  }
+}
+
+/* Modal, Loading, Mascot ใช้ของเดิมได้เลย */
 .modalOverlay {
   position: fixed;
   top: 0;
@@ -387,18 +586,16 @@
   z-index: 1000;
   backdrop-filter: blur(4px);
 }
-
 .modalContent {
   background-color: white;
   padding: 32px;
-  border-radius: 16px;
+  border-radius: 24px;
   width: 90%;
   max-width: 500px;
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
 }
-
 .modalTitle {
   margin-top: 0;
   margin-bottom: 24px;
@@ -406,7 +603,6 @@
   color: var(--on-surface);
   font-size: 22px;
 }
-
 .modalInputGroup {
   margin-bottom: 16px;
 }
@@ -427,14 +623,12 @@
   font-size: 16px;
   outline: none;
 }
-
 .modalActions {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
   margin-top: 32px;
 }
-
 .btnSave,
 .btnCancel {
   padding: 10px 20px;
@@ -444,7 +638,6 @@
   border: none;
   font-family: var(--font-body);
 }
-
 .btnSave {
   background-color: var(--primary);
   color: white;
@@ -454,110 +647,6 @@
   color: #333;
 }
 
-/* --- Footer --- */
-.footer {
-  width: 100%;
-  padding: 48px 20px;
-  background-color: var(--surface);
-  border-top: 1px solid var(--tertiary-fixed);
-}
-
-.footerContent {
-  max-width: 1000px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 24px;
-}
-
-.menuGroup {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-@media (min-width: 768px) {
-  .footerContent {
-    flex-direction: row;
-    justify-content: space-between;
-  }
-}
-
-.footerInfo {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  text-align: center;
-}
-
-@media (min-width: 768px) {
-  .footerInfo {
-    text-align: left;
-  }
-}
-
-.footerLogo {
-  font-family: var(--font-heading);
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--primary);
-}
-
-.footerCopyright {
-  font-size: 13px;
-  color: var(--on-surface-variant);
-}
-
-@media (max-width: 768px) {
-  .header {
-    padding: 16px 20px;
-    flex-direction: column; /* สั่งให้โลโก้กับเมนูอยู่คนละบรรทัด */
-    align-items: flex-start;
-    gap: 16px;
-  }
-
-  /* 🌟 ทำให้เมนูปัดซ้ายขวาได้ในมือถือ */
-  .menuGroup {
-    width: 100%;
-    overflow-x: auto;
-    padding-bottom: 8px; /* เว้นที่นิดนึงเวลาปัด */
-    -webkit-overflow-scrolling: touch; /* ให้ปัดได้ลื่นๆ บน iOS */
-  }
-
-  /* บังคับไม่ให้ปุ่มหดตัวเวลาโดนบีบ */
-  .menuGroup button {
-    flex-shrink: 0;
-  }
-
-  .cardBody {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-
-  /* ... (โค้ด Responsive อื่นๆ ที่มีอยู่ด้านล่างเก็บไว้เหมือนเดิม) ... */
-  .waterWidget {
-    flex-direction: column;
-    text-align: center;
-    gap: 16px;
-  }
-  .waterControls {
-    width: 100%;
-    justify-content: center;
-  }
-  .goalHeader {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
-  .topSummary {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* =========================================
-   🐹 ระบบน้องไวท์มอลสุดคิวท์ (Mascot) 
-   ========================================= */
 .mascotContainer {
   position: fixed;
   bottom: 24px;
@@ -568,7 +657,6 @@
   z-index: 1000;
   animation: float 3s ease-in-out infinite;
 }
-
 @keyframes float {
   0% {
     transform: translateY(0px);
@@ -580,7 +668,6 @@
     transform: translateY(0px);
   }
 }
-
 .mascotBubble {
   padding: 14px 20px;
   border-radius: 24px 24px 4px 24px;
@@ -591,9 +678,8 @@
   max-width: 230px;
   position: relative;
   line-height: 1.5;
+  background: white;
 }
-
-/* สร้างหางกล่องข้อความสุดคิวท์ */
 .mascotBubble::after {
   content: "";
   position: absolute;
@@ -609,7 +695,6 @@
   transform: skewX(-30deg);
   z-index: -1;
 }
-
 .mascotAvatar {
   width: 72px;
   height: 72px;
@@ -621,23 +706,16 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
   border: 3px solid;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: all 0.3s;
   user-select: none;
+  background: white;
 }
-
-/* เอฟเฟกต์ตอนเอาเมาส์ชี้และตอนคลิก */
 .mascotAvatar:hover {
   transform: scale(1.15) rotate(-10deg);
 }
-.mascotAvatar:active {
-  transform: scale(0.9);
-}
-
-/* เอฟเฟกต์ตอนโดนลูบหัว */
 .petting {
   animation: heartBeat 0.8s infinite;
 }
-
 @keyframes heartBeat {
   0% {
     transform: scale(1);
@@ -656,9 +734,6 @@
   }
 }
 
-/* =========================================
-   ⏳ ระบบ Loading Screen ตอนรอ Server 
-   ========================================= */
 .loadingOverlay {
   position: fixed;
   top: 0;
@@ -672,7 +747,6 @@
   align-items: center;
   z-index: 9999;
 }
-
 .loadingCard {
   background: white;
   padding: 40px;
@@ -685,13 +759,11 @@
   flex-direction: column;
   align-items: center;
 }
-
 .loadingMascot {
   font-size: 64px;
   margin-bottom: 16px;
   animation: runWheel 0.5s infinite alternate;
 }
-
 @keyframes runWheel {
   0% {
     transform: translateY(0) rotate(-5deg);
@@ -700,7 +772,6 @@
     transform: translateY(-10px) rotate(5deg);
   }
 }
-
 .loadingBarContainer {
   width: 100%;
   height: 12px;
@@ -710,7 +781,6 @@
   overflow: hidden;
   position: relative;
 }
-
 .loadingBar {
   width: 40%;
   height: 100%;
@@ -719,7 +789,6 @@
   position: absolute;
   animation: loadingSlide 1.5s infinite ease-in-out;
 }
-
 @keyframes loadingSlide {
   0% {
     left: -40%;
@@ -727,95 +796,4 @@
   100% {
     left: 100%;
   }
-}
-
-/* --- Protein Widget --- */
-.proteinWidget {
-  background-color: #fff3e0;
-  border-radius: 16px;
-  padding: 24px;
-  margin-bottom: 32px;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.1);
-  border-left: 6px solid #ff9800;
-}
-
-.proteinInfo h3 {
-  margin: 0 0 8px 0;
-  color: #e65100;
-  font-family: var(--font-heading);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.proteinInfo p {
-  margin: 0;
-  color: #f57c00;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.proteinControls {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-}
-
-@media (min-width: 768px) {
-  .proteinControls {
-    width: auto;
-  }
-}
-
-.proteinInput {
-  width: 80px;
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid #ffcc80;
-  outline: none;
-  font-family: var(--font-body);
-  font-size: 16px;
-  font-weight: bold;
-  color: #e65100;
-  text-align: center;
-}
-
-.proteinAddBtn {
-  background-color: #ff9800;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-weight: bold;
-  font-family: var(--font-body);
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.proteinAddBtn:hover {
-  background-color: #f57c00;
-}
-
-.proteinResetBtn {
-  background: white;
-  border: 1px solid #ffcc80;
-  color: #f44336;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.proteinResetBtn:hover {
-  background-color: #ffebee;
 }
