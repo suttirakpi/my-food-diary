@@ -406,6 +406,33 @@ app.post("/api/workout-plans", async (req, res) => {
   }
 });
 
+app.get("/api/weight", async (req, res) => {
+  try {
+    const [rows]: any = await pool.query(
+      "SELECT DATE_FORMAT(log_date, '%Y-%m-%d') as date, weight FROM weight_logs ORDER BY log_date ASC",
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// 2. บันทึกหรืออัปเดตน้ำหนักรายวัน
+app.post("/api/weight", async (req, res) => {
+  const { date, weight } = req.body;
+  try {
+    await pool.query(
+      "INSERT INTO weight_logs (log_date, weight) VALUES (?, ?) ON DUPLICATE KEY UPDATE weight = ?",
+      [date, weight, weight],
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
 // 🌟 บรรทัด app.listen ต้องอยู่ล่างสุดเสมอ!
 app.listen(port, () => {
   console.log(`Backend Server is running on http://localhost:${port}`);
