@@ -12,6 +12,8 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
+  LineChart,
+  Line,
   CartesianGrid,
   AreaChart,
   Area,
@@ -109,7 +111,7 @@ const Trends: React.FC = () => {
         setData(trendsRes.data);
         const calData = calendarRes.data;
 
-        // 1. ดึงข้อมูลโปรตีนย้อนหลัง 7 วัน
+        // 🌟 1. ดึงข้อมูลโปรตีนย้อนหลัง 7 วัน
         const last7Dates = Array.from({ length: 7 }, (_, i) => {
           const d = new Date();
           d.setDate(d.getDate() - (6 - i));
@@ -134,7 +136,7 @@ const Trends: React.FC = () => {
         });
         setProteinTrend(pData);
 
-        // 2. คำนวณข้อมูลรายสัปดาห์ (บังคับเป็น Number แก้บั๊ก e+26 ยาวทะลุโลก)
+        // 🌟 2. คำนวณข้อมูลรายสัปดาห์
         const wData = [];
         for (let w = 0; w < 4; w++) {
           let sum = 0;
@@ -153,7 +155,7 @@ const Trends: React.FC = () => {
         }
         setWeeklyTrend(wData);
 
-        // 3. คำนวณข้อมูลรายเดือน (บังคับเป็น Number)
+        // 🌟 3. คำนวณข้อมูลรายเดือน
         const monthNames = [
           "ม.ค.",
           "ก.พ.",
@@ -194,7 +196,7 @@ const Trends: React.FC = () => {
         }
         setMonthlyAvgTrend(mData);
 
-        // 4. ภาพรวม 30 วัน (กิน vs เบิร์น)
+        // 🌟 4. ภาพรวม 30 วัน (กิน vs เบิร์น)
         const last30Days = [];
         for (let i = 29; i >= 0; i--) {
           const d = new Date();
@@ -226,6 +228,53 @@ const Trends: React.FC = () => {
     [],
   );
 
+  // 🌟 นำข้อมูลเจาะลึก 7 วัน (กราฟแท่งคู่ของเดิม) กลับมา
+  const mergedChartData = useMemo(() => {
+    if (!data) return [];
+
+    const combined: Record<string, any> = {};
+
+    data.calorieTrend.forEach((item) => {
+      combined[item.date] = {
+        date: item.date,
+        total_cal: Number(item.total_cal) || 0,
+        total_burned: 0,
+      };
+    });
+
+    data.exerciseTrend.forEach((item) => {
+      if (combined[item.date]) {
+        combined[item.date].total_burned = Number(item.total_burned) || 0;
+      } else {
+        combined[item.date] = {
+          date: item.date,
+          total_cal: 0,
+          total_burned: Number(item.total_burned) || 0,
+        };
+      }
+    });
+
+    const allDates = Array.from(
+      new Set([
+        ...data.calorieTrend.map((d) => d.date),
+        ...data.exerciseTrend.map((d) => d.date),
+      ]),
+    );
+
+    allDates.sort((a, b) => {
+      const numA = parseInt(a.replace(/\D/g, "")) || 0;
+      const numB = parseInt(b.replace(/\D/g, "")) || 0;
+      const today = new Date().getDate();
+
+      const scoreA = today < 15 && numA > 20 ? numA - 31 : numA;
+      const scoreB = today < 15 && numB > 20 ? numB - 31 : numB;
+
+      return scoreA - scoreB;
+    });
+
+    return allDates.map((date) => combined[date]).slice(-7);
+  }, [data]);
+
   if (loading) return <div className={styles.pageContainer}>กำลังโหลด...</div>;
   if (!data) return <div className={styles.pageContainer}>ไม่พบข้อมูล</div>;
 
@@ -242,6 +291,7 @@ const Trends: React.FC = () => {
         <div style={{ width: "40px" }}></div>
       </header>
 
+      {/* สรุปแคลอรี่ */}
       <div className={styles.summaryGrid}>
         <div className={styles.summaryCard}>
           <div className={styles.summaryLabel}>แคลอรี่ที่กินวันนี้</div>
@@ -294,6 +344,96 @@ const Trends: React.FC = () => {
                 radius={[6, 6, 0, 0]}
               />
             </BarChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* 🌟 เจาะลึก กิน vs เบิร์น (7 วันล่าสุด) [ของเดิมกลับมาแล้ว] */}
+        <div className={styles.chartCard} style={{ gridColumn: "1 / -1" }}>
+          <h3 className={styles.chartTitle}>
+            เจาะลึก กิน vs เบิร์น (7 วันล่าสุด)
+          </h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart
+              data={mergedChartData}
+              margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="date" />
+              <YAxis />
+              <Tooltip
+                cursor={{ fill: "rgba(0,0,0,0.05)" }}
+                contentStyle={{
+                  borderRadius: "12px",
+                  border: "none",
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                }}
+              />
+              <Legend wrapperStyle={{ paddingTop: "20px" }} />
+              <Bar
+                dataKey="total_cal"
+                name="กินเข้า (kcal)"
+                fill="#4caf50"
+                radius={[6, 6, 0, 0]}
+              />
+              <Bar
+                dataKey="total_burned"
+                name="เบิร์นออก (kcal)"
+                fill="#f44336"
+                radius={[6, 6, 0, 0]}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* 🌟 กราฟเส้น: แนวโน้มแคลอรี่ที่กิน [ของเดิมกลับมาแล้ว] */}
+        <div className={styles.chartCard} style={{ gridColumn: "1 / -1" }}>
+          <h3 className={styles.chartTitle}>แนวโน้มการกิน 7 วันล่าสุด</h3>
+          <ResponsiveContainer width="100%" height={250}>
+            <LineChart data={data.calorieTrend}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="date" />
+              <YAxis />
+              <Tooltip formatter={(value) => [`${value} kcal`, "กินเข้า"]} />
+              <Line
+                type="monotone"
+                dataKey="total_cal"
+                stroke="#4caf50"
+                strokeWidth={3}
+                dot={{ r: 5 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* 🌟 กราฟพื้นที่: แนวโน้มการเผาผลาญ [ของเดิมกลับมาแล้ว] */}
+        <div
+          className={styles.chartCard}
+          style={{ gridColumn: "1 / -1", backgroundColor: "#fff5f5" }}
+        >
+          <h3 className={styles.chartTitle} style={{ color: "#d32f2f" }}>
+            แนวโน้มการเผาผลาญ (Exercise)
+          </h3>
+          <ResponsiveContainer width="100%" height={250}>
+            <AreaChart data={data.exerciseTrend}>
+              <defs>
+                <linearGradient id="colorBurn" x1="0" y1="0" x2="0" y2="100%">
+                  <stop offset="5%" stopColor="#f44336" stopOpacity={0.8} />
+                  <stop offset="95%" stopColor="#f44336" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="date" />
+              <YAxis />
+              <Tooltip formatter={(value) => [`${value} kcal`, "เบิร์นออก"]} />
+              <Area
+                type="monotone"
+                dataKey="total_burned"
+                stroke="#d32f2f"
+                fillOpacity={1}
+                fill="url(#colorBurn)"
+                strokeWidth={3}
+              />
+            </AreaChart>
           </ResponsiveContainer>
         </div>
 
@@ -404,7 +544,7 @@ const Trends: React.FC = () => {
           </ResponsiveContainer>
         </div>
 
-        {/* สัดส่วนประเภทที่กิน */}
+        {/* กราฟวงกลม: สัดส่วนอาหาร */}
         <div className={styles.chartCard}>
           <h3 className={styles.chartTitle}>สัดส่วนประเภทที่กิน (7 วัน)</h3>
           <ResponsiveContainer width="100%" height={250}>
@@ -435,7 +575,7 @@ const Trends: React.FC = () => {
           </ResponsiveContainer>
         </div>
 
-        {/* สถิติน้ำดื่ม 7 วัน */}
+        {/* กราฟแท่ง: น้ำดื่ม */}
         <div className={styles.chartCard}>
           <h3 className={styles.chartTitle}>สถิติน้ำดื่ม 7 วัน</h3>
           <ResponsiveContainer width="100%" height={250}>
