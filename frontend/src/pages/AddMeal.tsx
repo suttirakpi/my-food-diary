@@ -1,10 +1,10 @@
 // frontend/src/pages/AddMeal.tsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import toast from "react-hot-toast";
 import styles from "./AddMeal.module.css";
-import AppLayout from "../components/AppLayout"; // 🌟 Import Layout เข้ามา
+import AppLayout from "../components/AppLayout";
 
 interface SideOption {
   id: number;
@@ -13,6 +13,9 @@ interface SideOption {
 
 const AddMeal = () => {
   const navigate = useNavigate();
+
+  // 🌟 State สำหรับ Loading หน้าเว็บตอนโหลดเข้า
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const [mealDate, setMealDate] = useState(
     new Date().toISOString().split("T")[0],
@@ -32,6 +35,23 @@ const AddMeal = () => {
   const [sideOptions, setSideOptions] = useState<SideOption[]>([
     { id: Date.now(), value: "" },
   ]);
+
+  // 🌟 จำลองการเช็คเซิร์ฟเวอร์ว่าตื่นหรือยัง (เหมือน DailyLog)
+  useEffect(() => {
+    const wakeupServer = async () => {
+      try {
+        // ยิง request เปล่าๆ ไปหา health-check หรือ api ใดก็ได้เพื่อปลุก render
+        await axios.get(
+          "https://my-food-diary-n1tf.onrender.com/api/meals?date=" + mealDate,
+        );
+      } catch (error) {
+        console.error("ตื่นสิเซิร์ฟเวอร์", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    wakeupServer();
+  }, [mealDate]);
 
   const handleAddSide = () =>
     setSideOptions([...sideOptions, { id: Date.now(), value: "" }]);
@@ -76,8 +96,36 @@ const AddMeal = () => {
   };
 
   return (
-    // 🌟 ครอบเนื้อหาทั้งหมดด้วย AppLayout เพื่อให้มี Sidebar แบบหน้า Dashboard
     <AppLayout>
+      {/* 🌟 หน้าจอ Loading ระหว่างรอเซิร์ฟเวอร์ */}
+      {isLoading && (
+        <div className="loadingOverlay">
+          <div className="loadingCard">
+            <div className="loadingMascot">🐹💨</div>
+            <h2
+              style={{ fontFamily: "var(--font-heading)", margin: "0 0 8px 0" }}
+            >
+              กำลังปลุกเซิร์ฟเวอร์...
+            </h2>
+            <p
+              style={{
+                color: "#64748b",
+                margin: 0,
+                fontSize: "14px",
+                lineHeight: "1.6",
+              }}
+            >
+              รอแป๊บนะฮะ ไวท์มอลกำลังเตรียมกระทะให้อยู่!
+              <br />
+              (อาจใช้เวลา 30-50 วินาทีหากเซิร์ฟเวอร์หลับ)
+            </p>
+            <div className="loadingBarContainer">
+              <div className="loadingBar"></div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className={styles.contentWrapper}>
         <div className={styles.header}>
           <h1>Log Your Meal</h1>
