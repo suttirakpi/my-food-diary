@@ -1,48 +1,40 @@
-.pageContainer {
-  max-width: 1100px;
+/* frontend/src/pages/MealHistory.module.css */
+.contentWrapper {
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 32px 20px;
-  min-height: 100vh;
-  background-color: var(--background);
+  width: 100%;
 }
 
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
+.pageHeader {
+  margin-bottom: 32px;
 }
 
-.backBtn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: none;
-  border: none;
-  color: var(--primary);
-  font-family: var(--font-body);
-  font-weight: 600;
-  cursor: pointer;
-  padding: 8px 16px;
-  border-radius: 8px;
-  transition: background-color 0.2s;
+.pageHeader h1 {
+  font-family: var(--font-heading);
+  font-size: 32px;
+  color: #0f172a;
+  margin-top: 0;
+  margin-bottom: 8px;
 }
 
-.backBtn:hover {
-  background-color: var(--surface);
+.pageHeader p {
+  color: #64748b;
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
 }
 
-/* แถบตัวกรอง */
+/* 🔍 แถบตัวกรอง (Filter) */
 .filterSection {
   background-color: white;
-  padding: 20px;
-  border-radius: 16px;
-  border: 1px solid var(--tertiary-fixed);
+  padding: 24px;
+  border-radius: 24px;
+  border: 1px solid #e2e8f0;
   display: flex;
   flex-wrap: wrap;
-  gap: 16px;
-  margin-bottom: 20px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+  gap: 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
 }
 
 .inputGroup {
@@ -50,45 +42,62 @@
   min-width: 200px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .inputGroup label {
   font-size: 13px;
-  font-weight: 600;
-  color: var(--on-surface-variant);
+  font-weight: 700;
+  color: #334155;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .inputGroup input,
 .inputGroup select {
-  padding: 12px;
-  border-radius: 8px;
-  border: 1px solid var(--tertiary-fixed);
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
   font-family: var(--font-body);
   font-size: 15px;
   outline: none;
-  background-color: var(--background);
+  background-color: #f8fafc;
+  color: #0f172a;
+  transition: all 0.2s;
 }
 
 .inputGroup input:focus,
 .inputGroup select:focus {
-  border-color: var(--primary);
+  background-color: white;
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.calFilterGroup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.calFilterGroup input {
+  width: 100%;
 }
 
 .tableSummary {
-  font-size: 14px;
-  color: var(--on-surface-variant);
-  margin-bottom: 12px;
-  padding-left: 4px;
+  font-size: 15px;
+  color: #64748b;
+  margin-bottom: 16px;
+  font-weight: 500;
+  padding-left: 8px;
 }
 
-/* จัดการ Table */
+/* 📊 จัดการ Table */
 .tableWrapper {
   background-color: white;
-  border-radius: 16px;
-  border: 1px solid var(--tertiary-fixed);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
-  overflow-x: auto; /* เลื่อนซ้ายขวาได้ถ้าจอมือถือเล็ก */
+  border-radius: 24px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+  overflow-x: auto;
 }
 
 .excelTable {
@@ -99,62 +108,67 @@
 }
 
 .excelTable th {
-  background-color: #f5f7fa;
-  padding: 16px;
-  font-weight: 600;
-  color: var(--on-surface);
-  border-bottom: 2px solid var(--tertiary-fixed);
-  font-family: var(--font-heading);
+  background-color: #f8fafc;
+  padding: 16px 20px;
+  font-weight: 700;
+  color: #475569;
+  border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
 }
 
 .excelTable td {
-  padding: 16px;
-  border-bottom: 1px solid #f0f0f0;
-  color: #333;
+  padding: 16px 20px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #1e293b;
+  vertical-align: middle;
 }
 
 .excelTable tbody tr:hover {
-  background-color: #f9fbfd; /* ไฮไลท์แถวเวลาเอาเมาส์ชี้แบบ Excel */
+  background-color: #f8fafc;
 }
 
-.excelTable tfoot td {
-  background-color: #f5f7fa;
-  padding: 18px 16px;
-  border-top: 2px solid var(--tertiary-fixed);
+/* แถบหัวตารางแสดง วันที่ */
+.dateHeaderRow td {
+  background-color: #ecfdf5 !important;
+  color: #047857 !important;
+  font-size: 15px;
+  font-weight: 700;
+  padding: 12px 20px !important;
+  border-bottom: 1px solid #a7f3d0 !important;
 }
 
 .dateCell {
   white-space: nowrap;
-  color: var(--on-surface-variant);
+  color: #64748b;
+  font-weight: 500;
 }
 
-/* Badges มื้ออาหาร */
+/* 🏷 Badges มื้ออาหาร */
 .badge {
   display: inline-block;
-  padding: 4px 10px;
+  padding: 6px 12px;
   border-radius: 20px;
-  font-size: 12px;
-  font-weight: bold;
+  font-size: 13px;
+  font-weight: 700;
 }
-
 .มื้อเช้า {
-  background-color: #ffe0b2;
-  color: #e65100;
+  background-color: #fef3c7;
+  color: #b45309;
 }
 .มื้อกลางวัน {
-  background-color: #ffcdd2;
-  color: #c62828;
+  background-color: #fee2e2;
+  color: #b91c1c;
 }
 .มื้อเย็น {
-  background-color: #fff9c4;
-  color: #f57f17;
+  background-color: #ede9fe;
+  color: #6d28d9;
 }
 .ระหว่างวัน {
-  background-color: #e1f5fe;
-  color: #0277bd;
+  background-color: #e0f2fe;
+  color: #0369a1;
 }
 
-/* Toppings Tags */
+/* 🥗 Toppings Tags */
 .toppingContainer {
   display: flex;
   flex-wrap: wrap;
@@ -162,73 +176,53 @@
 }
 
 .toppingTag {
-  background-color: #f0f2f5;
-  padding: 2px 8px;
-  border-radius: 4px;
+  background-color: #f1f5f9;
+  padding: 4px 10px;
+  border-radius: 8px;
   font-size: 13px;
-  color: #555;
-  border: 1px solid #e1e4e8;
+  color: #475569;
+  border: 1px solid #e2e8f0;
 }
 
-/* Responsive สำหรับมือถือจอเล็กมากๆ */
-@media (max-width: 768px) {
-  .header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
+/* แถบรวมแคลอรี่ด้านล่างตาราง */
+.excelTable tfoot td {
+  background-color: #f8fafc;
+  padding: 20px;
+  border-top: 2px solid #e2e8f0;
 }
 
-.calFilterGroup {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.calFilterGroup input {
-  width: 100%;
-}
-
-/* แถบหัวตารางแสดง วันที่ และ ปริมาณน้ำดื่ม */
-.dateHeaderRow td {
-  background-color: #e0f2fe !important;
-  color: #0369a1 !important;
-  font-size: 16px;
-  font-weight: bold;
-  padding: 12px 16px !important;
-  border-bottom: 2px solid #bae6fd !important;
-}
-
-/* ปุ่มเลื่อนหน้า (Pagination) */
+/* ⏪ ปุ่มเลื่อนหน้า (Pagination) */
 .pagination {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-top: 24px;
-  padding: 16px;
+  padding: 16px 24px;
   background-color: white;
-  border-radius: 12px;
-  border: 1px solid var(--tertiary-fixed);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
 }
 
 .pageBtn {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 10px 20px;
-  background-color: var(--primary);
+  gap: 6px;
+  padding: 12px 24px;
+  background-color: #0f172a;
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 12px;
   cursor: pointer;
   font-family: var(--font-body);
-  font-weight: bold;
-  transition: opacity 0.2s;
+  font-weight: 700;
+  font-size: 14px;
+  transition: all 0.2s;
 }
 
 .pageBtn:hover:not(:disabled) {
-  opacity: 0.9;
+  background-color: #1e293b;
+  transform: translateY(-2px);
 }
 
 .pageBtn:disabled {
@@ -237,6 +231,7 @@
 }
 
 .pageInfo {
-  font-weight: 600;
-  color: var(--on-surface-variant);
+  font-weight: 700;
+  color: #475569;
+  font-size: 15px;
 }

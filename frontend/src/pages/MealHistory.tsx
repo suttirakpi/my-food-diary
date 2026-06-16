@@ -1,7 +1,8 @@
+// frontend/src/pages/MealHistory.tsx
 import React, { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import styles from "./MealHistory.module.css";
+import AppLayout from "../components/AppLayout"; // 🌟 Import Layout เข้ามา
 
 interface MealOption {
   id: number;
@@ -28,21 +29,24 @@ const getLocalDateStr = (dateString: string) => {
 };
 
 const MealHistory: React.FC = () => {
-  const navigate = useNavigate();
   const [meals, setMeals] = useState<MealEntry[]>([]);
   const [waterData, setWaterData] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState<boolean>(true);
 
-  // 🌟 States สำหรับระบบค้นหา ตัวกรอง และการเรียงลำดับ
+  // States สำหรับระบบค้นหา ตัวกรอง และการเรียงลำดับ
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string>("ทั้งหมด");
   const [selectedType, setSelectedType] = useState<string>("ทั้งหมด");
   const [minCal, setMinCal] = useState<number | "">("");
   const [maxCal, setMaxCal] = useState<number | "">("");
-  const [sortOrder, setSortOrder] = useState<string>("default"); // 🌟 เพิ่ม State สำหรับเรียงลำดับ
+  const [sortOrder, setSortOrder] = useState<string>("default");
 
   const [currentPage, setCurrentPage] = useState<number>(1);
   const DATES_PER_PAGE = 7;
+  const MEALS_PER_PAGE = 15;
+
+  // เช็คโหมดมุมมองตาราง
+  const isGroupedView = sortOrder === "default";
 
   useEffect(() => {
     const fetchData = async () => {
@@ -69,9 +73,7 @@ const MealHistory: React.FC = () => {
     fetchData();
   }, []);
 
-  // 🌟 1. กรองข้อมูลและ "เรียงลำดับ (Sort)"
   const filteredMeals = useMemo(() => {
-    // กรองข้อมูลตามเงื่อนไขก่อน
     let result = meals.filter((meal) => {
       const matchesSearch = meal.main_dish
         .toLowerCase()
@@ -94,7 +96,6 @@ const MealHistory: React.FC = () => {
       );
     });
 
-    // 🌟 ระบบเรียงลำดับแคลอรี่
     if (sortOrder === "highToLow") {
       result.sort(
         (a, b) => (Number(b.calories) || 0) - (Number(a.calories) || 0),
@@ -116,7 +117,6 @@ const MealHistory: React.FC = () => {
     sortOrder,
   ]);
 
-  // รีเซ็ตกลับไปหน้า 1 เสมอเวลาเปลี่ยนเงื่อนไขใดๆ รวมถึงตอนเรียงลำดับด้วย
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, selectedCategory, selectedType, minCal, maxCal, sortOrder]);
@@ -137,11 +137,19 @@ const MealHistory: React.FC = () => {
     );
   }, [groupedByDate]);
 
-  const totalPages = Math.ceil(uniqueDates.length / DATES_PER_PAGE) || 1;
+  const totalPages = isGroupedView
+    ? Math.ceil(uniqueDates.length / DATES_PER_PAGE) || 1
+    : Math.ceil(filteredMeals.length / MEALS_PER_PAGE) || 1;
+
   const currentDates = useMemo(() => {
     const startIndex = (currentPage - 1) * DATES_PER_PAGE;
     return uniqueDates.slice(startIndex, startIndex + DATES_PER_PAGE);
   }, [uniqueDates, currentPage]);
+
+  const currentFlatMeals = useMemo(() => {
+    const startIndex = (currentPage - 1) * MEALS_PER_PAGE;
+    return filteredMeals.slice(startIndex, startIndex + MEALS_PER_PAGE);
+  }, [filteredMeals, currentPage]);
 
   const totalFilteredCalories = useMemo(() => {
     return filteredMeals.reduce(
@@ -150,142 +158,246 @@ const MealHistory: React.FC = () => {
     );
   }, [filteredMeals]);
 
-  if (loading)
-    return (
-      <div className={styles.pageContainer}>กำลังโหลดประวัติข้อมูล...</div>
-    );
-
   return (
-    <div className={styles.pageContainer}>
-      <header className={styles.header}>
-        <button className={styles.backBtn} onClick={() => navigate("/")}>
-          <span className="material-symbols-outlined">arrow_back</span>{" "}
-          กลับหน้าแรก
-        </button>
-        <h1 style={{ fontFamily: "var(--font-heading)", margin: 0 }}>
-          Meal History Ledger
-        </h1>
-        <div style={{ width: "40px" }}></div>
-      </header>
-
-      <div className={styles.filterSection}>
-        <div className={styles.inputGroup}>
-          <label>ค้นหาชื่อเมนู</label>
-          <input
-            type="text"
-            placeholder="พิมพ์ชื่ออาหารเพื่อค้นหา..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-
-        <div className={styles.inputGroup}>
-          <label>กรองตามแคลอรี่ (kcal)</label>
-          <div className={styles.calFilterGroup}>
-            <input
-              type="number"
-              placeholder="Min"
-              value={minCal}
-              onChange={(e) =>
-                setMinCal(e.target.value ? Number(e.target.value) : "")
-              }
-            />
-            <span>-</span>
-            <input
-              type="number"
-              placeholder="Max"
-              value={maxCal}
-              onChange={(e) =>
-                setMaxCal(e.target.value ? Number(e.target.value) : "")
-              }
-            />
+    <AppLayout>
+      {/* 🌟 หน้าจอ Loading ระหว่างรอเซิร์ฟเวอร์ดึงข้อมูล */}
+      {loading && (
+        <div className="loadingOverlay">
+          <div className="loadingCard">
+            <div className="loadingMascot">🐹💨</div>
+            <h2
+              style={{
+                fontFamily: "var(--font-heading)",
+                margin: "0 0 8px 0",
+                color: "#0f172a",
+              }}
+            >
+              กำลังโหลดประวัติ...
+            </h2>
+            <p
+              style={{
+                color: "#64748b",
+                margin: 0,
+                fontSize: "14px",
+                lineHeight: "1.6",
+              }}
+            >
+              รอแป๊บนะฮะ ไวท์มอลกำลังรื้อแฟ้มประวัติให้อยู่!
+            </p>
+            <div className="loadingBarContainer">
+              <div className="loadingBar"></div>
+            </div>
           </div>
         </div>
+      )}
 
-        {/* 🌟 เพิ่ม Dropdown สำหรับการเรียงลำดับ */}
-        <div className={styles.inputGroup}>
-          <label>เรียงลำดับแคลอรี่</label>
-          <select
-            value={sortOrder}
-            onChange={(e) => setSortOrder(e.target.value)}
-          >
-            <option value="default">ค่าเริ่มต้น (เวลา)</option>
-            <option value="highToLow">แคลอรี่: มากไปน้อย 🔥</option>
-            <option value="lowToHigh">แคลอรี่: น้อยไปมาก 🥗</option>
-          </select>
-        </div>
+      {/* เนื้อหาหน้าเว็บ */}
+      {!loading && (
+        <div className={styles.contentWrapper}>
+          <div className={styles.pageHeader}>
+            <h1>Meal History Ledger</h1>
+            <p>Review and filter your past dietary records 📋</p>
+          </div>
 
-        <div className={styles.inputGroup}>
-          <label>มื้ออาหาร</label>
-          <select
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-          >
-            <option value="ทั้งหมด">ทั้งหมดทุกมื้อ</option>
-            <option value="มื้อเช้า">มื้อเช้า</option>
-            <option value="มื้อกลางวัน">มื้อกลางวัน</option>
-            <option value="มื้อเย็น">มื้อเย็น</option>
-            <option value="ระหว่างวัน">ระหว่างวัน</option>
-          </select>
-        </div>
+          <div className={styles.filterSection}>
+            <div className={styles.inputGroup}>
+              <label>ค้นหาชื่อเมนู</label>
+              <input
+                type="text"
+                placeholder="พิมพ์ชื่ออาหารเพื่อค้นหา..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
 
-        <div className={styles.inputGroup}>
-          <label>ประเภท</label>
-          <select
-            value={selectedType}
-            onChange={(e) => setSelectedType(e.target.value)}
-          >
-            <option value="ทั้งหมด">ทั้งหมดทุกประเภท</option>
-            <option value="อาหาร">อาหาร</option>
-            <option value="เครื่องดื่ม">เครื่องดื่ม</option>
-            <option value="ขนม">ขนม</option>
-          </select>
-        </div>
-      </div>
+            <div className={styles.inputGroup}>
+              <label>กรองตามแคลอรี่ (kcal)</label>
+              <div className={styles.calFilterGroup}>
+                <input
+                  type="number"
+                  placeholder="Min"
+                  value={minCal}
+                  onChange={(e) =>
+                    setMinCal(e.target.value ? Number(e.target.value) : "")
+                  }
+                />
+                <span style={{ color: "#94a3b8", fontWeight: "bold" }}>-</span>
+                <input
+                  type="number"
+                  placeholder="Max"
+                  value={maxCal}
+                  onChange={(e) =>
+                    setMaxCal(e.target.value ? Number(e.target.value) : "")
+                  }
+                />
+              </div>
+            </div>
 
-      <div className={styles.tableSummary}>
-        พบข้อมูลทั้งหมด <strong>{filteredMeals.length}</strong> รายการ |
-        แคลอรี่รวมในการค้นหานี้: <strong>{totalFilteredCalories} kcal</strong>
-      </div>
+            <div className={styles.inputGroup}>
+              <label>เรียงลำดับแคลอรี่</label>
+              <select
+                value={sortOrder}
+                onChange={(e) => setSortOrder(e.target.value)}
+              >
+                <option value="default">ค่าเริ่มต้น (จัดกลุ่มตามวัน)</option>
+                <option value="highToLow">แคลอรี่: มากไปน้อย 🔥</option>
+                <option value="lowToHigh">แคลอรี่: น้อยไปมาก 🥗</option>
+              </select>
+            </div>
 
-      <div className={styles.tableWrapper}>
-        <table className={styles.excelTable}>
-          <thead>
-            <tr>
-              <th>เวลา</th>
-              <th>มื้ออาหาร</th>
-              <th>ประเภท</th>
-              <th>ชื่อเมนูอาหาร / เครื่องดื่ม</th>
-              <th>ท็อปปิ้ง / เพิ่มเติม</th>
-              <th style={{ textAlign: "right" }}>แคลอรี่ (kcal)</th>
-            </tr>
-          </thead>
-          <tbody>
-            {currentDates.length > 0 ? (
-              currentDates.map((date) => {
-                const dayMeals = groupedByDate[date];
-                const glasses = waterData[date] || 0;
+            <div className={styles.inputGroup}>
+              <label>มื้ออาหาร</label>
+              <select
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+              >
+                <option value="ทั้งหมด">ทั้งหมดทุกมื้อ</option>
+                <option value="มื้อเช้า">มื้อเช้า</option>
+                <option value="มื้อกลางวัน">มื้อกลางวัน</option>
+                <option value="มื้อเย็น">มื้อเย็น</option>
+                <option value="ระหว่างวัน">ระหว่างวัน</option>
+              </select>
+            </div>
 
-                const dateObj = new Date(date);
-                const formattedDate = dateObj.toLocaleDateString("th-TH", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                  weekday: "long",
-                });
+            <div className={styles.inputGroup}>
+              <label>ประเภท</label>
+              <select
+                value={selectedType}
+                onChange={(e) => setSelectedType(e.target.value)}
+              >
+                <option value="ทั้งหมด">ทั้งหมดทุกประเภท</option>
+                <option value="อาหาร">อาหาร</option>
+                <option value="เครื่องดื่ม">เครื่องดื่ม</option>
+                <option value="ขนม">ขนม</option>
+              </select>
+            </div>
+          </div>
 
-                return (
-                  <React.Fragment key={date}>
-                    <tr className={styles.dateHeaderRow}>
-                      <td colSpan={6}>
-                        📅 {formattedDate} &nbsp;&nbsp;|&nbsp;&nbsp; 💧 ดื่มน้ำ:{" "}
-                        {glasses} แก้ว ({glasses * 22} oz /{" "}
-                        {((glasses * 650) / 1000).toFixed(1)} L)
+          <div className={styles.tableSummary}>
+            พบข้อมูลทั้งหมด <strong>{filteredMeals.length}</strong> รายการ
+            &nbsp;|&nbsp; แคลอรี่รวมในการค้นหานี้:{" "}
+            <strong>{totalFilteredCalories} kcal</strong>
+          </div>
+
+          <div className={styles.tableWrapper}>
+            <table className={styles.excelTable}>
+              <thead>
+                <tr>
+                  {!isGroupedView && <th>วันที่</th>}
+                  <th>เวลา</th>
+                  <th>มื้ออาหาร</th>
+                  <th>ประเภท</th>
+                  <th>ชื่อเมนูอาหาร / เครื่องดื่ม</th>
+                  <th>ท็อปปิ้ง / เพิ่มเติม</th>
+                  <th style={{ textAlign: "right" }}>แคลอรี่ (kcal)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {isGroupedView ? (
+                  currentDates.length > 0 ? (
+                    currentDates.map((date) => {
+                      const dayMeals = groupedByDate[date];
+                      const glasses = waterData[date] || 0;
+                      const dateObj = new Date(date);
+                      const formattedDate = dateObj.toLocaleDateString(
+                        "th-TH",
+                        {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                          weekday: "long",
+                        },
+                      );
+
+                      return (
+                        <React.Fragment key={date}>
+                          <tr className={styles.dateHeaderRow}>
+                            <td colSpan={6}>
+                              📅 {formattedDate} &nbsp;&nbsp;|&nbsp;&nbsp; 💧
+                              ดื่มน้ำ: {glasses} แก้ว ({glasses * 22} oz /{" "}
+                              {((glasses * 650) / 1000).toFixed(1)} L)
+                            </td>
+                          </tr>
+
+                          {dayMeals.map((meal) => (
+                            <tr key={meal.id}>
+                              <td data-label="เวลา">
+                                {meal.meal_time.substring(0, 5)} น.
+                              </td>
+                              <td data-label="มื้ออาหาร">
+                                <span
+                                  className={`${styles.badge} ${styles[meal.category]}`}
+                                >
+                                  {meal.category}
+                                </span>
+                              </td>
+                              <td data-label="ประเภท">{meal.item_type}</td>
+                              <td
+                                data-label="ชื่อเมนู"
+                                style={{ fontWeight: 700 }}
+                              >
+                                {meal.main_dish}
+                              </td>
+                              <td data-label="ท็อปปิ้ง">
+                                {meal.options && meal.options.length > 0 ? (
+                                  <div className={styles.toppingContainer}>
+                                    {meal.options.map((opt) => (
+                                      <span
+                                        key={opt.id}
+                                        className={styles.toppingTag}
+                                      >
+                                        {opt.option_name}
+                                      </span>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <span style={{ color: "#cbd5e1" }}>-</span>
+                                )}
+                              </td>
+                              <td
+                                data-label="แคลอรี่"
+                                style={{
+                                  textAlign: "right",
+                                  fontWeight: "bold",
+                                  color: "#10b981",
+                                }}
+                              >
+                                {meal.calories > 0 ? `${meal.calories}` : "0"}
+                              </td>
+                            </tr>
+                          ))}
+                        </React.Fragment>
+                      );
+                    })
+                  ) : (
+                    <tr>
+                      <td
+                        colSpan={6}
+                        style={{
+                          textAlign: "center",
+                          padding: "40px",
+                          color: "#64748b",
+                          fontWeight: 500,
+                        }}
+                      >
+                        ❌ ไม่พบข้อมูลที่ตรงกับตัวกรอง
                       </td>
                     </tr>
+                  )
+                ) : currentFlatMeals.length > 0 ? (
+                  currentFlatMeals.map((meal) => {
+                    const dateObj = new Date(meal.meal_date);
+                    const formattedDate = dateObj.toLocaleDateString("th-TH", {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    });
 
-                    {dayMeals.map((meal) => (
+                    return (
                       <tr key={meal.id}>
+                        <td data-label="วันที่" className={styles.dateCell}>
+                          {formattedDate}
+                        </td>
                         <td data-label="เวลา">
                           {meal.meal_time.substring(0, 5)} น.
                         </td>
@@ -297,7 +409,7 @@ const MealHistory: React.FC = () => {
                           </span>
                         </td>
                         <td data-label="ประเภท">{meal.item_type}</td>
-                        <td data-label="ชื่อเมนู" style={{ fontWeight: 600 }}>
+                        <td data-label="ชื่อเมนู" style={{ fontWeight: 700 }}>
                           {meal.main_dish}
                         </td>
                         <td data-label="ท็อปปิ้ง">
@@ -313,7 +425,7 @@ const MealHistory: React.FC = () => {
                               ))}
                             </div>
                           ) : (
-                            <span style={{ color: "#bfbfbf" }}>-</span>
+                            <span style={{ color: "#cbd5e1" }}>-</span>
                           )}
                         </td>
                         <td
@@ -321,80 +433,87 @@ const MealHistory: React.FC = () => {
                           style={{
                             textAlign: "right",
                             fontWeight: "bold",
-                            color: "#e65100",
+                            color: "#10b981",
                           }}
                         >
-                          {meal.calories > 0 ? `${meal.calories} 🔥` : "0"}
+                          {meal.calories > 0 ? `${meal.calories}` : "0"}
                         </td>
                       </tr>
-                    ))}
-                  </React.Fragment>
-                );
-              })
-            ) : (
-              <tr>
-                <td
-                  colSpan={6}
-                  style={{
-                    textAlign: "center",
-                    padding: "40px",
-                    color: "var(--on-surface-variant)",
-                  }}
-                >
-                  ❌ ไม่พบข้อมูลที่ตรงกับตัวกรองซักรายการเลยครับตูน
-                </td>
-              </tr>
-            )}
-          </tbody>
-          <tfoot>
-            <tr>
-              <td
-                colSpan={5}
-                style={{ fontWeight: "bold", textAlign: "right" }}
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td
+                      colSpan={7}
+                      style={{
+                        textAlign: "center",
+                        padding: "40px",
+                        color: "#64748b",
+                        fontWeight: 500,
+                      }}
+                    >
+                      ❌ ไม่พบข้อมูล
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td
+                    colSpan={isGroupedView ? 5 : 6}
+                    style={{
+                      fontWeight: "bold",
+                      textAlign: "right",
+                      color: "#475569",
+                    }}
+                  >
+                    รวมแคลอรี่สุทธิที่กรองมาได้ (SUM):
+                  </td>
+                  <td
+                    style={{
+                      fontWeight: "800",
+                      textAlign: "right",
+                      color: "#0f172a",
+                      fontSize: "18px",
+                    }}
+                  >
+                    {totalFilteredCalories} kcal
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          {totalPages > 1 && (
+            <div className={styles.pagination}>
+              <button
+                className={styles.pageBtn}
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
               >
-                รวมแคลอรี่สุทธิที่กรองมาได้ (SUM):
-              </td>
-              <td
-                style={{
-                  fontWeight: "bold",
-                  textAlign: "right",
-                  color: "#d32f2f",
-                  fontSize: "18px",
-                }}
+                <span className="material-symbols-outlined">chevron_left</span>{" "}
+                ก่อนหน้า
+              </button>
+
+              <span className={styles.pageInfo}>
+                หน้าที่ {currentPage} จาก {totalPages}
+              </span>
+
+              <button
+                className={styles.pageBtn}
+                onClick={() =>
+                  setCurrentPage((p) => Math.min(totalPages, p + 1))
+                }
+                disabled={currentPage === totalPages}
               >
-                {totalFilteredCalories} kcal
-              </td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
-
-      {totalPages > 1 && (
-        <div className={styles.pagination}>
-          <button
-            className={styles.pageBtn}
-            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-            disabled={currentPage === 1}
-          >
-            <span className="material-symbols-outlined">chevron_left</span>{" "}
-            ก่อนหน้า
-          </button>
-
-          <span className={styles.pageInfo}>
-            หน้าที่ {currentPage} จาก {totalPages}
-          </span>
-
-          <button
-            className={styles.pageBtn}
-            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-            disabled={currentPage === totalPages}
-          >
-            ถัดไป{" "}
-            <span className="material-symbols-outlined">chevron_right</span>
-          </button>
+                ถัดไป{" "}
+                <span className="material-symbols-outlined">chevron_right</span>
+              </button>
+            </div>
+          )}
         </div>
       )}
-    </div>
+    </AppLayout>
   );
 };
 
