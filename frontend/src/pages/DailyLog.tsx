@@ -38,14 +38,16 @@ const DailyLog: React.FC = () => {
   const [editingMeal, setEditingMeal] = useState<MealEntry | null>(null);
   const [exercises, setExercises] = useState<ExerciseEntry[]>([]);
 
-  // States สำหรับเพิ่ม / แก้ไข ฟอร์มออกกำลังกาย
+  // States สำหรับฟอร์มออกกำลังกาย
   const [showExerciseForm, setShowExerciseForm] = useState(false);
   const [exName, setExName] = useState("");
   const [exCal, setExCal] = useState<number | "">("");
-  const [editingExercise, setEditingExercise] = useState<ExerciseEntry | null>(
-    null,
-  );
 
+  // 🌟 States สำหรับ Modal เพิ่มโปรตีน
+  const [showProteinModal, setShowProteinModal] = useState<boolean>(false);
+  const [proteinInput, setProteinInput] = useState<string>("10");
+
+  // มาสคอต
   const [isPetting, setIsPetting] = useState(false);
   const handlePetMascot = () => {
     setIsPetting(true);
@@ -84,8 +86,10 @@ const DailyLog: React.FC = () => {
     }
   };
 
+  // ดึงข้อมูลเมื่อเปลี่ยนวันที่
   useEffect(() => {
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDate]);
 
   const handleUpdateWater = async (newAmount: number) => {
@@ -101,27 +105,35 @@ const DailyLog: React.FC = () => {
     }
   };
 
-  const handleAddProtein = async () => {
-    const amount = Number(
-      window.prompt("ใส่จำนวนโปรตีน (กรัม) ที่กินเพิ่ม:", "10"),
-    );
-    if (!amount || amount <= 0) return;
+  // 🌟 ฟังก์ชันเปิด Pop-up โปรตีน
+  const handleOpenProteinModal = () => {
+    setProteinInput("10"); // ตั้งค่าเริ่มต้นเป็น 10 กรัม
+    setShowProteinModal(true);
+  };
+
+  // 🌟 ฟังก์ชันกดยืนยันเพิ่มโปรตีน (ทำงานแทน window.prompt)
+  const handleConfirmAddProtein = async () => {
+    const amount = Number(proteinInput);
+    if (!amount || amount <= 0) {
+      toast.error("กรุณากรอกจำนวนโปรตีนให้ถูกต้อง");
+      return;
+    }
+
     const newTotal = proteinGrams + amount;
     setProteinGrams(newTotal);
+
     try {
       await axios.post("https://my-food-diary-n1tf.onrender.com/api/protein", {
         date: selectedDate,
         grams: newTotal,
       });
       toast.success(`เพิ่มโปรตีน ${amount}g เรียบร้อย!`);
+      setShowProteinModal(false); // ปิด Pop-up
     } catch (error) {
       toast.error("บันทึกข้อมูลไม่สำเร็จ");
     }
   };
 
-  // ----------------------------------------
-  // 🏋️‍♂️ การจัดการ ออกกำลังกาย (Exercises)
-  // ----------------------------------------
   const handleAddExercise = async () => {
     if (!exName.trim() || !exCal) {
       toast.error("กรุณากรอกชื่อกิจกรรมและจำนวนแคลอรี่");
@@ -146,41 +158,6 @@ const DailyLog: React.FC = () => {
     }
   };
 
-  const handleDeleteExercise = async (id: number) => {
-    if (!window.confirm("คุณแน่ใจหรือไม่ว่าต้องการลบการออกกำลังกายนี้?"))
-      return;
-    try {
-      await axios.delete(
-        `https://my-food-diary-n1tf.onrender.com/api/exercises/${id}`,
-      );
-      setExercises((prev) => prev.filter((ex) => ex.id !== id));
-      toast.success("ลบรายการเรียบร้อย");
-    } catch (error) {
-      toast.error("เกิดข้อผิดพลาดในการลบข้อมูล");
-    }
-  };
-
-  const handleSaveEditExercise = async () => {
-    if (!editingExercise) return;
-    try {
-      await axios.put(
-        `https://my-food-diary-n1tf.onrender.com/api/exercises/${editingExercise.id}`,
-        {
-          activityName: editingExercise.activity_name,
-          caloriesBurned: Number(editingExercise.calories_burned),
-        },
-      );
-      setEditingExercise(null);
-      fetchData();
-      toast.success("อัปเดตข้อมูลสำเร็จ!");
-    } catch (error) {
-      toast.error("เกิดข้อผิดพลาดในการแก้ไขข้อมูล");
-    }
-  };
-
-  // ----------------------------------------
-  // 🥗 การจัดการ อาหาร (Meals)
-  // ----------------------------------------
   const handleDelete = async (id: number) => {
     if (!window.confirm("คุณแน่ใจหรือไม่ว่าต้องการลบรายการอาหารนี้?")) return;
     try {
@@ -260,6 +237,7 @@ const DailyLog: React.FC = () => {
   const DAILY_CALORIE_GOAL = 1400;
   const PROTEIN_GOAL = 140;
 
+  // คำนวณวงแหวน (Ring Chart)
   const isOverGoal = netCalories > DAILY_CALORIE_GOAL;
   const percentage = Math.min(
     Math.max((netCalories / DAILY_CALORIE_GOAL) * 100, 0),
@@ -291,6 +269,7 @@ const DailyLog: React.FC = () => {
 
   return (
     <AppLayout>
+      {/* 🌟 หน้าโหลดข้อมูล */}
       {isLoading && (
         <div className={styles.loadingOverlay}>
           <div className={styles.loadingCard}>
@@ -415,7 +394,9 @@ const DailyLog: React.FC = () => {
                     textDecoration: "underline",
                     fontSize: "13px",
                   }}
-                  onClick={handleAddProtein}
+                  onClick={
+                    handleOpenProteinModal
+                  } /* 🌟 เรียกใช้ฟังก์ชันเปิด Pop-up แทน */
                 >
                   +Add
                 </span>
@@ -452,7 +433,7 @@ const DailyLog: React.FC = () => {
           </div>
         </div>
 
-        {/* 🌟 Actions Row */}
+        {/* 🌟 Actions Row คลีนๆ จัดระเบียบใหม่ */}
         <div className={styles.actionsRow}>
           <div className={styles.quickAddSection}>
             <div className={styles.quickAddLabel}>Quick Add</div>
@@ -488,7 +469,7 @@ const DailyLog: React.FC = () => {
                 style={{ fontSize: "20px" }}
               >
                 add_circle
-              </span>{" "}
+              </span>
               Add New Meal
             </button>
           </div>
@@ -498,9 +479,9 @@ const DailyLog: React.FC = () => {
             <div className={styles.waterTrackerControls}>
               <button
                 className={styles.waterControlBtn}
-                onClick={() => handleUpdateWater(waterGlasses - 1)}
+                onClick={() => handleUpdateWater(waterGlasses + 1)}
               >
-                -
+                +
               </button>
               <span
                 className={`material-symbols-outlined ${styles.waterGlassIcon}`}
@@ -509,9 +490,9 @@ const DailyLog: React.FC = () => {
               </span>
               <button
                 className={styles.waterControlBtn}
-                onClick={() => handleUpdateWater(waterGlasses + 1)}
+                onClick={() => handleUpdateWater(waterGlasses - 1)}
               >
-                +
+                -
               </button>
               <span
                 style={{
@@ -527,181 +508,90 @@ const DailyLog: React.FC = () => {
         </div>
       </div>
 
-      {/* 🥗 Meal & Exercise Cards Grid */}
+      {/* 🥗 Meal Cards Grid */}
       <div className={styles.mealCardsGrid}>
-        {/* 🌟 1. กล่องแสดงรายการ ออกกำลังกาย (Workout) */}
-        {exercises.length > 0 && (
-          <div
-            className={styles.mealCardPremium}
-            style={{
-              background: "linear-gradient(135deg, #fef2f2 0%, #ffffff 100%)",
-              border: "1px solid #fecaca",
-            }}
-          >
-            <div className={styles.mealCardHeader}>
-              <div className={styles.mealCardTitleGroup}>
-                <div
-                  className={styles.mealIconBox}
-                  style={{
-                    backgroundColor: "rgba(254, 226, 226, 0.8)",
-                    color: "#ef4444",
-                  }}
-                >
-                  <span className="material-symbols-outlined">
-                    local_fire_department
-                  </span>
-                </div>
-                <h3 className={styles.mealCardTitle}>Workout</h3>
-              </div>
-              <div className={styles.mealCardCal} style={{ color: "#ef4444" }}>
-                {totalBurned} kcal
-              </div>
-            </div>
+        {meals.length > 0 ? (
+          groupsToRender.map((cat: string) => {
+            const mealsInCat = groupedMeals[cat];
+            if (!mealsInCat || mealsInCat.length === 0) return null;
 
-            <div className={styles.mealItemList}>
-              {exercises.map((ex) => (
-                <div
-                  key={ex.id}
-                  className={styles.mealItem}
-                  style={{ alignItems: "center", marginBottom: "12px" }}
-                >
-                  <span
-                    style={{
-                      flex: 1,
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {ex.activity_name}
-                  </span>
-                  <span
-                    style={{
-                      fontWeight: 600,
-                      color: "#ef4444",
-                      marginRight: "12px",
-                    }}
-                  >
-                    {ex.calories_burned} kcal
-                  </span>
-                  {/* ไอคอน Edit/Delete จิ๋ว */}
-                  <div style={{ display: "flex", gap: "6px" }}>
-                    <span
-                      className="material-symbols-outlined"
-                      style={{
-                        fontSize: "18px",
-                        cursor: "pointer",
-                        color: "#94a3b8",
-                      }}
-                      onClick={() => setEditingExercise(ex)}
-                    >
-                      edit
-                    </span>
-                    <span
-                      className="material-symbols-outlined"
-                      style={{
-                        fontSize: "18px",
-                        cursor: "pointer",
-                        color: "#f87171",
-                      }}
-                      onClick={() => handleDeleteExercise(ex.id)}
-                    >
-                      delete
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+            const catCals = mealsInCat.reduce(
+              (s, m) => s + (m.calories || 0),
+              0,
+            );
 
-        {/* 🌟 2. กล่องแสดงรายการ อาหาร (Meals) */}
-        {groupsToRender.map((cat: string) => {
-          const mealsInCat = groupedMeals[cat];
-          if (!mealsInCat || mealsInCat.length === 0) return null;
-          const catCals = mealsInCat.reduce((s, m) => s + (m.calories || 0), 0);
-
-          return (
-            <div
-              key={cat}
-              className={`${styles.mealCardPremium} ${getThemeClass(cat)}`}
-            >
-              <div className={styles.mealCardHeader}>
-                <div className={styles.mealCardTitleGroup}>
-                  <div className={styles.mealIconBox}>
-                    <span className="material-symbols-outlined">
-                      {getIconForCat(cat)}
-                    </span>
-                  </div>
-                  <h3 className={styles.mealCardTitle}>{cat}</h3>
-                </div>
-                <div className={styles.mealCardCal}>{catCals} kcal</div>
-              </div>
-
-              <div className={styles.mealItemList}>
-                {mealsInCat.map((meal) => (
-                  <div
-                    key={meal.id}
-                    className={styles.mealItem}
-                    style={{ alignItems: "center", marginBottom: "12px" }}
-                  >
-                    <span
-                      style={{
-                        flex: 1,
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {meal.main_dish}
-                      {meal.options && meal.options.length > 0 && (
-                        <span
-                          style={{
-                            color: "#94a3b8",
-                            fontSize: "12px",
-                            marginLeft: "4px",
-                          }}
-                        >
-                          (+{meal.options.length})
-                        </span>
-                      )}
-                    </span>
-                    <span style={{ fontWeight: 600, marginRight: "12px" }}>
-                      {meal.calories > 0 ? `${meal.calories} kcal` : "-"}
-                    </span>
-                    {/* ไอคอน Edit/Delete จิ๋ว */}
-                    <div style={{ display: "flex", gap: "6px" }}>
-                      <span
-                        className="material-symbols-outlined"
-                        style={{
-                          fontSize: "18px",
-                          cursor: "pointer",
-                          color: "#94a3b8",
-                        }}
-                        onClick={() => handleOpenEdit(meal)}
-                      >
-                        edit
-                      </span>
-                      <span
-                        className="material-symbols-outlined"
-                        style={{
-                          fontSize: "18px",
-                          cursor: "pointer",
-                          color: "#f87171",
-                        }}
-                        onClick={() => handleDelete(meal.id)}
-                      >
-                        delete
+            return (
+              <div
+                key={cat}
+                className={`${styles.mealCardPremium} ${getThemeClass(cat)}`}
+              >
+                <div className={styles.mealCardHeader}>
+                  <div className={styles.mealCardTitleGroup}>
+                    <div className={styles.mealIconBox}>
+                      <span className="material-symbols-outlined">
+                        {getIconForCat(cat)}
                       </span>
                     </div>
+                    <h3 className={styles.mealCardTitle}>{cat}</h3>
                   </div>
-                ))}
-              </div>
-            </div>
-          );
-        })}
+                  <div className={styles.mealCardCal}>{catCals} kcal</div>
+                </div>
 
-        {meals.length === 0 && exercises.length === 0 && (
+                <div className={styles.mealItemList}>
+                  {mealsInCat.map((meal) => (
+                    <div key={meal.id} className={styles.mealItem}>
+                      <span
+                        style={{
+                          maxWidth: "70%",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {meal.main_dish}
+                        {meal.options && meal.options.length > 0 && (
+                          <span
+                            style={{
+                              color: "#94a3b8",
+                              fontSize: "12px",
+                              marginLeft: "4px",
+                            }}
+                          >
+                            (+{meal.options.length})
+                          </span>
+                        )}
+                      </span>
+                      <span style={{ fontWeight: 600 }}>
+                        {meal.calories > 0 ? `${meal.calories} kcal` : "-"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className={styles.mealCardActions}>
+                  <button
+                    className={styles.actionBtnDelete}
+                    onClick={() => handleDelete(mealsInCat[0].id)}
+                  >
+                    <span
+                      className="material-symbols-outlined"
+                      style={{ fontSize: "18px" }}
+                    >
+                      delete
+                    </span>{" "}
+                    Delete
+                  </button>
+                  <button
+                    className={styles.actionBtnEdit}
+                    onClick={() => handleOpenEdit(mealsInCat[0])}
+                  >
+                    Edit
+                  </button>
+                </div>
+              </div>
+            );
+          })
+        ) : (
           <div
             style={{
               gridColumn: "1 / -1",
@@ -718,7 +608,7 @@ const DailyLog: React.FC = () => {
               restaurant
             </span>
             <p style={{ color: "#64748b", fontWeight: 500 }}>
-              No meals or workouts logged today.
+              No meals logged today.
             </p>
           </div>
         )}
@@ -767,56 +657,41 @@ const DailyLog: React.FC = () => {
         </div>
       )}
 
-      {/* 🛠 Modal แก้ไขการออกกำลังกาย */}
-      {editingExercise && (
+      {/* 🌟 Modal เพิ่มโปรตีน (แทน window.prompt) */}
+      {showProteinModal && (
         <div className={styles.modalOverlay}>
-          <div className={styles.modalContent}>
-            <h2 className={styles.modalTitle}>แก้ไขการออกกำลังกาย</h2>
+          <div className={styles.modalContent} style={{ maxWidth: "400px" }}>
+            <h2 className={styles.modalTitle} style={{ fontSize: "20px" }}>
+              เพิ่มโปรตีน
+            </h2>
             <div className={styles.modalInputGroup}>
-              <label>ชื่อกิจกรรม</label>
-              <input
-                type="text"
-                value={editingExercise.activity_name}
-                onChange={(e) =>
-                  setEditingExercise({
-                    ...editingExercise,
-                    activity_name: e.target.value,
-                  })
-                }
-              />
-            </div>
-            <div className={styles.modalInputGroup}>
-              <label>แคลอรี่ที่เผาผลาญ (kcal)</label>
+              <label>ใส่จำนวนโปรตีน (กรัม) ที่กินเพิ่ม:</label>
               <input
                 type="number"
-                value={editingExercise.calories_burned}
-                onChange={(e) =>
-                  setEditingExercise({
-                    ...editingExercise,
-                    calories_burned: Number(e.target.value) || 0,
-                  })
-                }
+                value={proteinInput}
+                onChange={(e) => setProteinInput(e.target.value)}
+                autoFocus /* ให้ cursor เด้งไปรอที่ช่องนี้อัตโนมัติ */
               />
             </div>
             <div className={styles.modalActions}>
               <button
                 className={styles.btnCancel}
-                onClick={() => setEditingExercise(null)}
+                onClick={() => setShowProteinModal(false)}
               >
                 ยกเลิก
               </button>
               <button
                 className={styles.btnSave}
-                onClick={handleSaveEditExercise}
+                onClick={handleConfirmAddProtein}
               >
-                บันทึกข้อมูล
+                ตกลง
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* 🐹 Mascot น้องไวท์มอล */}
+      {/* Mascot น้องไวท์มอล 🐹 */}
       <div className={styles.mascotContainer}>
         <div
           className={styles.mascotBubble}
