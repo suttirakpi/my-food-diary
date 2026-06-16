@@ -458,6 +458,20 @@ const DailyLog: React.FC = () => {
             <span className="material-symbols-outlined">table_chart</span>{" "}
             History
           </button>
+
+          <button
+            className={
+              styles.actionBtn
+            } /* 🌟 เปลี่ยนชื่อคลาสให้ตรงกับปุ่มอื่นของตูน (เช่น styles.navBtn หรือ styles.outlineBtn) */
+            onClick={() => navigate("/weight")}
+            style={{
+              borderColor: "#9c27b0",
+              color: "#9c27b0",
+            }} /* สีม่วงให้ดูแตกต่าง */
+          >
+            <span className="material-symbols-outlined">scale</span> Weight
+          </button>
+
           <button
             className={styles.addBtn}
             onClick={() => navigate("/add-meal")}
