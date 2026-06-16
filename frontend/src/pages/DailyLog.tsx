@@ -493,10 +493,11 @@ const DailyLog: React.FC = () => {
             <div className={styles.waterTrackerControls}>
               <button
                 className={styles.waterControlBtn}
-                onClick={() => handleUpdateWater(waterGlasses + 1)}
+                onClick={() => handleUpdateWater(waterGlasses - 1)}
               >
-                +
+                -
               </button>
+
               <span
                 className={`material-symbols-outlined ${styles.waterGlassIcon}`}
               >
@@ -504,9 +505,9 @@ const DailyLog: React.FC = () => {
               </span>
               <button
                 className={styles.waterControlBtn}
-                onClick={() => handleUpdateWater(waterGlasses - 1)}
+                onClick={() => handleUpdateWater(waterGlasses + 1)}
               >
-                -
+                +
               </button>
               <span
                 style={{
