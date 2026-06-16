@@ -86,7 +86,6 @@ const DailyLog: React.FC = () => {
     }
   };
 
-  // ดึงข้อมูลเมื่อเปลี่ยนวันที่
   useEffect(() => {
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -105,13 +104,11 @@ const DailyLog: React.FC = () => {
     }
   };
 
-  // 🌟 ฟังก์ชันเปิด Pop-up โปรตีน
   const handleOpenProteinModal = () => {
-    setProteinInput("10"); // ตั้งค่าเริ่มต้นเป็น 10 กรัม
+    setProteinInput("10");
     setShowProteinModal(true);
   };
 
-  // 🌟 ฟังก์ชันกดยืนยันเพิ่มโปรตีน (ทำงานแทน window.prompt)
   const handleConfirmAddProtein = async () => {
     const amount = Number(proteinInput);
     if (!amount || amount <= 0) {
@@ -128,7 +125,7 @@ const DailyLog: React.FC = () => {
         grams: newTotal,
       });
       toast.success(`เพิ่มโปรตีน ${amount}g เรียบร้อย!`);
-      setShowProteinModal(false); // ปิด Pop-up
+      setShowProteinModal(false);
     } catch (error) {
       toast.error("บันทึกข้อมูลไม่สำเร็จ");
     }
@@ -234,10 +231,14 @@ const DailyLog: React.FC = () => {
   );
   const netCalories = totalCalories - totalBurned;
 
+  // 🌟 ตั้งค่า Range เป้าหมายโปรตีน
   const DAILY_CALORIE_GOAL = 1400;
-  const PROTEIN_GOAL = 140;
+  const PROTEIN_MIN_GOAL = 80;
+  const PROTEIN_MAX_GOAL = 140;
 
-  // คำนวณวงแหวน (Ring Chart)
+  // เช็คสถานะการกินโปรตีน
+  const isProteinReachedMin = proteinGrams >= PROTEIN_MIN_GOAL;
+
   const isOverGoal = netCalories > DAILY_CALORIE_GOAL;
   const percentage = Math.min(
     Math.max((netCalories / DAILY_CALORIE_GOAL) * 100, 0),
@@ -269,7 +270,7 @@ const DailyLog: React.FC = () => {
 
   return (
     <AppLayout>
-      {/* 🌟 หน้าโหลดข้อมูล */}
+      {/* หน้าโหลดข้อมูล */}
       {isLoading && (
         <div className={styles.loadingOverlay}>
           <div className={styles.loadingCard}>
@@ -281,7 +282,6 @@ const DailyLog: React.FC = () => {
         </div>
       )}
 
-      {/* 📅 Date Picker */}
       <div className={styles.topHeader}>
         <div className={styles.datePickerWrapper}>
           <span
@@ -298,7 +298,6 @@ const DailyLog: React.FC = () => {
         </div>
       </div>
 
-      {/* 📊 Top Stat Cards */}
       <div className={styles.statGrid}>
         <div className={styles.statCard}>
           <div className={styles.statTitle}>Calories Consumed</div>
@@ -360,7 +359,6 @@ const DailyLog: React.FC = () => {
         </div>
       </div>
 
-      {/* 🎯 Center Progress Card */}
       <div className={styles.centerCard}>
         <div className={styles.ringContainer} style={ringStyle}>
           <div className={styles.ringInner}>
@@ -380,7 +378,7 @@ const DailyLog: React.FC = () => {
             <div className={styles.macroHeader}>
               <span
                 style={{
-                  color: "#34d399",
+                  color: isProteinReachedMin ? "#10b981" : "#fb923c",
                   display: "flex",
                   gap: "8px",
                   alignItems: "center",
@@ -394,27 +392,44 @@ const DailyLog: React.FC = () => {
                     textDecoration: "underline",
                     fontSize: "13px",
                   }}
-                  onClick={
-                    handleOpenProteinModal
-                  } /* 🌟 เรียกใช้ฟังก์ชันเปิด Pop-up แทน */
+                  onClick={handleOpenProteinModal}
                 >
                   +Add
                 </span>
               </span>
               <span>
                 {proteinGrams}g{" "}
-                <span style={{ color: "#94a3b8" }}>/ {PROTEIN_GOAL}g</span>
+                <span style={{ color: "#94a3b8" }}>
+                  / {PROTEIN_MIN_GOAL}-{PROTEIN_MAX_GOAL}g
+                </span>
               </span>
             </div>
-            <div className={styles.macroBarBg}>
+            {/* 🌟 ปรับหลอดโปรตีนให้มีขีดบอกขั้นต่ำ 80g และเปลี่ยนสี */}
+            <div className={styles.macroBarBg} style={{ position: "relative" }}>
               <div
-                className={`${styles.macroBarFill} ${styles.fillGreen}`}
                 style={{
-                  width: `${Math.min((proteinGrams / PROTEIN_GOAL) * 100, 100)}%`,
+                  position: "absolute",
+                  left: `${(PROTEIN_MIN_GOAL / PROTEIN_MAX_GOAL) * 100}%`,
+                  top: 0,
+                  bottom: 0,
+                  width: "2px",
+                  backgroundColor: "#cbd5e1",
+                  zIndex: 1,
+                }}
+                title={`ขั้นต่ำ ${PROTEIN_MIN_GOAL}g`}
+              ></div>
+              <div
+                className={`${styles.macroBarFill} ${isProteinReachedMin ? styles.fillGreen : styles.fillOrange}`}
+                style={{
+                  width: `${Math.min((proteinGrams / PROTEIN_MAX_GOAL) * 100, 100)}%`,
+                  position: "relative",
+                  zIndex: 2,
+                  transition: "width 0.5s ease-out, background-color 0.5s",
                 }}
               ></div>
             </div>
           </div>
+
           <div className={styles.macroItem}>
             <div className={styles.macroHeader}>
               <span style={{ color: "#fb923c" }}>Snacks/Sweets</span>
@@ -433,7 +448,6 @@ const DailyLog: React.FC = () => {
           </div>
         </div>
 
-        {/* 🌟 Actions Row คลีนๆ จัดระเบียบใหม่ */}
         <div className={styles.actionsRow}>
           <div className={styles.quickAddSection}>
             <div className={styles.quickAddLabel}>Quick Add</div>
@@ -508,7 +522,6 @@ const DailyLog: React.FC = () => {
         </div>
       </div>
 
-      {/* 🥗 Meal Cards Grid */}
       <div className={styles.mealCardsGrid}>
         {meals.length > 0 ? (
           groupsToRender.map((cat: string) => {
@@ -614,7 +627,6 @@ const DailyLog: React.FC = () => {
         )}
       </div>
 
-      {/* 🛠 Modal แก้ไขอาหาร */}
       {editingMeal && (
         <div className={styles.modalOverlay}>
           <div className={styles.modalContent}>
@@ -657,7 +669,6 @@ const DailyLog: React.FC = () => {
         </div>
       )}
 
-      {/* 🌟 Modal เพิ่มโปรตีน (แทน window.prompt) */}
       {showProteinModal && (
         <div className={styles.modalOverlay}>
           <div className={styles.modalContent} style={{ maxWidth: "400px" }}>
@@ -670,7 +681,7 @@ const DailyLog: React.FC = () => {
                 type="number"
                 value={proteinInput}
                 onChange={(e) => setProteinInput(e.target.value)}
-                autoFocus /* ให้ cursor เด้งไปรอที่ช่องนี้อัตโนมัติ */
+                autoFocus
               />
             </div>
             <div className={styles.modalActions}>
@@ -691,7 +702,6 @@ const DailyLog: React.FC = () => {
         </div>
       )}
 
-      {/* Mascot น้องไวท์มอล 🐹 */}
       <div className={styles.mascotContainer}>
         <div
           className={styles.mascotBubble}
