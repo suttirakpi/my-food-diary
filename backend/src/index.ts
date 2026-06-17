@@ -449,6 +449,62 @@ app.post("/api/weight", async (req, res) => {
   }
 });
 
+// ----------------------------------------
+// ⚙️ API สำหรับจัดการการตั้งค่าเป้าหมาย (Settings)
+// ----------------------------------------
+
+// ดึงข้อมูลการตั้งค่า
+app.get("/api/settings", async (req: Request, res: Response) => {
+  try {
+    // ดึงข้อมูล user id 1 (เพราะเราใช้คนเดียว)
+    const [rows]: any = await pool.query(
+      "SELECT * FROM user_settings WHERE id = 1",
+    );
+    if (rows.length === 0) {
+      // ถ้ายังไม่มีข้อมูลใน DB ให้ส่งค่า Default กลับไป
+      res.json({
+        cal_goal: 1400,
+        protein_goal: 140,
+        water_goal: 8,
+        current_weight: 0,
+        target_weight: 0,
+      });
+    } else {
+      res.json(rows[0]);
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "ดึงข้อมูลการตั้งค่าไม่สำเร็จ" });
+  }
+});
+
+// บันทึก/อัปเดตการตั้งค่า
+app.post("/api/settings", async (req: Request, res: Response) => {
+  const { cal_goal, protein_goal, water_goal, current_weight, target_weight } =
+    req.body;
+  try {
+    // ถ้ามี id = 1 อยู่แล้วให้อัปเดต ถ้าไม่มีให้สร้างใหม่ (รองรับ MySQL)
+    await pool.query(
+      `
+      INSERT INTO user_settings (id, cal_goal, protein_goal, water_goal, current_weight, target_weight)
+      VALUES (1, ?, ?, ?, ?, ?)
+      ON DUPLICATE KEY UPDATE 
+        cal_goal = VALUES(cal_goal),
+        protein_goal = VALUES(protein_goal),
+        water_goal = VALUES(water_goal),
+        current_weight = VALUES(current_weight),
+        target_weight = VALUES(target_weight)
+    `,
+      [cal_goal, protein_goal, water_goal, current_weight, target_weight],
+    );
+
+    res.json({ message: "บันทึกการตั้งค่าสำเร็จ" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "บันทึกการตั้งค่าไม่สำเร็จ" });
+  }
+});
+
 // 🌟 บรรทัด app.listen ต้องอยู่ล่างสุดเสมอ!
 app.listen(port, () => {
   console.log(`Backend Server is running on http://localhost:${port}`);

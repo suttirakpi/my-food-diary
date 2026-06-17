@@ -17,6 +17,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
   return (
     <div className={styles.appLayout}>
+      {/* 🌟 รวบปุ่มทั้งหมดเข้ามาอยู่ใน aside */}
       <aside className={styles.sidebar}>
         <div className={styles.brandLogo}>❤️</div>
 
@@ -41,8 +42,6 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           <span className="material-symbols-outlined">monitoring</span>
           Trends
         </button>
-
-        {/* 🌟 เพิ่มปุ่ม Workout Plan ตรงนี้ครับ! */}
         <button
           className={`${styles.navItem} ${checkActive("/workout-plan")}`}
           onClick={() => navigate("/workout-plan")}
@@ -50,7 +49,6 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           <span className="material-symbols-outlined">fitness_center</span>
           Workout
         </button>
-
         <button
           className={`${styles.navItem} ${checkActive("/calendar")}`}
           onClick={() => navigate("/calendar")}
@@ -71,6 +69,13 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         >
           <span className="material-symbols-outlined">scale</span>
           Weight
+        </button>
+        <button
+          className={`${styles.navItem} ${checkActive("/settings")}`}
+          onClick={() => navigate("/settings")}
+        >
+          <span className="material-symbols-outlined">settings</span>
+          Settings
         </button>
       </aside>
 
