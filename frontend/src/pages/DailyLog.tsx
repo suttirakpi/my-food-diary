@@ -43,9 +43,9 @@ const DailyLog: React.FC = () => {
   const [exName, setExName] = useState("");
   const [exCal, setExCal] = useState<number | "">("");
 
-  // 🌟 States สำหรับ Modal เพิ่มโปรตีน
+  // 🌟 States สำหรับ Modal แก้ไขโปรตีน
   const [showProteinModal, setShowProteinModal] = useState<boolean>(false);
-  const [proteinInput, setProteinInput] = useState<string>("10");
+  const [proteinInput, setProteinInput] = useState<string>("0");
 
   // มาสคอต
   const [isPetting, setIsPetting] = useState(false);
@@ -104,27 +104,28 @@ const DailyLog: React.FC = () => {
     }
   };
 
+  // 🌟 ฟังก์ชันเปิด Modal พร้อมดึงค่าโปรตีนปัจจุบันมาแสดง
   const handleOpenProteinModal = () => {
-    setProteinInput("10");
+    setProteinInput(proteinGrams.toString());
     setShowProteinModal(true);
   };
 
-  const handleConfirmAddProtein = async () => {
+  // 🌟 ฟังก์ชันบันทึกค่าโปรตีนทับของเดิม (Edit)
+  const handleConfirmSetProtein = async () => {
     const amount = Number(proteinInput);
-    if (!amount || amount <= 0) {
+    if (isNaN(amount) || amount < 0) {
       toast.error("กรุณากรอกจำนวนโปรตีนให้ถูกต้อง");
       return;
     }
 
-    const newTotal = proteinGrams + amount;
-    setProteinGrams(newTotal);
+    setProteinGrams(amount); // อัปเดต UI ทันทีให้ผู้ใช้เห็น
 
     try {
       await axios.post("https://my-food-diary-n1tf.onrender.com/api/protein", {
         date: selectedDate,
-        grams: newTotal,
+        grams: amount,
       });
-      toast.success(`เพิ่มโปรตีน ${amount}g เรียบร้อย!`);
+      toast.success(`อัปเดตโปรตีนเป็น ${amount}g เรียบร้อย!`);
       setShowProteinModal(false);
     } catch (error) {
       toast.error("บันทึกข้อมูลไม่สำเร็จ");
@@ -394,7 +395,7 @@ const DailyLog: React.FC = () => {
                   }}
                   onClick={handleOpenProteinModal}
                 >
-                  +Add
+                  Edit
                 </span>
               </span>
               <span>
@@ -628,6 +629,7 @@ const DailyLog: React.FC = () => {
         )}
       </div>
 
+      {/* Modal แก้ไขอาหาร */}
       {editingMeal && (
         <div className={styles.modalOverlay}>
           <div className={styles.modalContent}>
@@ -670,14 +672,15 @@ const DailyLog: React.FC = () => {
         </div>
       )}
 
+      {/* 🌟 Modal แก้ไขโปรตีน (ใหม่) */}
       {showProteinModal && (
         <div className={styles.modalOverlay}>
           <div className={styles.modalContent} style={{ maxWidth: "400px" }}>
             <h2 className={styles.modalTitle} style={{ fontSize: "20px" }}>
-              เพิ่มโปรตีน
+              แก้ไขปริมาณโปรตีน
             </h2>
             <div className={styles.modalInputGroup}>
-              <label>ใส่จำนวนโปรตีน (กรัม) ที่กินเพิ่ม:</label>
+              <label>จำนวนโปรตีนทั้งหมดวันนี้ (กรัม):</label>
               <input
                 type="number"
                 value={proteinInput}
@@ -694,15 +697,16 @@ const DailyLog: React.FC = () => {
               </button>
               <button
                 className={styles.btnSave}
-                onClick={handleConfirmAddProtein}
+                onClick={handleConfirmSetProtein}
               >
-                ตกลง
+                บันทึก
               </button>
             </div>
           </div>
         </div>
       )}
 
+      {/* Mascot น้องไวท์มอล 🐹 */}
       <div className={styles.mascotContainer}>
         <div
           className={styles.mascotBubble}
