@@ -338,21 +338,26 @@ app.get("/api/calendar", async (req: Request, res: Response) => {
     const [meals]: any = await pool.query(
       "SELECT DATE_FORMAT(meal_date, '%Y-%m-%d') as date, SUM(calories) as total_cal FROM meals GROUP BY meal_date",
     );
+
+    // 🌟 แก้จาก daily_water เป็น water_logs
     const [water]: any = await pool.query(
-      "SELECT DATE_FORMAT(log_date, '%Y-%m-%d') as date, glasses FROM daily_water",
-    );
-    const [exercises]: any = await pool.query(
-      "SELECT DATE_FORMAT(log_date, '%Y-%m-%d') as date, SUM(calories_burned) as total_burned FROM exercises GROUP BY log_date",
+      "SELECT DATE_FORMAT(log_date, '%Y-%m-%d') as date, glasses FROM water_logs",
     );
 
-    // 🌟 เพิ่มการดึงข้อมูลจาก daily_macros
+    // 🌟 แก้จาก log_date เป็น exercise_date
+    const [exercises]: any = await pool.query(
+      "SELECT DATE_FORMAT(exercise_date, '%Y-%m-%d') as date, SUM(calories_burned) as total_burned FROM exercises GROUP BY exercise_date",
+    );
+
+    // 🌟 ดึงข้อมูลจาก daily_macros (ต้องมั่นใจว่าสร้าง Table นี้ในฐานข้อมูลแล้วนะครับ)
     const [macros]: any = await pool.query(
       "SELECT DATE_FORMAT(log_date, '%Y-%m-%d') as date, protein, carbs, fats FROM daily_macros",
     );
 
-    // 🌟 อย่าลืมส่ง macros กลับไปใน JSON ด้วย
+    // ส่งข้อมูลทั้งหมดกลับไป
     res.json({ meals, water, exercises, macros });
   } catch (error) {
+    console.error("Calendar Error: ", error); // พ่น Error ใส่ Log เพื่อให้เรารู้ว่าผิดที่ไหน
     res.status(500).json({ error: "Failed to fetch calendar data" });
   }
 });
