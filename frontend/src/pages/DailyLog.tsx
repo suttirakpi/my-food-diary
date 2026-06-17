@@ -43,9 +43,12 @@ const DailyLog: React.FC = () => {
   const [exName, setExName] = useState("");
   const [exCal, setExCal] = useState<number | "">("");
 
-  // 🌟 States สำหรับ Modal แก้ไขโปรตีน
+  // 🌟 States สำหรับ Modal โปรตีน (เพิ่มระบบ Mode)
   const [showProteinModal, setShowProteinModal] = useState<boolean>(false);
-  const [proteinInput, setProteinInput] = useState<string>("0");
+  const [proteinModalMode, setProteinModalMode] = useState<"add" | "edit">(
+    "add",
+  );
+  const [proteinInput, setProteinInput] = useState<string>("");
 
   // มาสคอต
   const [isPetting, setIsPetting] = useState(false);
@@ -104,28 +107,47 @@ const DailyLog: React.FC = () => {
     }
   };
 
-  // 🌟 ฟังก์ชันเปิด Modal พร้อมดึงค่าโปรตีนปัจจุบันมาแสดง
-  const handleOpenProteinModal = () => {
-    setProteinInput(proteinGrams.toString());
+  // 🌟 ฟังก์ชันเปิด Modal สำหรับ "บวกเพิ่ม"
+  const handleOpenAddProtein = () => {
+    setProteinModalMode("add");
+    setProteinInput(""); // เว้นว่างให้พิมพ์ง่าย
     setShowProteinModal(true);
   };
 
-  // 🌟 ฟังก์ชันบันทึกค่าโปรตีนทับของเดิม (Edit)
-  const handleConfirmSetProtein = async () => {
+  // 🌟 ฟังก์ชันเปิด Modal สำหรับ "แก้ไขค่ารวม"
+  const handleOpenEditProtein = () => {
+    setProteinModalMode("edit");
+    setProteinInput(proteinGrams.toString()); // แสดงค่าปัจจุบัน
+    setShowProteinModal(true);
+  };
+
+  // 🌟 ฟังก์ชันยืนยัน (จัดการได้ทั้ง Add และ Edit)
+  const handleConfirmProtein = async () => {
     const amount = Number(proteinInput);
-    if (isNaN(amount) || amount < 0) {
+    if (
+      isNaN(amount) ||
+      amount < 0 ||
+      (proteinModalMode === "add" && amount === 0)
+    ) {
       toast.error("กรุณากรอกจำนวนโปรตีนให้ถูกต้อง");
       return;
     }
 
-    setProteinGrams(amount); // อัปเดต UI ทันทีให้ผู้ใช้เห็น
+    // ถ้ารูปแบบคือ add ให้เอาค่าเดิม + ค่าใหม่, ถ้า edit ให้ใช้ค่าใหม่ไปเลย
+    const newTotal =
+      proteinModalMode === "add" ? proteinGrams + amount : amount;
+    setProteinGrams(newTotal);
 
     try {
       await axios.post("https://my-food-diary-n1tf.onrender.com/api/protein", {
         date: selectedDate,
-        grams: amount,
+        grams: newTotal,
       });
-      toast.success(`อัปเดตโปรตีนเป็น ${amount}g เรียบร้อย!`);
+      toast.success(
+        proteinModalMode === "add"
+          ? `เพิ่มโปรตีน ${amount}g เรียบร้อย!`
+          : `อัปเดตโปรตีนเป็น ${newTotal}g เรียบร้อย!`,
+      );
       setShowProteinModal(false);
     } catch (error) {
       toast.error("บันทึกข้อมูลไม่สำเร็จ");
@@ -232,7 +254,7 @@ const DailyLog: React.FC = () => {
   );
   const netCalories = totalCalories - totalBurned;
 
-  // 🌟 ตั้งค่า Range เป้าหมายโปรตีน
+  // ตั้งค่า Range เป้าหมายโปรตีน
   const DAILY_CALORIE_GOAL = 1400;
   const PROTEIN_MIN_GOAL = 80;
   const PROTEIN_MAX_GOAL = 140;
@@ -381,21 +403,37 @@ const DailyLog: React.FC = () => {
                 style={{
                   color: isProteinReachedMin ? "#10b981" : "#fb923c",
                   display: "flex",
-                  gap: "8px",
+                  gap: "10px",
                   alignItems: "center",
                 }}
               >
                 Protein
+                {/* 🌟 ปุ่ม +Add และ Edit แบบแยกกัน */}
                 <span
-                  style={{
-                    color: "#10b981",
-                    cursor: "pointer",
-                    textDecoration: "underline",
-                    fontSize: "13px",
-                  }}
-                  onClick={handleOpenProteinModal}
+                  style={{ display: "flex", gap: "8px", fontWeight: "normal" }}
                 >
-                  Edit
+                  <span
+                    style={{
+                      color: "#10b981",
+                      cursor: "pointer",
+                      textDecoration: "underline",
+                      fontSize: "13px",
+                    }}
+                    onClick={handleOpenAddProtein}
+                  >
+                    +Add
+                  </span>
+                  <span
+                    style={{
+                      color: "#94a3b8",
+                      cursor: "pointer",
+                      textDecoration: "underline",
+                      fontSize: "13px",
+                    }}
+                    onClick={handleOpenEditProtein}
+                  >
+                    Edit
+                  </span>
                 </span>
               </span>
               <span>
@@ -405,7 +443,6 @@ const DailyLog: React.FC = () => {
                 </span>
               </span>
             </div>
-            {/* 🌟 ปรับหลอดโปรตีนให้มีขีดบอกขั้นต่ำ 80g และเปลี่ยนสี */}
             <div className={styles.macroBarBg} style={{ position: "relative" }}>
               <div
                 style={{
@@ -672,15 +709,19 @@ const DailyLog: React.FC = () => {
         </div>
       )}
 
-      {/* 🌟 Modal แก้ไขโปรตีน (ใหม่) */}
+      {/* 🌟 Modal โปรตีน (รวมทั้งแบบ Add และ Edit) */}
       {showProteinModal && (
         <div className={styles.modalOverlay}>
           <div className={styles.modalContent} style={{ maxWidth: "400px" }}>
             <h2 className={styles.modalTitle} style={{ fontSize: "20px" }}>
-              แก้ไขปริมาณโปรตีน
+              {proteinModalMode === "add" ? "เพิ่มโปรตีน" : "แก้ไขปริมาณโปรตีน"}
             </h2>
             <div className={styles.modalInputGroup}>
-              <label>จำนวนโปรตีนทั้งหมดวันนี้ (กรัม):</label>
+              <label>
+                {proteinModalMode === "add"
+                  ? "ใส่จำนวนโปรตีน (กรัม) ที่กินเพิ่ม:"
+                  : "จำนวนโปรตีนทั้งหมดวันนี้ (กรัม):"}
+              </label>
               <input
                 type="number"
                 value={proteinInput}
@@ -695,18 +736,14 @@ const DailyLog: React.FC = () => {
               >
                 ยกเลิก
               </button>
-              <button
-                className={styles.btnSave}
-                onClick={handleConfirmSetProtein}
-              >
-                บันทึก
+              <button className={styles.btnSave} onClick={handleConfirmProtein}>
+                {proteinModalMode === "add" ? "เพิ่ม" : "บันทึก"}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Mascot น้องไวท์มอล 🐹 */}
       <div className={styles.mascotContainer}>
         <div
           className={styles.mascotBubble}
