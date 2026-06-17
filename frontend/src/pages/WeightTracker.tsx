@@ -12,7 +12,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import styles from "./WeightTracker.module.css";
-import AppLayout from "../components/AppLayout"; // 🌟 Import Layout เข้ามา
+import AppLayout from "../components/AppLayout";
 
 interface WeightEntry {
   date: string;
@@ -63,11 +63,28 @@ const WeightTracker: React.FC = () => {
     }
 
     try {
+      // 1. บันทึกประวัติน้ำหนัก (Weight Tracker)
       await axios.post("https://my-food-diary-n1tf.onrender.com/api/weight", {
         date: inputDate,
         weight: Number(inputWeight),
       });
-      toast.success("บันทึกน้ำหนักเรียบร้อย!");
+
+      // 🌟 2. ดึง Settings ปัจจุบันมาก่อน (เพื่อไม่ให้ค่า Calorie/Protein ที่ตั้งไว้หาย)
+      const settingsRes = await axios
+        .get("https://my-food-diary-n1tf.onrender.com/api/settings")
+        .catch(() => ({ data: {} }));
+      const currentSettings = settingsRes.data;
+
+      // 🌟 3. อัปเดต Settings โดยแก้แค่ current_weight
+      await axios.post("https://my-food-diary-n1tf.onrender.com/api/settings", {
+        cal_goal: currentSettings.cal_goal || 1400,
+        protein_goal: currentSettings.protein_goal || 140,
+        water_goal: currentSettings.water_goal || 8,
+        target_weight: currentSettings.target_weight || 0,
+        current_weight: Number(inputWeight), // อัปเดตน้ำหนักล่าสุด!
+      });
+
+      toast.success("บันทึกน้ำหนักและอัปเดตข้อมูลส่วนตัวเรียบร้อย!");
       setInputWeight("");
       fetchWeights();
     } catch (error) {
@@ -79,7 +96,7 @@ const WeightTracker: React.FC = () => {
 
   return (
     <AppLayout>
-      {/* 🌟 หน้าจอ Loading ระหว่างรอเซิร์ฟเวอร์ */}
+      {/* หน้าจอ Loading ระหว่างรอเซิร์ฟเวอร์ */}
       {loading && (
         <div className="loadingOverlay">
           <div className="loadingCard">
@@ -197,7 +214,7 @@ const WeightTracker: React.FC = () => {
                   <Line
                     type="monotone"
                     dataKey="weight"
-                    stroke="#10b981" /* 🌟 เปลี่ยนเป็นสี Mint Green */
+                    stroke="#10b981"
                     strokeWidth={4}
                     dot={{
                       r: 6,
