@@ -69,16 +69,18 @@ const WeightTracker: React.FC = () => {
         weight: Number(inputWeight),
       });
 
-      // 🌟 2. ดึง Settings ปัจจุบันมาก่อน (เพื่อไม่ให้ค่า Calorie/Protein ที่ตั้งไว้หาย)
+      // 🌟 2. ดึง Settings ปัจจุบันมาก่อน
       const settingsRes = await axios
         .get("https://my-food-diary-n1tf.onrender.com/api/settings")
         .catch(() => ({ data: {} }));
       const currentSettings = settingsRes.data;
 
-      // 🌟 3. อัปเดต Settings โดยแก้แค่ current_weight
+      // 🌟 3. อัปเดต Settings โดยส่งค่า คาร์บ และ ไขมัน ไปด้วย (จะได้ไม่โดนรีเซ็ต)
       await axios.post("https://my-food-diary-n1tf.onrender.com/api/settings", {
         cal_goal: currentSettings.cal_goal || 1400,
         protein_goal: currentSettings.protein_goal || 140,
+        carbs_goal: currentSettings.carbs_goal || 150, // 🌟 ป้องกันคาร์บหาย
+        fats_goal: currentSettings.fats_goal || 50, // 🌟 ป้องกันไขมันหาย
         water_goal: currentSettings.water_goal || 8,
         target_weight: currentSettings.target_weight || 0,
         current_weight: Number(inputWeight), // อัปเดตน้ำหนักล่าสุด!
