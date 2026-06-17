@@ -477,32 +477,47 @@ app.get("/api/settings", async (req: Request, res: Response) => {
 });
 
 // บันทึก/อัปเดตการตั้งค่า
+// 🌟 API บันทึก Settings (แก้ไขให้เซฟ Carbs & Fats ได้แล้ว)
 app.post("/api/settings", async (req: Request, res: Response) => {
-  const { cal_goal, protein_goal, water_goal, current_weight, target_weight } =
-    req.body;
+  const {
+    cal_goal,
+    protein_goal,
+    carbs_goal,
+    fats_goal,
+    water_goal,
+    current_weight,
+    target_weight,
+  } = req.body;
   try {
-    // ถ้ามี id = 1 อยู่แล้วให้อัปเดต ถ้าไม่มีให้สร้างใหม่ (รองรับ MySQL)
     await pool.query(
       `
-      INSERT INTO user_settings (id, cal_goal, protein_goal, water_goal, current_weight, target_weight)
-      VALUES (1, ?, ?, ?, ?, ?)
+      INSERT INTO user_settings (id, cal_goal, protein_goal, carbs_goal, fats_goal, water_goal, current_weight, target_weight)
+      VALUES (1, ?, ?, ?, ?, ?, ?, ?)
       ON DUPLICATE KEY UPDATE 
         cal_goal = VALUES(cal_goal),
         protein_goal = VALUES(protein_goal),
+        carbs_goal = VALUES(carbs_goal),
+        fats_goal = VALUES(fats_goal),
         water_goal = VALUES(water_goal),
         current_weight = VALUES(current_weight),
         target_weight = VALUES(target_weight)
     `,
-      [cal_goal, protein_goal, water_goal, current_weight, target_weight],
+      [
+        cal_goal,
+        protein_goal,
+        carbs_goal,
+        fats_goal,
+        water_goal,
+        current_weight,
+        target_weight,
+      ],
     );
-
     res.json({ message: "บันทึกการตั้งค่าสำเร็จ" });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "บันทึกการตั้งค่าไม่สำเร็จ" });
   }
 });
-
 // ดึงข้อมูล Macros รายวัน
 app.get("/api/macros", async (req: Request, res: Response) => {
   const date = req.query.date;
