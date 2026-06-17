@@ -2,13 +2,14 @@
 import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import styles from "./CalendarView.module.css";
-import AppLayout from "../components/AppLayout"; // 🌟 Import Layout
+import AppLayout from "../components/AppLayout";
 
 interface CalendarData {
   meals: { date: string; total_cal: number }[];
   water: { date: string; glasses: number }[];
   exercises: { date: string; total_burned: number }[];
-  protein: { date: string; total_grams: number }[];
+  protein?: { date: string; total_grams: number }[]; // เก็บไว้รองรับข้อมูลเดิม
+  macros?: { date: string; protein: number; carbs: number; fats: number }[]; // 🌟 เพิ่มข้อมูล Macros ใหม่
 }
 
 const CalendarView: React.FC = () => {
@@ -64,7 +65,10 @@ const CalendarView: React.FC = () => {
     const meal = data.meals.find((m) => m.date === fullDateStr);
     const water = data.water.find((w) => w.date === fullDateStr);
     const ex = data.exercises.find((e) => e.date === fullDateStr);
-    const protein = data.protein?.find((p) => p.date === fullDateStr);
+
+    // 🌟 ดึงข้อมูลจากตารางใหม่ (macros) หรือตารางเก่า (protein)
+    const macroData = data.macros?.find((m) => m.date === fullDateStr);
+    const legacyProtein = data.protein?.find((p) => p.date === fullDateStr);
 
     const totalCal = Number(meal?.total_cal || 0);
     const totalBurned = Number(ex?.total_burned || 0);
@@ -74,7 +78,9 @@ const CalendarView: React.FC = () => {
       cal: totalCal,
       burn: totalBurned,
       water: water?.glasses || 0,
-      protein: protein?.total_grams || 0,
+      protein: macroData?.protein || legacyProtein?.total_grams || 0,
+      carbs: macroData?.carbs || 0,
+      fats: macroData?.fats || 0,
       netCal: netCal,
       hasData: totalCal > 0 || totalBurned > 0 || (water?.glasses || 0) > 0,
     };
@@ -98,7 +104,6 @@ const CalendarView: React.FC = () => {
 
   return (
     <AppLayout>
-      {/* 🌟 หน้าจอ Loading ระหว่างรอเซิร์ฟเวอร์ดึงข้อมูล */}
       {loading && (
         <div className={styles.loadingOverlay}>
           <div className={styles.loadingCard}>
@@ -131,7 +136,6 @@ const CalendarView: React.FC = () => {
         </div>
       )}
 
-      {/* เนื้อหาหน้าเว็บ */}
       {!loading && (
         <div className={styles.contentWrapper}>
           <div className={styles.pageHeader}>
@@ -206,6 +210,17 @@ const CalendarView: React.FC = () => {
                           className={`${styles.statItem} ${styles.labelProtein}`}
                         >
                           <span>โปร:</span> <span>{stats.protein}g</span>
+                        </div>
+                        {/* 🌟 เพิ่มคาร์บและไขมันตรงนี้ */}
+                        <div
+                          className={`${styles.statItem} ${styles.labelCarbs}`}
+                        >
+                          <span>คาร์บ:</span> <span>{stats.carbs}g</span>
+                        </div>
+                        <div
+                          className={`${styles.statItem} ${styles.labelFats}`}
+                        >
+                          <span>ไขมัน:</span> <span>{stats.fats}g</span>
                         </div>
                       </div>
                     )}

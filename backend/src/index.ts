@@ -333,34 +333,27 @@ app.delete("/api/exercises/:id", async (req, res) => {
 });
 
 // 🌟 ย้าย API Calendar ขึ้นมาไว้ตรงนี้ (ก่อน app.listen)
-app.get("/api/calendar", async (req, res) => {
+app.get("/api/calendar", async (req: Request, res: Response) => {
   try {
-    const [mealRows]: any = await pool.query(
-      "SELECT DATE_FORMAT(meal_date, '%Y-%m-%d') as date, SUM(calories) as total_cal FROM meals GROUP BY date",
+    const [meals]: any = await pool.query(
+      "SELECT DATE_FORMAT(meal_date, '%Y-%m-%d') as date, SUM(calories) as total_cal FROM meals GROUP BY meal_date",
     );
-    const [waterRows]: any = await pool.query(
-      "SELECT DATE_FORMAT(log_date, '%Y-%m-%d') as date, glasses FROM water_logs",
+    const [water]: any = await pool.query(
+      "SELECT DATE_FORMAT(log_date, '%Y-%m-%d') as date, glasses FROM daily_water",
     );
-
-    // 🌟 แก้ไข: เปลี่ยนจาก log_date เป็น exercise_date ให้ตรงกับฐานข้อมูล
-    const [exRows]: any = await pool.query(
-      "SELECT DATE_FORMAT(exercise_date, '%Y-%m-%d') as date, SUM(calories_burned) as total_burned FROM exercises GROUP BY date",
+    const [exercises]: any = await pool.query(
+      "SELECT DATE_FORMAT(log_date, '%Y-%m-%d') as date, SUM(calories_burned) as total_burned FROM exercises GROUP BY log_date",
     );
 
-    // 🌟 แก้ไข: ดึงข้อมูลโปรตีนแบบปกติ (เอา CONVERT_TZ ออก ป้องกันบั๊กค่าว่าง)
-    const [proteinRows]: any = await pool.query(
-      "SELECT DATE_FORMAT(log_date, '%Y-%m-%d') as date, total_grams FROM daily_protein",
+    // 🌟 เพิ่มการดึงข้อมูลจาก daily_macros
+    const [macros]: any = await pool.query(
+      "SELECT DATE_FORMAT(log_date, '%Y-%m-%d') as date, protein, carbs, fats FROM daily_macros",
     );
 
-    res.json({
-      meals: mealRows,
-      water: waterRows,
-      exercises: exRows,
-      protein: proteinRows,
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Database error" });
+    // 🌟 อย่าลืมส่ง macros กลับไปใน JSON ด้วย
+    res.json({ meals, water, exercises, macros });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch calendar data" });
   }
 });
 

@@ -85,7 +85,7 @@
 }
 
 .dayCell {
-  min-height: 120px;
+  min-height: 145px; /* 🌟 เพิ่มความสูงเพื่อรองรับ 6 บรรทัด */
   background: #f8fafc;
   border: 2px solid transparent;
   border-radius: 16px;
@@ -96,7 +96,6 @@
   position: relative;
 }
 
-/* 🌟 สถานะขอบสีแบบพรีเมียม */
 .borderGreen {
   border-color: #34d399 !important;
   background-color: #ecfdf5;
@@ -123,7 +122,6 @@
   margin-bottom: 8px;
 }
 
-/* 🌟 สไตล์ตัวเลขสถิติในวัน */
 .statsGrid {
   display: flex;
   flex-direction: column;
@@ -142,7 +140,7 @@
   border-radius: 6px;
 }
 
-/* สีพื้นหลังอ่อนๆ ให้แต่ละค่าดูแยกชัดเจน */
+/* 🌟 สีพื้นหลังอ่อนๆ ให้แต่ละค่า */
 .labelCal {
   color: #047857;
   background-color: rgba(16, 185, 129, 0.1);
@@ -159,9 +157,17 @@
   color: #b45309;
   background-color: rgba(245, 158, 11, 0.1);
 }
+.labelCarbs {
+  color: #0284c7;
+  background-color: rgba(2, 132, 199, 0.1);
+} /* 🌟 สีฟ้าสำหรับคาร์บ */
+.labelFats {
+  color: #c2410c;
+  background-color: rgba(194, 65, 12, 0.1);
+} /* 🌟 สีส้มเข้มสำหรับไขมัน */
 
 .blankCell {
-  min-height: 120px;
+  min-height: 145px;
 }
 
 @media (max-width: 768px) {
@@ -173,7 +179,7 @@
     border-radius: 20px;
   }
   .dayCell {
-    min-height: 95px;
+    min-height: 125px; /* 🌟 เพิ่มความสูงในจอมือถือ */
     padding: 4px;
     border-radius: 8px;
   }
@@ -188,6 +194,9 @@
   }
   .dayNumber {
     font-size: 12px;
+  }
+  .blankCell {
+    min-height: 125px;
   }
 }
 
