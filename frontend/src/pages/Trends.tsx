@@ -12,13 +12,12 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-  LineChart,
   Line,
   CartesianGrid,
   AreaChart,
   Area,
   ReferenceLine,
-  ComposedChart, // 🌟 นำเข้า ComposedChart สำหรับกราฟผสม
+  ComposedChart,
 } from "recharts";
 import styles from "./Trends.module.css";
 import AppLayout from "../components/AppLayout";
