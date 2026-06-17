@@ -69,7 +69,7 @@ const DailyLog: React.FC = () => {
 
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // 🌟 อัปเดตฟังก์ชันดึงข้อมูลให้รวมเอา Settings มาด้วย
+  // อัปเดตฟังก์ชันดึงข้อมูลให้รวมเอา Settings มาด้วย
   const fetchData = async () => {
     setIsLoading(true);
     try {
@@ -305,12 +305,11 @@ const DailyLog: React.FC = () => {
   );
   const netCalories = totalCalories - totalBurned;
 
-  // 🌟 นำค่าเป้าหมายที่ได้จาก Database มาใช้
+  // 🌟 นำค่าเป้าหมายที่ได้จาก Database มาใช้ตรงๆ
   const DAILY_CALORIE_GOAL = dailyCalGoal;
-  const PROTEIN_MAX_GOAL = proteinGoal;
-  const PROTEIN_MIN_GOAL = Math.round(proteinGoal * 0.6); // คำนวณขีดขั้นต่ำที่ 60% อัตโนมัติ
 
-  const isProteinReachedMin = proteinGrams >= PROTEIN_MIN_GOAL;
+  // เช็คว่ากินถึงเป้าที่ตั้งไว้หรือยัง
+  const isProteinReachedGoal = proteinGrams >= proteinGoal;
 
   const isOverGoal = netCalories > DAILY_CALORIE_GOAL;
   const percentage = Math.min(
@@ -450,7 +449,7 @@ const DailyLog: React.FC = () => {
             <div className={styles.macroHeader}>
               <span
                 style={{
-                  color: isProteinReachedMin ? "#10b981" : "#fb923c",
+                  color: isProteinReachedGoal ? "#10b981" : "#fb923c",
                   display: "flex",
                   gap: "10px",
                   alignItems: "center",
@@ -487,29 +486,17 @@ const DailyLog: React.FC = () => {
               <span>
                 {proteinGrams}g{" "}
                 <span style={{ color: "#94a3b8" }}>
-                  / {PROTEIN_MIN_GOAL}-{PROTEIN_MAX_GOAL}g
+                  {/* 🌟 โชว์เป้าหมายเพียวๆ ไปเลยตาม Settings */}/ {proteinGoal}
+                  g
                 </span>
               </span>
             </div>
-            <div className={styles.macroBarBg} style={{ position: "relative" }}>
+            {/* 🌟 ปรับหลอดให้คำนวณตามเป้าหมายปกติแบบไม่มีขีดขั้นต่ำ */}
+            <div className={styles.macroBarBg}>
               <div
+                className={`${styles.macroBarFill} ${isProteinReachedGoal ? styles.fillGreen : styles.fillOrange}`}
                 style={{
-                  position: "absolute",
-                  left: `${(PROTEIN_MIN_GOAL / PROTEIN_MAX_GOAL) * 100}%`,
-                  top: 0,
-                  bottom: 0,
-                  width: "2px",
-                  backgroundColor: "#cbd5e1",
-                  zIndex: 1,
-                }}
-                title={`ขั้นต่ำ ${PROTEIN_MIN_GOAL}g`}
-              ></div>
-              <div
-                className={`${styles.macroBarFill} ${isProteinReachedMin ? styles.fillGreen : styles.fillOrange}`}
-                style={{
-                  width: `${Math.min((proteinGrams / PROTEIN_MAX_GOAL) * 100, 100)}%`,
-                  position: "relative",
-                  zIndex: 2,
+                  width: `${Math.min((proteinGrams / proteinGoal) * 100, 100)}%`,
                   transition: "width 0.5s ease-out, background-color 0.5s",
                 }}
               ></div>
@@ -895,7 +882,7 @@ const DailyLog: React.FC = () => {
         </div>
       )}
 
-      {/* Modal โปรตีน (รวมทั้งแบบ Add และ Edit) */}
+      {/* Modal โปรตีน */}
       {showProteinModal && (
         <div className={styles.modalOverlay}>
           <div className={styles.modalContent} style={{ maxWidth: "400px" }}>
