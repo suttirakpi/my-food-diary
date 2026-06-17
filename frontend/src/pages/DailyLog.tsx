@@ -25,55 +25,55 @@ interface ExerciseEntry {
   calories_burned: number;
 }
 
+type MacroType = "protein" | "carbs" | "fats";
+
 const DailyLog: React.FC = () => {
   const navigate = useNavigate();
   const [meals, setMeals] = useState<MealEntry[]>([]);
   const [waterGlasses, setWaterGlasses] = useState<number>(0);
+
+  // 🌟 States สำหรับค่าที่กินเข้าไป (Current Macros)
   const [proteinGrams, setProteinGrams] = useState<number>(0);
+  const [carbsGrams, setCarbsGrams] = useState<number>(0);
+  const [fatsGrams, setFatsGrams] = useState<number>(0);
 
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().split("T")[0],
   );
-
   const [editingMeal, setEditingMeal] = useState<MealEntry | null>(null);
   const [exercises, setExercises] = useState<ExerciseEntry[]>([]);
 
-  // 🌟 States สำหรับเป้าหมายที่ดึงจาก Settings
+  // 🌟 States สำหรับเป้าหมาย (Goals)
   const [dailyCalGoal, setDailyCalGoal] = useState<number>(1400);
   const [proteinGoal, setProteinGoal] = useState<number>(140);
+  const [carbsGoal, setCarbsGoal] = useState<number>(150);
+  const [fatsGoal, setFatsGoal] = useState<number>(50);
   const [waterGoal, setWaterGoal] = useState<number>(8);
 
-  // States สำหรับฟอร์มออกกำลังกาย
   const [showExerciseForm, setShowExerciseForm] = useState(false);
   const [exName, setExName] = useState("");
   const [exCal, setExCal] = useState<number | "">("");
-
-  // States สำหรับแก้ไขการออกกำลังกาย
   const [editingExercise, setEditingExercise] = useState<ExerciseEntry | null>(
     null,
   );
 
-  // States สำหรับ Modal โปรตีน
-  const [showProteinModal, setShowProteinModal] = useState<boolean>(false);
-  const [proteinModalMode, setProteinModalMode] = useState<"add" | "edit">(
-    "add",
-  );
-  const [proteinInput, setProteinInput] = useState<string>("");
+  // 🌟 States สำหรับ Modal จัดการ Macros 3 ตัว
+  const [showMacroModal, setShowMacroModal] = useState<boolean>(false);
+  const [macroModalMode, setMacroModalMode] = useState<"add" | "edit">("add");
+  const [macroActiveType, setMacroActiveType] = useState<MacroType>("protein");
+  const [macroInput, setMacroInput] = useState<string>("");
 
-  // มาสคอต
   const [isPetting, setIsPetting] = useState(false);
   const handlePetMascot = () => {
     setIsPetting(true);
     setTimeout(() => setIsPetting(false), 3000);
   };
-
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // อัปเดตฟังก์ชันดึงข้อมูลให้รวมเอา Settings มาด้วย
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const [mealsRes, waterRes, exRes, proteinRes, settingsRes] =
+      const [mealsRes, waterRes, exRes, macrosRes, settingsRes] =
         await Promise.all([
           axios.get(
             `https://my-food-diary-n1tf.onrender.com/api/meals?date=${selectedDate}`,
@@ -86,9 +86,9 @@ const DailyLog: React.FC = () => {
           ),
           axios
             .get(
-              `https://my-food-diary-n1tf.onrender.com/api/protein?date=${selectedDate}`,
+              `https://my-food-diary-n1tf.onrender.com/api/macros?date=${selectedDate}`,
             )
-            .catch(() => ({ data: { grams: 0 } })),
+            .catch(() => ({ data: { protein: 0, carbs: 0, fats: 0 } })),
           axios
             .get(`https://my-food-diary-n1tf.onrender.com/api/settings`)
             .catch(() => ({ data: null })),
@@ -97,12 +97,18 @@ const DailyLog: React.FC = () => {
       setMeals(mealsRes.data);
       setWaterGlasses(waterRes.data.glasses);
       setExercises(exRes.data);
-      setProteinGrams(proteinRes.data.grams || 0);
 
-      // เซตค่าเป้าหมายจาก Database
+      // ดึง Current Macros
+      setProteinGrams(macrosRes.data.protein || 0);
+      setCarbsGrams(macrosRes.data.carbs || 0);
+      setFatsGrams(macrosRes.data.fats || 0);
+
+      // ดึง Goals
       if (settingsRes.data) {
         setDailyCalGoal(settingsRes.data.cal_goal || 1400);
         setProteinGoal(settingsRes.data.protein_goal || 140);
+        setCarbsGoal(settingsRes.data.carbs_goal || 150);
+        setFatsGoal(settingsRes.data.fats_goal || 50);
         setWaterGoal(settingsRes.data.water_goal || 8);
       }
     } catch (error) {
@@ -114,7 +120,6 @@ const DailyLog: React.FC = () => {
 
   useEffect(() => {
     fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDate]);
 
   const handleUpdateWater = async (newAmount: number) => {
@@ -125,59 +130,79 @@ const DailyLog: React.FC = () => {
         date: selectedDate,
         glasses: newAmount,
       });
-    } catch (error) {
-      console.error("อัปเดตน้ำไม่สำเร็จ", error);
+    } catch (error) {}
+  };
+
+  // 🌟 ฟังก์ชันจัดการ Macros Modal
+  const handleOpenMacroModal = (type: MacroType, mode: "add" | "edit") => {
+    setMacroActiveType(type);
+    setMacroModalMode(mode);
+    if (mode === "add") {
+      setMacroInput("");
+    } else {
+      if (type === "protein") setMacroInput(proteinGrams.toString());
+      if (type === "carbs") setMacroInput(carbsGrams.toString());
+      if (type === "fats") setMacroInput(fatsGrams.toString());
     }
+    setShowMacroModal(true);
   };
 
-  const handleOpenAddProtein = () => {
-    setProteinModalMode("add");
-    setProteinInput("");
-    setShowProteinModal(true);
-  };
-
-  const handleOpenEditProtein = () => {
-    setProteinModalMode("edit");
-    setProteinInput(proteinGrams.toString());
-    setShowProteinModal(true);
-  };
-
-  const handleConfirmProtein = async () => {
-    const amount = Number(proteinInput);
+  const handleConfirmMacro = async () => {
+    const amount = Number(macroInput);
     if (
       isNaN(amount) ||
       amount < 0 ||
-      (proteinModalMode === "add" && amount === 0)
+      (macroModalMode === "add" && amount === 0)
     ) {
-      toast.error("กรุณากรอกจำนวนโปรตีนให้ถูกต้อง");
+      toast.error("กรุณากรอกตัวเลขให้ถูกต้อง");
       return;
     }
 
-    const newTotal =
-      proteinModalMode === "add" ? proteinGrams + amount : amount;
-    setProteinGrams(newTotal);
+    let currentVal = 0;
+    if (macroActiveType === "protein") currentVal = proteinGrams;
+    if (macroActiveType === "carbs") currentVal = carbsGrams;
+    if (macroActiveType === "fats") currentVal = fatsGrams;
+
+    const newTotal = macroModalMode === "add" ? currentVal + amount : amount;
+
+    // อัปเดต State ก่อนเพื่อความรวดเร็วของ UI
+    let newProtein = proteinGrams;
+    let newCarbs = carbsGrams;
+    let newFats = fatsGrams;
+
+    if (macroActiveType === "protein") {
+      setProteinGrams(newTotal);
+      newProtein = newTotal;
+    }
+    if (macroActiveType === "carbs") {
+      setCarbsGrams(newTotal);
+      newCarbs = newTotal;
+    }
+    if (macroActiveType === "fats") {
+      setFatsGrams(newTotal);
+      newFats = newTotal;
+    }
 
     try {
-      await axios.post("https://my-food-diary-n1tf.onrender.com/api/protein", {
+      await axios.post("https://my-food-diary-n1tf.onrender.com/api/macros", {
         date: selectedDate,
-        grams: newTotal,
+        protein: newProtein,
+        carbs: newCarbs,
+        fats: newFats,
       });
       toast.success(
-        proteinModalMode === "add"
-          ? `เพิ่มโปรตีน ${amount}g เรียบร้อย!`
-          : `อัปเดตโปรตีนเป็น ${newTotal}g เรียบร้อย!`,
+        macroModalMode === "add"
+          ? `เพิ่ม ${macroActiveType} ${amount}g เรียบร้อย!`
+          : `อัปเดต ${macroActiveType} เรียบร้อย!`,
       );
-      setShowProteinModal(false);
+      setShowMacroModal(false);
     } catch (error) {
       toast.error("บันทึกข้อมูลไม่สำเร็จ");
     }
   };
 
   const handleAddExercise = async () => {
-    if (!exName.trim() || !exCal) {
-      toast.error("กรุณากรอกชื่อกิจกรรมและจำนวนแคลอรี่");
-      return;
-    }
+    if (!exName.trim() || !exCal) return toast.error("กรุณากรอกข้อมูลให้ครบ");
     try {
       await axios.post(
         "https://my-food-diary-n1tf.onrender.com/api/exercises",
@@ -191,24 +216,19 @@ const DailyLog: React.FC = () => {
       setExCal("");
       setShowExerciseForm(false);
       fetchData();
-      toast.success("บันทึกการออกกำลังกายสำเร็จ!");
-    } catch (error) {
-      toast.error("บันทึกข้อมูลไม่สำเร็จ");
-    }
+      toast.success("บันทึกสำเร็จ!");
+    } catch (error) {}
   };
 
   const handleDeleteExercise = async (id: number) => {
-    if (!window.confirm("คุณแน่ใจหรือไม่ว่าต้องการลบการออกกำลังกายนี้?"))
-      return;
+    if (!window.confirm("ลบการออกกำลังกายนี้?")) return;
     try {
       await axios.delete(
         `https://my-food-diary-n1tf.onrender.com/api/exercises/${id}`,
       );
       setExercises((prev) => prev.filter((ex) => ex.id !== id));
-      toast.success("ลบรายการเรียบร้อย");
-    } catch (error) {
-      toast.error("เกิดข้อผิดพลาดในการลบข้อมูล");
-    }
+      toast.success("ลบเรียบร้อย");
+    } catch (error) {}
   };
 
   const handleSaveEditExercise = async () => {
@@ -223,28 +243,23 @@ const DailyLog: React.FC = () => {
       );
       setEditingExercise(null);
       fetchData();
-      toast.success("อัปเดตข้อมูลสำเร็จ!");
-    } catch (error) {
-      toast.error("เกิดข้อผิดพลาดในการแก้ไขข้อมูล");
-    }
+      toast.success("อัปเดตสำเร็จ!");
+    } catch (error) {}
   };
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm("คุณแน่ใจหรือไม่ว่าต้องการลบรายการอาหารนี้?")) return;
+    if (!window.confirm("ลบรายการนี้?")) return;
     try {
       await axios.delete(
         `https://my-food-diary-n1tf.onrender.com/api/meals/${id}`,
       );
       setMeals((prev) => prev.filter((meal) => meal.id !== id));
-      toast.success("ลบรายการเรียบร้อย");
-    } catch (error) {
-      toast.error("เกิดข้อผิดพลาดในการลบข้อมูล");
-    }
+      toast.success("ลบเรียบร้อย");
+    } catch (error) {}
   };
 
   const handleOpenEdit = (meal: MealEntry) =>
     setEditingMeal(JSON.parse(JSON.stringify(meal)));
-
   const handleSaveEdit = async () => {
     if (!editingMeal) return;
     const validOptions = editingMeal.options
@@ -264,10 +279,8 @@ const DailyLog: React.FC = () => {
       );
       setEditingMeal(null);
       fetchData();
-      toast.success("อัปเดตข้อมูลสำเร็จ!");
-    } catch (error) {
-      toast.error("เกิดข้อผิดพลาดในการแก้ไขข้อมูล");
-    }
+      toast.success("อัปเดตสำเร็จ!");
+    } catch (error) {}
   };
 
   const groupedMeals = useMemo(() => {
@@ -278,7 +291,6 @@ const DailyLog: React.FC = () => {
       return acc;
     }, {});
   }, [meals]);
-
   const groupsToRender = ["มื้อเช้า", "มื้อกลางวัน", "มื้อเย็น", "ระหว่างวัน"];
 
   const getThemeClass = (cat: string) => {
@@ -287,7 +299,6 @@ const DailyLog: React.FC = () => {
     if (cat === "มื้อเย็น") return styles.themeDinner;
     return styles.themeSnack;
   };
-
   const getIconForCat = (cat: string) => {
     if (cat === "มื้อเช้า") return "restaurant";
     if (cat === "มื้อกลางวัน") return "lunch_dining";
@@ -305,15 +316,9 @@ const DailyLog: React.FC = () => {
   );
   const netCalories = totalCalories - totalBurned;
 
-  // 🌟 นำค่าเป้าหมายที่ได้จาก Database มาใช้ตรงๆ
-  const DAILY_CALORIE_GOAL = dailyCalGoal;
-
-  // เช็คว่ากินถึงเป้าที่ตั้งไว้หรือยัง
-  const isProteinReachedGoal = proteinGrams >= proteinGoal;
-
-  const isOverGoal = netCalories > DAILY_CALORIE_GOAL;
+  const isOverGoal = netCalories > dailyCalGoal;
   const percentage = Math.min(
-    Math.max((netCalories / DAILY_CALORIE_GOAL) * 100, 0),
+    Math.max((netCalories / dailyCalGoal) * 100, 0),
     100,
   );
   const ringDegree = (percentage / 100) * 360;
@@ -325,7 +330,6 @@ const DailyLog: React.FC = () => {
   let mascotMood = "normal";
   let mascotMessage = "สวัสดีฮะตูน! ไวท์มอลมาช่วยดูแลหุ่นแล้ว (๑˃ᴗ˂)ﻭ 🐹";
   let mascotEmoji = "🐹";
-
   if (isPetting) {
     mascotMood = "love";
     mascotMessage = "งื้ออออ~ ฟินจุงเบยยย รักตูนน้าา 💕";
@@ -340,12 +344,40 @@ const DailyLog: React.FC = () => {
     mascotEmoji = "🐹✨";
   }
 
+  // 🌟 โครงสร้างข้อมูลสำหรับวนลูปสร้างหลอด Macros 3 ตัว
+  const macroConfigs = [
+    {
+      type: "protein" as MacroType,
+      label: "Protein",
+      current: proteinGrams,
+      goal: proteinGoal,
+      color: "#10b981",
+      bg: "#d1fae5",
+    },
+    {
+      type: "carbs" as MacroType,
+      label: "Carbs",
+      current: carbsGrams,
+      goal: carbsGoal,
+      color: "#3b82f6",
+      bg: "#dbeafe",
+    },
+    {
+      type: "fats" as MacroType,
+      label: "Fats",
+      current: fatsGrams,
+      goal: fatsGoal,
+      color: "#f59e0b",
+      bg: "#fef3c7",
+    },
+  ];
+
   return (
     <AppLayout>
       {isLoading && (
-        <div className={styles.loadingOverlay}>
-          <div className={styles.loadingCard}>
-            <div className={styles.loadingMascot}>🐹💨</div>
+        <div className="loadingOverlay">
+          <div className="loadingCard">
+            <div className="loadingMascot">🐹💨</div>
             <h2 style={{ fontFamily: "var(--font-heading)" }}>
               กำลังดึงข้อมูล...
             </h2>
@@ -407,7 +439,6 @@ const DailyLog: React.FC = () => {
               local_fire_department
             </span>
           </div>
-
           {showExerciseForm && (
             <div className={styles.exercisePanel}>
               <input
@@ -440,85 +471,102 @@ const DailyLog: React.FC = () => {
             >
               {netCalories}
             </div>
-            <div className={styles.ringGoal}>/ {DAILY_CALORIE_GOAL} kcal</div>
+            <div className={styles.ringGoal}>/ {dailyCalGoal} kcal</div>
           </div>
         </div>
 
-        <div className={styles.macrosRow}>
-          <div className={styles.macroItem}>
-            <div className={styles.macroHeader}>
-              <span
-                style={{
-                  color: isProteinReachedGoal ? "#10b981" : "#fb923c",
-                  display: "flex",
-                  gap: "10px",
-                  alignItems: "center",
-                }}
-              >
-                Protein
-                <span
-                  style={{ display: "flex", gap: "8px", fontWeight: "normal" }}
+        {/* 🌟 แสดงหลอดสารอาหาร 3 ช่อง (Protein, Carbs, Fats) */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+            gap: "24px",
+            marginBottom: "32px",
+            paddingBottom: "32px",
+            borderBottom: "1px solid #f1f5f9",
+          }}
+        >
+          {macroConfigs.map((macro) => {
+            const isReachedGoal = macro.current >= macro.goal;
+            return (
+              <div key={macro.type}>
+                <div
+                  className={styles.macroHeader}
+                  style={{
+                    marginBottom: "12px",
+                    display: "flex",
+                    justifyContent: "space-between",
+                  }}
                 >
                   <span
                     style={{
-                      color: "#10b981",
-                      cursor: "pointer",
-                      textDecoration: "underline",
-                      fontSize: "13px",
+                      color: isReachedGoal ? "#10b981" : macro.color,
+                      display: "flex",
+                      gap: "8px",
+                      alignItems: "center",
+                      fontWeight: "bold",
                     }}
-                    onClick={handleOpenAddProtein}
                   >
-                    +Add
+                    {macro.label}
+                    <span
+                      style={{
+                        display: "flex",
+                        gap: "6px",
+                        fontWeight: "normal",
+                      }}
+                    >
+                      <span
+                        style={{
+                          color: macro.color,
+                          cursor: "pointer",
+                          textDecoration: "underline",
+                          fontSize: "12px",
+                        }}
+                        onClick={() => handleOpenMacroModal(macro.type, "add")}
+                      >
+                        +Add
+                      </span>
+                      <span
+                        style={{
+                          color: "#94a3b8",
+                          cursor: "pointer",
+                          textDecoration: "underline",
+                          fontSize: "12px",
+                        }}
+                        onClick={() => handleOpenMacroModal(macro.type, "edit")}
+                      >
+                        Edit
+                      </span>
+                    </span>
                   </span>
-                  <span
+                  <span style={{ fontWeight: "bold", color: "#334155" }}>
+                    {macro.current}g{" "}
+                    <span style={{ color: "#94a3b8", fontWeight: "normal" }}>
+                      / {macro.goal}g
+                    </span>
+                  </span>
+                </div>
+                <div
+                  style={{
+                    height: "10px",
+                    backgroundColor: macro.bg,
+                    borderRadius: "6px",
+                    overflow: "hidden",
+                  }}
+                >
+                  <div
                     style={{
-                      color: "#94a3b8",
-                      cursor: "pointer",
-                      textDecoration: "underline",
-                      fontSize: "13px",
+                      height: "100%",
+                      backgroundColor: macro.color,
+                      width: `${Math.min((macro.current / macro.goal) * 100, 100)}%`,
+                      transition: "width 0.5s ease-out",
+                      borderRadius: "6px",
                     }}
-                    onClick={handleOpenEditProtein}
-                  >
-                    Edit
-                  </span>
-                </span>
-              </span>
-              <span>
-                {proteinGrams}g{" "}
-                <span style={{ color: "#94a3b8" }}>
-                  {/* 🌟 โชว์เป้าหมายเพียวๆ ไปเลยตาม Settings */}/ {proteinGoal}
-                  g
-                </span>
-              </span>
-            </div>
-            {/* 🌟 ปรับหลอดให้คำนวณตามเป้าหมายปกติแบบไม่มีขีดขั้นต่ำ */}
-            <div className={styles.macroBarBg}>
-              <div
-                className={`${styles.macroBarFill} ${isProteinReachedGoal ? styles.fillGreen : styles.fillOrange}`}
-                style={{
-                  width: `${Math.min((proteinGrams / proteinGoal) * 100, 100)}%`,
-                  transition: "width 0.5s ease-out, background-color 0.5s",
-                }}
-              ></div>
-            </div>
-          </div>
-
-          <div className={styles.macroItem}>
-            <div className={styles.macroHeader}>
-              <span style={{ color: "#fb923c" }}>Snacks/Sweets</span>
-              <span>
-                {meals.filter((m) => m.item_type === "ขนม").length} items
-              </span>
-            </div>
-            <div className={styles.macroBarBg}>
-              <div
-                className={`${styles.macroBarFill} ${styles.fillOrange}`}
-                style={{
-                  width: `${Math.min((meals.filter((m) => m.item_type === "ขนม").length / 3) * 100, 100)}%`,
-                }}
-              ></div>
-            </div>
-          </div>
+                  ></div>
+                </div>
+              </div>
+            );
+          })}
         </div>
 
         <div className={styles.actionsRow}>
@@ -541,26 +589,12 @@ const DailyLog: React.FC = () => {
                 alignItems: "center",
                 justifyContent: "center",
                 gap: "8px",
-                boxShadow: "0 4px 12px rgba(15, 23, 42, 0.15)",
-                transition: "background-color 0.2s",
               }}
-              onMouseOver={(e) =>
-                (e.currentTarget.style.backgroundColor = "#1e293b")
-              }
-              onMouseOut={(e) =>
-                (e.currentTarget.style.backgroundColor = "#0f172a")
-              }
             >
-              <span
-                className="material-symbols-outlined"
-                style={{ fontSize: "20px" }}
-              >
-                add_circle
-              </span>
-              Add New Meal
+              <span className="material-symbols-outlined">add_circle</span> Add
+              New Meal
             </button>
           </div>
-
           <div className={styles.waterTrackerSection}>
             <div className={styles.quickAddLabel}>Water Tracker</div>
             <div className={styles.waterTrackerControls}>
@@ -570,7 +604,6 @@ const DailyLog: React.FC = () => {
               >
                 -
               </button>
-
               <span
                 className={`material-symbols-outlined ${styles.waterGlassIcon}`}
               >
@@ -596,7 +629,6 @@ const DailyLog: React.FC = () => {
         </div>
       </div>
 
-      {/* 🥗 Meal & Exercise Cards Grid */}
       <div className={styles.mealCardsGrid}>
         {exercises.length > 0 && (
           <div
@@ -625,7 +657,6 @@ const DailyLog: React.FC = () => {
                 {totalBurned} kcal
               </div>
             </div>
-
             <div className={styles.mealItemList}>
               {exercises.map((ex) => (
                 <div
@@ -685,9 +716,7 @@ const DailyLog: React.FC = () => {
         {groupsToRender.map((cat: string) => {
           const mealsInCat = groupedMeals[cat];
           if (!mealsInCat || mealsInCat.length === 0) return null;
-
           const catCals = mealsInCat.reduce((s, m) => s + (m.calories || 0), 0);
-
           return (
             <div
               key={cat}
@@ -704,7 +733,6 @@ const DailyLog: React.FC = () => {
                 </div>
                 <div className={styles.mealCardCal}>{catCals} kcal</div>
               </div>
-
               <div className={styles.mealItemList}>
                 {mealsInCat.map((meal) => (
                   <div
@@ -766,7 +794,6 @@ const DailyLog: React.FC = () => {
             </div>
           );
         })}
-
         {meals.length === 0 && exercises.length === 0 && (
           <div
             style={{
@@ -790,7 +817,7 @@ const DailyLog: React.FC = () => {
         )}
       </div>
 
-      {/* Modal แก้ไขอาหาร */}
+      {/* Modal แก้ไขอาหาร & การออกกำลังกาย ... (เหมือนเดิม) */}
       {editingMeal && (
         <div className={styles.modalOverlay}>
           <div className={styles.modalContent}>
@@ -833,7 +860,6 @@ const DailyLog: React.FC = () => {
         </div>
       )}
 
-      {/* Modal แก้ไขการออกกำลังกาย */}
       {editingExercise && (
         <div className={styles.modalOverlay}>
           <div className={styles.modalContent}>
@@ -882,35 +908,40 @@ const DailyLog: React.FC = () => {
         </div>
       )}
 
-      {/* Modal โปรตีน */}
-      {showProteinModal && (
+      {/* 🌟 Unified Macro Modal สำหรับ Protein, Carbs, Fats */}
+      {showMacroModal && (
         <div className={styles.modalOverlay}>
           <div className={styles.modalContent} style={{ maxWidth: "400px" }}>
-            <h2 className={styles.modalTitle} style={{ fontSize: "20px" }}>
-              {proteinModalMode === "add" ? "เพิ่มโปรตีน" : "แก้ไขปริมาณโปรตีน"}
+            <h2
+              className={styles.modalTitle}
+              style={{ fontSize: "20px", textTransform: "capitalize" }}
+            >
+              {macroModalMode === "add"
+                ? `เพิ่ม ${macroActiveType}`
+                : `แก้ไขปริมาณ ${macroActiveType}`}
             </h2>
             <div className={styles.modalInputGroup}>
               <label>
-                {proteinModalMode === "add"
-                  ? "ใส่จำนวนโปรตีน (กรัม) ที่กินเพิ่ม:"
-                  : "จำนวนโปรตีนทั้งหมดวันนี้ (กรัม):"}
+                {macroModalMode === "add"
+                  ? `ใส่จำนวน ${macroActiveType} (กรัม) ที่กินเพิ่ม:`
+                  : `จำนวน ${macroActiveType} ทั้งหมดวันนี้ (กรัม):`}
               </label>
               <input
                 type="number"
-                value={proteinInput}
-                onChange={(e) => setProteinInput(e.target.value)}
+                value={macroInput}
+                onChange={(e) => setMacroInput(e.target.value)}
                 autoFocus
               />
             </div>
             <div className={styles.modalActions}>
               <button
                 className={styles.btnCancel}
-                onClick={() => setShowProteinModal(false)}
+                onClick={() => setShowMacroModal(false)}
               >
                 ยกเลิก
               </button>
-              <button className={styles.btnSave} onClick={handleConfirmProtein}>
-                {proteinModalMode === "add" ? "เพิ่ม" : "บันทึก"}
+              <button className={styles.btnSave} onClick={handleConfirmMacro}>
+                {macroModalMode === "add" ? "เพิ่ม" : "บันทึก"}
               </button>
             </div>
           </div>

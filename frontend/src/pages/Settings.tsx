@@ -7,13 +7,14 @@ import AppLayout from "../components/AppLayout";
 const Settings: React.FC = () => {
   const [calGoal, setCalGoal] = useState<number | "">("");
   const [proteinGoal, setProteinGoal] = useState<number | "">("");
+  const [carbsGoal, setCarbsGoal] = useState<number | "">(""); // 🌟 เพิ่มคาร์บ
+  const [fatsGoal, setFatsGoal] = useState<number | "">(""); // 🌟 เพิ่มไขมัน
   const [waterGoal, setWaterGoal] = useState<number | "">("");
   const [currentWeight, setCurrentWeight] = useState<number | "">("");
   const [targetWeight, setTargetWeight] = useState<number | "">("");
 
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // ดึงข้อมูลการตั้งค่าตอนเข้าเว็บ
   useEffect(() => {
     const fetchSettings = async () => {
       try {
@@ -23,12 +24,13 @@ const Settings: React.FC = () => {
         if (res.data) {
           setCalGoal(res.data.cal_goal || 1400);
           setProteinGoal(res.data.protein_goal || 140);
+          setCarbsGoal(res.data.carbs_goal || 150); // ดึงคาร์บ
+          setFatsGoal(res.data.fats_goal || 50); // ดึงไขมัน
           setWaterGoal(res.data.water_goal || 8);
           setCurrentWeight(res.data.current_weight || "");
           setTargetWeight(res.data.target_weight || "");
         }
       } catch (error) {
-        console.error("ดึงข้อมูลการตั้งค่าล้มเหลว", error);
         toast.error("ดึงข้อมูลไม่สำเร็จ");
       } finally {
         setIsLoading(false);
@@ -43,13 +45,14 @@ const Settings: React.FC = () => {
       await axios.post("https://my-food-diary-n1tf.onrender.com/api/settings", {
         cal_goal: Number(calGoal) || 1400,
         protein_goal: Number(proteinGoal) || 140,
+        carbs_goal: Number(carbsGoal) || 150, // เซฟคาร์บ
+        fats_goal: Number(fatsGoal) || 50, // เซฟไขมัน
         water_goal: Number(waterGoal) || 8,
         current_weight: Number(currentWeight) || 0,
         target_weight: Number(targetWeight) || 0,
       });
       toast.success("บันทึกการตั้งค่าเรียบร้อย!", { id: loadingToast });
     } catch (error) {
-      console.error(error);
       toast.error("บันทึกข้อมูลไม่สำเร็จ");
     }
   };
@@ -60,28 +63,9 @@ const Settings: React.FC = () => {
         <div className="loadingOverlay">
           <div className="loadingCard">
             <div className="loadingMascot">🐹💨</div>
-            <h2
-              style={{
-                fontFamily: "var(--font-heading)",
-                margin: "0 0 8px 0",
-                color: "#0f172a",
-              }}
-            >
+            <h2 style={{ fontFamily: "var(--font-heading)" }}>
               กำลังโหลดการตั้งค่า...
             </h2>
-            <p
-              style={{
-                color: "#64748b",
-                margin: 0,
-                fontSize: "14px",
-                lineHeight: "1.6",
-              }}
-            >
-              รอแป๊บนะฮะ ไวท์มอลกำลังค้นแฟ้มประวัติอยู่!
-            </p>
-            <div className="loadingBarContainer">
-              <div className="loadingBar"></div>
-            </div>
           </div>
         </div>
       )}
@@ -101,9 +85,14 @@ const Settings: React.FC = () => {
               >
                 track_changes
               </span>
-              เป้าหมายโภชนาการรายวัน
+              เป้าหมายสารอาหาร (Macros)
             </h3>
-            <div className={styles.formGrid}>
+
+            {/* 🌟 ปรับ Grid ให้รองรับ 4 ช่องสวยๆ */}
+            <div
+              className={styles.formGrid}
+              style={{ gridTemplateColumns: "1fr 1fr", gap: "24px" }}
+            >
               <div className={styles.inputGroup}>
                 <label className={styles.formLabel}>
                   เป้าหมายแคลอรี่ (kcal)
@@ -117,13 +106,10 @@ const Settings: React.FC = () => {
                       e.target.value === "" ? "" : Number(e.target.value),
                     )
                   }
-                  placeholder="เช่น 1400"
                 />
               </div>
               <div className={styles.inputGroup}>
-                <label className={styles.formLabel}>
-                  เป้าหมายโปรตีน (กรัม)
-                </label>
+                <label className={styles.formLabel}>โปรตีน (Protein - g)</label>
                 <input
                   type="number"
                   className={styles.formInput}
@@ -133,23 +119,34 @@ const Settings: React.FC = () => {
                       e.target.value === "" ? "" : Number(e.target.value),
                     )
                   }
-                  placeholder="เช่น 140"
                 />
               </div>
               <div className={styles.inputGroup}>
                 <label className={styles.formLabel}>
-                  เป้าหมายการดื่มน้ำ (แก้ว)
+                  คาร์โบไฮเดรต (Carbs - g)
                 </label>
                 <input
                   type="number"
                   className={styles.formInput}
-                  value={waterGoal}
+                  value={carbsGoal}
                   onChange={(e) =>
-                    setWaterGoal(
+                    setCarbsGoal(
                       e.target.value === "" ? "" : Number(e.target.value),
                     )
                   }
-                  placeholder="เช่น 8"
+                />
+              </div>
+              <div className={styles.inputGroup}>
+                <label className={styles.formLabel}>ไขมัน (Fats - g)</label>
+                <input
+                  type="number"
+                  className={styles.formInput}
+                  value={fatsGoal}
+                  onChange={(e) =>
+                    setFatsGoal(
+                      e.target.value === "" ? "" : Number(e.target.value),
+                    )
+                  }
                 />
               </div>
             </div>
@@ -163,7 +160,7 @@ const Settings: React.FC = () => {
               >
                 monitor_weight
               </span>
-              เป้าหมายน้ำหนัก
+              เป้าหมายอื่นๆ
             </h3>
             <div className={styles.formGrid}>
               <div className={styles.inputGroup}>
@@ -178,7 +175,6 @@ const Settings: React.FC = () => {
                       e.target.value === "" ? "" : Number(e.target.value),
                     )
                   }
-                  placeholder="เช่น 65.5"
                 />
               </div>
               <div className={styles.inputGroup}>
@@ -193,7 +189,21 @@ const Settings: React.FC = () => {
                       e.target.value === "" ? "" : Number(e.target.value),
                     )
                   }
-                  placeholder="เช่น 60.0"
+                />
+              </div>
+              <div className={styles.inputGroup}>
+                <label className={styles.formLabel}>
+                  เป้าหมายดื่มน้ำ (แก้ว)
+                </label>
+                <input
+                  type="number"
+                  className={styles.formInput}
+                  value={waterGoal}
+                  onChange={(e) =>
+                    setWaterGoal(
+                      e.target.value === "" ? "" : Number(e.target.value),
+                    )
+                  }
                 />
               </div>
             </div>

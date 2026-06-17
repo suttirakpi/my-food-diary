@@ -505,6 +505,45 @@ app.post("/api/settings", async (req: Request, res: Response) => {
   }
 });
 
+// ดึงข้อมูล Macros รายวัน
+app.get("/api/macros", async (req: Request, res: Response) => {
+  const date = req.query.date;
+  try {
+    const [rows]: any = await pool.query(
+      "SELECT * FROM daily_macros WHERE log_date = ?",
+      [date],
+    );
+    if (rows.length === 0) {
+      res.json({ protein: 0, carbs: 0, fats: 0 });
+    } else {
+      res.json(rows[0]);
+    }
+  } catch (error) {
+    res.status(500).json({ error: "ดึงข้อมูล Macros ไม่สำเร็จ" });
+  }
+});
+
+// บันทึก/อัปเดตข้อมูล Macros รายวัน
+app.post("/api/macros", async (req: Request, res: Response) => {
+  const { date, protein, carbs, fats } = req.body;
+  try {
+    await pool.query(
+      `
+      INSERT INTO daily_macros (log_date, protein, carbs, fats)
+      VALUES (?, ?, ?, ?)
+      ON DUPLICATE KEY UPDATE 
+        protein = VALUES(protein),
+        carbs = VALUES(carbs),
+        fats = VALUES(fats)
+    `,
+      [date, protein, carbs, fats],
+    );
+    res.json({ message: "อัปเดต Macros สำเร็จ" });
+  } catch (error) {
+    res.status(500).json({ error: "บันทึก Macros ไม่สำเร็จ" });
+  }
+});
+
 // 🌟 บรรทัด app.listen ต้องอยู่ล่างสุดเสมอ!
 app.listen(port, () => {
   console.log(`Backend Server is running on http://localhost:${port}`);
