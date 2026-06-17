@@ -38,17 +38,22 @@ const DailyLog: React.FC = () => {
   const [editingMeal, setEditingMeal] = useState<MealEntry | null>(null);
   const [exercises, setExercises] = useState<ExerciseEntry[]>([]);
 
+  // 🌟 States สำหรับเป้าหมายที่ดึงจาก Settings
+  const [dailyCalGoal, setDailyCalGoal] = useState<number>(1400);
+  const [proteinGoal, setProteinGoal] = useState<number>(140);
+  const [waterGoal, setWaterGoal] = useState<number>(8);
+
   // States สำหรับฟอร์มออกกำลังกาย
   const [showExerciseForm, setShowExerciseForm] = useState(false);
   const [exName, setExName] = useState("");
   const [exCal, setExCal] = useState<number | "">("");
 
-  // 🌟 States สำหรับแก้ไขการออกกำลังกาย
+  // States สำหรับแก้ไขการออกกำลังกาย
   const [editingExercise, setEditingExercise] = useState<ExerciseEntry | null>(
     null,
   );
 
-  // States สำหรับ Modal โปรตีน (เพิ่มระบบ Mode)
+  // States สำหรับ Modal โปรตีน
   const [showProteinModal, setShowProteinModal] = useState<boolean>(false);
   const [proteinModalMode, setProteinModalMode] = useState<"add" | "edit">(
     "add",
@@ -64,29 +69,42 @@ const DailyLog: React.FC = () => {
 
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
+  // 🌟 อัปเดตฟังก์ชันดึงข้อมูลให้รวมเอา Settings มาด้วย
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const [mealsRes, waterRes, exRes, proteinRes] = await Promise.all([
-        axios.get(
-          `https://my-food-diary-n1tf.onrender.com/api/meals?date=${selectedDate}`,
-        ),
-        axios.get(
-          `https://my-food-diary-n1tf.onrender.com/api/water?date=${selectedDate}`,
-        ),
-        axios.get(
-          `https://my-food-diary-n1tf.onrender.com/api/exercises?date=${selectedDate}`,
-        ),
-        axios
-          .get(
-            `https://my-food-diary-n1tf.onrender.com/api/protein?date=${selectedDate}`,
-          )
-          .catch(() => ({ data: { grams: 0 } })),
-      ]);
+      const [mealsRes, waterRes, exRes, proteinRes, settingsRes] =
+        await Promise.all([
+          axios.get(
+            `https://my-food-diary-n1tf.onrender.com/api/meals?date=${selectedDate}`,
+          ),
+          axios.get(
+            `https://my-food-diary-n1tf.onrender.com/api/water?date=${selectedDate}`,
+          ),
+          axios.get(
+            `https://my-food-diary-n1tf.onrender.com/api/exercises?date=${selectedDate}`,
+          ),
+          axios
+            .get(
+              `https://my-food-diary-n1tf.onrender.com/api/protein?date=${selectedDate}`,
+            )
+            .catch(() => ({ data: { grams: 0 } })),
+          axios
+            .get(`https://my-food-diary-n1tf.onrender.com/api/settings`)
+            .catch(() => ({ data: null })),
+        ]);
+
       setMeals(mealsRes.data);
       setWaterGlasses(waterRes.data.glasses);
       setExercises(exRes.data);
       setProteinGrams(proteinRes.data.grams || 0);
+
+      // เซตค่าเป้าหมายจาก Database
+      if (settingsRes.data) {
+        setDailyCalGoal(settingsRes.data.cal_goal || 1400);
+        setProteinGoal(settingsRes.data.protein_goal || 140);
+        setWaterGoal(settingsRes.data.water_goal || 8);
+      }
     } catch (error) {
       console.error("ดึงข้อมูลไม่สำเร็จ:", error);
     } finally {
@@ -155,9 +173,6 @@ const DailyLog: React.FC = () => {
     }
   };
 
-  // ----------------------------------------
-  // 🏋️‍♂️ การจัดการ ออกกำลังกาย (Exercises)
-  // ----------------------------------------
   const handleAddExercise = async () => {
     if (!exName.trim() || !exCal) {
       toast.error("กรุณากรอกชื่อกิจกรรมและจำนวนแคลอรี่");
@@ -182,7 +197,6 @@ const DailyLog: React.FC = () => {
     }
   };
 
-  // 🌟 ฟังก์ชันลบการออกกำลังกาย
   const handleDeleteExercise = async (id: number) => {
     if (!window.confirm("คุณแน่ใจหรือไม่ว่าต้องการลบการออกกำลังกายนี้?"))
       return;
@@ -197,7 +211,6 @@ const DailyLog: React.FC = () => {
     }
   };
 
-  // 🌟 ฟังก์ชันบันทึกการแก้ไขการออกกำลังกาย
   const handleSaveEditExercise = async () => {
     if (!editingExercise) return;
     try {
@@ -216,9 +229,6 @@ const DailyLog: React.FC = () => {
     }
   };
 
-  // ----------------------------------------
-  // 🥗 การจัดการ อาหาร (Meals)
-  // ----------------------------------------
   const handleDelete = async (id: number) => {
     if (!window.confirm("คุณแน่ใจหรือไม่ว่าต้องการลบรายการอาหารนี้?")) return;
     try {
@@ -295,9 +305,10 @@ const DailyLog: React.FC = () => {
   );
   const netCalories = totalCalories - totalBurned;
 
-  const DAILY_CALORIE_GOAL = 1400;
-  const PROTEIN_MIN_GOAL = 80;
-  const PROTEIN_MAX_GOAL = 140;
+  // 🌟 นำค่าเป้าหมายที่ได้จาก Database มาใช้
+  const DAILY_CALORIE_GOAL = dailyCalGoal;
+  const PROTEIN_MAX_GOAL = proteinGoal;
+  const PROTEIN_MIN_GOAL = Math.round(proteinGoal * 0.6); // คำนวณขีดขั้นต่ำที่ 60% อัตโนมัติ
 
   const isProteinReachedMin = proteinGrams >= PROTEIN_MIN_GOAL;
 
@@ -322,11 +333,11 @@ const DailyLog: React.FC = () => {
     mascotEmoji = "🐹💖";
   } else if (isOverGoal) {
     mascotMood = "warning";
-    mascotMessage = "แงะ! แคลอรี่ทะลุแล้วฮะ! 🍔";
+    mascotMessage = "แงะ! แคลอรี่ทะลุเป้าหมายแล้วฮะ! 🍔";
     mascotEmoji = "🐹💦";
-  } else if (waterGlasses >= 8) {
+  } else if (waterGlasses >= waterGoal) {
     mascotMood = "happy";
-    mascotMessage = "ดื่มน้ำครบแล้ว ตูนเก่งที่สุดเลยฮะ! 💧";
+    mascotMessage = `ดื่มน้ำครบ ${waterGoal} แก้วตามเป้าแล้ว ตูนเก่งที่สุดเลยฮะ! 💧`;
     mascotEmoji = "🐹✨";
   }
 
@@ -600,7 +611,6 @@ const DailyLog: React.FC = () => {
 
       {/* 🥗 Meal & Exercise Cards Grid */}
       <div className={styles.mealCardsGrid}>
-        {/* 🌟 1. กล่องแสดงรายการ ออกกำลังกาย (Workout) */}
         {exercises.length > 0 && (
           <div
             className={styles.mealCardPremium}
@@ -655,7 +665,6 @@ const DailyLog: React.FC = () => {
                   >
                     {ex.calories_burned} kcal
                   </span>
-                  {/* ไอคอน Edit/Delete จิ๋ว สำหรับ Workout */}
                   <div style={{ display: "flex", gap: "6px" }}>
                     <span
                       className="material-symbols-outlined"
@@ -686,7 +695,6 @@ const DailyLog: React.FC = () => {
           </div>
         )}
 
-        {/* 🌟 2. กล่องแสดงรายการ อาหาร (Meals) */}
         {groupsToRender.map((cat: string) => {
           const mealsInCat = groupedMeals[cat];
           if (!mealsInCat || mealsInCat.length === 0) return null;
@@ -838,7 +846,7 @@ const DailyLog: React.FC = () => {
         </div>
       )}
 
-      {/* 🌟 Modal แก้ไขการออกกำลังกาย */}
+      {/* Modal แก้ไขการออกกำลังกาย */}
       {editingExercise && (
         <div className={styles.modalOverlay}>
           <div className={styles.modalContent}>
