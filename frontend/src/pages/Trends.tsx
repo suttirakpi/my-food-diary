@@ -102,14 +102,13 @@ const Trends: React.FC = () => {
         setData(trendsRes.data);
         const calData = calendarRes.data;
 
-        // ดึงข้อมูลย้อนหลัง 7 วัน
         const last7Dates = Array.from({ length: 7 }, (_, i) => {
           const d = new Date();
           d.setDate(d.getDate() - (6 - i));
           return getLocalDateStr(d);
         });
 
-        // ดึงของเก่าเผื่อไว้ (Legacy API)
+        // ดึงของเก่าเผื่อไว้สำหรับโปรตีน (Legacy API)
         const proteinPromises = last7Dates.map((date) =>
           axios
             .get(
@@ -131,9 +130,9 @@ const Trends: React.FC = () => {
         });
         setProteinTrend(pData);
 
-        // 🌟 สร้างข้อมูล All-In-One Trend (รวมเบิร์นออกเข้าไปด้วย)
+        // 🌟 สร้างข้อมูล All-In-One Trend (อัปเกรดเป็น 1 เดือน / 30 วันล่าสุด)
         const allInOneData = [];
-        for (let i = 6; i >= 0; i--) {
+        for (let i = 29; i >= 0; i--) {
           const d = new Date();
           d.setDate(d.getDate() - i);
           const dateStr = getLocalDateStr(d);
@@ -142,13 +141,17 @@ const Trends: React.FC = () => {
           const meal = calData.meals.find((m: any) => m.date === dateStr);
           const macro = calData.macros?.find((m: any) => m.date === dateStr);
           const water = calData.water.find((w: any) => w.date === dateStr);
-          const ex = calData.exercises.find((e: any) => e.date === dateStr); // 🌟 หาข้อมูลออกกำลังกาย
-          const legacyProtein = proteinResults[6 - i]?.data?.grams || 0;
+          const ex = calData.exercises.find((e: any) => e.date === dateStr);
+
+          let legacyProtein = 0;
+          if (i < 7 && proteinResults[6 - i]) {
+            legacyProtein = Number(proteinResults[6 - i].data.grams) || 0;
+          }
 
           allInOneData.push({
             date: displayDate,
             calories: Number(meal?.total_cal) || 0,
-            burned: Number(ex?.total_burned) || 0, // 🌟 เพิ่มข้อมูลเบิร์นลงไปในกราฟ
+            burned: Number(ex?.total_burned) || 0,
             protein: macro?.protein || legacyProtein || 0,
             carbs: macro?.carbs || 0,
             fats: macro?.fats || 0,
@@ -285,6 +288,12 @@ const Trends: React.FC = () => {
     return allDates.map((date) => combined[date]).slice(-7);
   }, [data]);
 
+  // 🌟 ดึงข้อมูล 7 วันล่าสุดจาก allInOneTrend ไว้สำหรับกราฟย่อย
+  const last7DaysTrend = useMemo(
+    () => allInOneTrend.slice(-7),
+    [allInOneTrend],
+  );
+
   return (
     <AppLayout>
       {loading && (
@@ -342,7 +351,7 @@ const Trends: React.FC = () => {
           </div>
 
           <div className={styles.dashboardGrid}>
-            {/* 🌟 กราฟภาพรวมทั้งหมด (แคล, เบิร์น, โปรตีน, คาร์บ, น้ำ, ไขมัน) */}
+            {/* 🌟 กราฟภาพรวมทั้งหมด (1 เดือนล่าสุด) */}
             <div
               className={styles.chartCard}
               style={{
@@ -355,7 +364,7 @@ const Trends: React.FC = () => {
                 className={styles.chartTitle}
                 style={{ color: "#0f172a", fontSize: "20px" }}
               >
-                🌟 ภาพรวมโภชนาการแบบครบจบในที่เดียว (7 วันล่าสุด)
+                🌟 ภาพรวมโภชนาการแบบครบจบในที่เดียว (1 เดือนล่าสุด)
               </h3>
               <ResponsiveContainer width="100%" height={350}>
                 <ComposedChart
@@ -367,7 +376,12 @@ const Trends: React.FC = () => {
                     strokeDasharray="3 3"
                     vertical={false}
                   />
-                  <XAxis dataKey="date" tick={{ fill: "#64748b" }} />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fill: "#64748b", fontSize: 12 }}
+                    interval="preserveStartEnd"
+                    minTickGap={20}
+                  />
                   <YAxis
                     yAxisId="left"
                     orientation="left"
@@ -396,7 +410,7 @@ const Trends: React.FC = () => {
                     name="โปรตีน (g)"
                     stackId="a"
                     fill="#10b981"
-                    radius={[0, 0, 4, 4]}
+                    radius={[0, 0, 0, 0]}
                   />
                   <Bar
                     yAxisId="right"
@@ -421,16 +435,9 @@ const Trends: React.FC = () => {
                     name="แคลอรี่กิน (kcal)"
                     stroke="#ef4444"
                     strokeWidth={3}
-                    dot={{
-                      r: 6,
-                      fill: "#ef4444",
-                      stroke: "white",
-                      strokeWidth: 2,
-                    }}
+                    dot={false}
                     activeDot={{ r: 8 }}
                   />
-
-                  {/* 🌟 เพิ่มเส้นสำหรับแคลอรี่ที่เบิร์น (อ้างอิงแกนซ้าย) */}
                   <Line
                     yAxisId="left"
                     type="monotone"
@@ -439,15 +446,9 @@ const Trends: React.FC = () => {
                     stroke="#a855f7"
                     strokeWidth={3}
                     strokeDasharray="5 5"
-                    dot={{
-                      r: 5,
-                      fill: "#a855f7",
-                      stroke: "white",
-                      strokeWidth: 2,
-                    }}
+                    dot={false}
                     activeDot={{ r: 7 }}
                   />
-
                   <Line
                     yAxisId="right"
                     type="monotone"
@@ -456,13 +457,51 @@ const Trends: React.FC = () => {
                     stroke="#0ea5e9"
                     strokeWidth={3}
                     strokeDasharray="3 3"
-                    dot={{ r: 5, fill: "#0ea5e9" }}
+                    dot={false}
                   />
                 </ComposedChart>
               </ResponsiveContainer>
             </div>
 
-            {/* กราฟโปรตีน 7 วันล่าสุด */}
+            {/* เจาะลึก กิน vs เบิร์น (7 วันล่าสุด) */}
+            <div className={styles.chartCard} style={{ gridColumn: "1 / -1" }}>
+              <h3 className={styles.chartTitle}>
+                เจาะลึก กิน vs เบิร์น (7 วันล่าสุด)
+              </h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart
+                  data={mergedChartData}
+                  margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="date" />
+                  <YAxis />
+                  <Tooltip
+                    cursor={{ fill: "rgba(0,0,0,0.05)" }}
+                    contentStyle={{
+                      borderRadius: "12px",
+                      border: "none",
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                    }}
+                  />
+                  <Legend wrapperStyle={{ paddingTop: "20px" }} />
+                  <Bar
+                    dataKey="total_cal"
+                    name="กินเข้า (kcal)"
+                    fill="#10b981"
+                    radius={[6, 6, 0, 0]}
+                  />
+                  <Bar
+                    dataKey="total_burned"
+                    name="เบิร์นออก (kcal)"
+                    fill="#ef4444"
+                    radius={[6, 6, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* 🌟 กราฟโปรตีน 7 วันล่าสุด */}
             <div
               className={styles.chartCard}
               style={{ backgroundColor: "#fff8e1" }}
@@ -501,108 +540,114 @@ const Trends: React.FC = () => {
               </ResponsiveContainer>
             </div>
 
-            {/* เจาะลึก กิน vs เบิร์น */}
-            <div className={styles.chartCard}>
-              <h3 className={styles.chartTitle}>
-                เจาะลึก กิน vs เบิร์น (7 วันล่าสุด)
+            {/* 🌟 กราฟคาร์บ 7 วันล่าสุด */}
+            <div
+              className={styles.chartCard}
+              style={{ backgroundColor: "#eff6ff" }}
+            >
+              <h3 className={styles.chartTitle} style={{ color: "#1d4ed8" }}>
+                🍚 สถิติคาร์โบไฮเดรต 7 วันล่าสุด
               </h3>
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width="100%" height={250}>
                 <BarChart
-                  data={mergedChartData}
+                  data={last7DaysTrend}
                   margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="date" />
                   <YAxis />
                   <Tooltip
-                    cursor={{ fill: "rgba(0,0,0,0.05)" }}
+                    formatter={(value) => [`${value} กรัม`, "คาร์บ"]}
                     contentStyle={{
                       borderRadius: "12px",
-                      border: "none",
-                      boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                      border: "1px solid #bfdbfe",
                     }}
                   />
-                  <Legend wrapperStyle={{ paddingTop: "20px" }} />
-                  <Bar
-                    dataKey="total_cal"
-                    name="กินเข้า (kcal)"
-                    fill="#10b981"
-                    radius={[6, 6, 0, 0]}
+                  <ReferenceLine
+                    y={150}
+                    label="เป้าหมาย 150g"
+                    stroke="#2563eb"
+                    strokeDasharray="3 3"
                   />
                   <Bar
-                    dataKey="total_burned"
-                    name="เบิร์นออก (kcal)"
-                    fill="#ef4444"
+                    dataKey="carbs"
+                    name="คาร์บ (กรัม)"
+                    fill="#3b82f6"
                     radius={[6, 6, 0, 0]}
                   />
                 </BarChart>
               </ResponsiveContainer>
             </div>
 
-            {/* ภาพรวม 30 วัน */}
+            {/* 🌟 กราฟไขมัน 7 วันล่าสุด */}
             <div
               className={styles.chartCard}
-              style={{ gridColumn: "1 / -1", backgroundColor: "#f8fafc" }}
+              style={{ backgroundColor: "#fffbeb" }}
             >
-              <h3 className={styles.chartTitle}>
-                ภาพรวม กิน vs เบิร์น (30 วันล่าสุด)
+              <h3 className={styles.chartTitle} style={{ color: "#b45309" }}>
+                🥑 สถิติไขมัน 7 วันล่าสุด
               </h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <AreaChart
-                  data={monthlyData}
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart
+                  data={last7DaysTrend}
                   margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
                 >
-                  <defs>
-                    <linearGradient id="colorCal30" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.5} />
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                    </linearGradient>
-                    <linearGradient
-                      id="colorBurn30"
-                      x1="0"
-                      y1="0"
-                      x2="0"
-                      y2="1"
-                    >
-                      <stop offset="5%" stopColor="#ef4444" stopOpacity={0.5} />
-                      <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis
-                    dataKey="date"
-                    tick={{ fontSize: 12 }}
-                    interval="preserveStartEnd"
-                    minTickGap={20}
-                  />
+                  <XAxis dataKey="date" />
                   <YAxis />
                   <Tooltip
+                    formatter={(value) => [`${value} กรัม`, "ไขมัน"]}
                     contentStyle={{
                       borderRadius: "12px",
-                      border: "none",
-                      boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                      border: "1px solid #fde68a",
                     }}
                   />
-                  <Legend wrapperStyle={{ paddingTop: "20px" }} />
-                  <Area
-                    type="monotone"
-                    dataKey="total_cal"
-                    name="กินเข้า (kcal)"
-                    stroke="#10b981"
-                    fillOpacity={1}
-                    fill="url(#colorCal30)"
-                    strokeWidth={2}
+                  <ReferenceLine
+                    y={50}
+                    label="เป้าหมาย 50g"
+                    stroke="#d97706"
+                    strokeDasharray="3 3"
                   />
-                  <Area
-                    type="monotone"
-                    dataKey="total_burned"
-                    name="เบิร์นออก (kcal)"
-                    stroke="#ef4444"
-                    fillOpacity={1}
-                    fill="url(#colorBurn30)"
-                    strokeWidth={2}
+                  <Bar
+                    dataKey="fats"
+                    name="ไขมัน (กรัม)"
+                    fill="#f59e0b"
+                    radius={[6, 6, 0, 0]}
                   />
-                </AreaChart>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* 🌟 กราฟเบิร์น 7 วันล่าสุด */}
+            <div
+              className={styles.chartCard}
+              style={{ backgroundColor: "#fef2f2" }}
+            >
+              <h3 className={styles.chartTitle} style={{ color: "#b91c1c" }}>
+                🔥 สถิติเผาผลาญ 7 วันล่าสุด
+              </h3>
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart
+                  data={last7DaysTrend}
+                  margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="date" />
+                  <YAxis />
+                  <Tooltip
+                    formatter={(value) => [`${value} kcal`, "เบิร์นออก"]}
+                    contentStyle={{
+                      borderRadius: "12px",
+                      border: "1px solid #fecaca",
+                    }}
+                  />
+                  <Bar
+                    dataKey="burned"
+                    name="เผาผลาญ (kcal)"
+                    fill="#ef4444"
+                    radius={[6, 6, 0, 0]}
+                  />
+                </BarChart>
               </ResponsiveContainer>
             </div>
 
