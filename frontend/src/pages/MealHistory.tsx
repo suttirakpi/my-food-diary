@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import styles from "./MealHistory.module.css";
-import AppLayout from "../components/AppLayout"; // 🌟 Import Layout เข้ามา
+import AppLayout from "../components/AppLayout";
 
 interface MealOption {
   id: number;
@@ -17,6 +17,9 @@ interface MealEntry {
   category: string;
   item_type: string;
   calories: number;
+  protein?: number; // 🌟 เพิ่มมารองรับข้อมูลใหม่
+  carbs?: number; // 🌟 เพิ่มมารองรับข้อมูลใหม่
+  fats?: number; // 🌟 เพิ่มมารองรับข้อมูลใหม่
   options: MealOption[];
 }
 
@@ -33,7 +36,6 @@ const MealHistory: React.FC = () => {
   const [waterData, setWaterData] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState<boolean>(true);
 
-  // States สำหรับระบบค้นหา ตัวกรอง และการเรียงลำดับ
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string>("ทั้งหมด");
   const [selectedType, setSelectedType] = useState<string>("ทั้งหมด");
@@ -45,7 +47,6 @@ const MealHistory: React.FC = () => {
   const DATES_PER_PAGE = 7;
   const MEALS_PER_PAGE = 15;
 
-  // เช็คโหมดมุมมองตาราง
   const isGroupedView = sortOrder === "default";
 
   useEffect(() => {
@@ -160,11 +161,10 @@ const MealHistory: React.FC = () => {
 
   return (
     <AppLayout>
-      {/* 🌟 หน้าจอ Loading ระหว่างรอเซิร์ฟเวอร์ดึงข้อมูล */}
       {loading && (
-        <div className="loadingOverlay">
-          <div className="loadingCard">
-            <div className="loadingMascot">🐹💨</div>
+        <div className={styles.loadingOverlay}>
+          <div className={styles.loadingCard}>
+            <div className={styles.loadingMascot}>🐹💨</div>
             <h2
               style={{
                 fontFamily: "var(--font-heading)",
@@ -184,14 +184,13 @@ const MealHistory: React.FC = () => {
             >
               รอแป๊บนะฮะ ไวท์มอลกำลังรื้อแฟ้มประวัติให้อยู่!
             </p>
-            <div className="loadingBarContainer">
-              <div className="loadingBar"></div>
+            <div className={styles.loadingBarContainer}>
+              <div className={styles.loadingBar}></div>
             </div>
           </div>
         </div>
       )}
 
-      {/* เนื้อหาหน้าเว็บ */}
       {!loading && (
         <div className={styles.contentWrapper}>
           <div className={styles.pageHeader}>
@@ -286,9 +285,10 @@ const MealHistory: React.FC = () => {
                   {!isGroupedView && <th>วันที่</th>}
                   <th>เวลา</th>
                   <th>มื้ออาหาร</th>
-                  <th>ประเภท</th>
                   <th>ชื่อเมนูอาหาร / เครื่องดื่ม</th>
                   <th>ท็อปปิ้ง / เพิ่มเติม</th>
+                  {/* 🌟 เพิ่มหัวตาราง Macros */}
+                  <th style={{ textAlign: "right" }}>สารอาหาร (Macros)</th>
                   <th style={{ textAlign: "right" }}>แคลอรี่ (kcal)</th>
                 </tr>
               </thead>
@@ -312,7 +312,7 @@ const MealHistory: React.FC = () => {
                       return (
                         <React.Fragment key={date}>
                           <tr className={styles.dateHeaderRow}>
-                            <td colSpan={6}>
+                            <td colSpan={7}>
                               📅 {formattedDate} &nbsp;&nbsp;|&nbsp;&nbsp; 💧
                               ดื่มน้ำ: {glasses} แก้ว ({glasses * 22} oz /{" "}
                               {((glasses * 650) / 1000).toFixed(1)} L)
@@ -331,12 +331,21 @@ const MealHistory: React.FC = () => {
                                   {meal.category}
                                 </span>
                               </td>
-                              <td data-label="ประเภท">{meal.item_type}</td>
                               <td
                                 data-label="ชื่อเมนู"
                                 style={{ fontWeight: 700 }}
                               >
                                 {meal.main_dish}
+                                <div
+                                  style={{
+                                    fontSize: "12px",
+                                    color: "#94a3b8",
+                                    fontWeight: "normal",
+                                    marginTop: "2px",
+                                  }}
+                                >
+                                  {meal.item_type}
+                                </div>
                               </td>
                               <td data-label="ท็อปปิ้ง">
                                 {meal.options && meal.options.length > 0 ? (
@@ -354,12 +363,47 @@ const MealHistory: React.FC = () => {
                                   <span style={{ color: "#cbd5e1" }}>-</span>
                                 )}
                               </td>
+                              {/* 🌟 เซลล์แสดง Macros แบบแยกบรรทัด */}
+                              <td
+                                data-label="สารอาหาร"
+                                className={styles.macroCell}
+                              >
+                                {meal.protein || meal.carbs || meal.fats ? (
+                                  <>
+                                    <span
+                                      className={`${styles.macroText} ${styles.textProtein}`}
+                                    >
+                                      Pro: {meal.protein || 0}g
+                                    </span>
+                                    <span
+                                      className={`${styles.macroText} ${styles.textCarbs}`}
+                                    >
+                                      Carb: {meal.carbs || 0}g
+                                    </span>
+                                    <span
+                                      className={`${styles.macroText} ${styles.textFats}`}
+                                    >
+                                      Fat: {meal.fats || 0}g
+                                    </span>
+                                  </>
+                                ) : (
+                                  <span
+                                    style={{
+                                      color: "#cbd5e1",
+                                      fontSize: "13px",
+                                    }}
+                                  >
+                                    ไม่มีข้อมูล
+                                  </span>
+                                )}
+                              </td>
                               <td
                                 data-label="แคลอรี่"
                                 style={{
                                   textAlign: "right",
                                   fontWeight: "bold",
                                   color: "#10b981",
+                                  verticalAlign: "top",
                                 }}
                               >
                                 {meal.calories > 0 ? `${meal.calories}` : "0"}
@@ -372,7 +416,7 @@ const MealHistory: React.FC = () => {
                   ) : (
                     <tr>
                       <td
-                        colSpan={6}
+                        colSpan={7}
                         style={{
                           textAlign: "center",
                           padding: "40px",
@@ -408,9 +452,18 @@ const MealHistory: React.FC = () => {
                             {meal.category}
                           </span>
                         </td>
-                        <td data-label="ประเภท">{meal.item_type}</td>
                         <td data-label="ชื่อเมนู" style={{ fontWeight: 700 }}>
                           {meal.main_dish}
+                          <div
+                            style={{
+                              fontSize: "12px",
+                              color: "#94a3b8",
+                              fontWeight: "normal",
+                              marginTop: "2px",
+                            }}
+                          >
+                            {meal.item_type}
+                          </div>
                         </td>
                         <td data-label="ท็อปปิ้ง">
                           {meal.options && meal.options.length > 0 ? (
@@ -428,12 +481,40 @@ const MealHistory: React.FC = () => {
                             <span style={{ color: "#cbd5e1" }}>-</span>
                           )}
                         </td>
+                        <td data-label="สารอาหาร" className={styles.macroCell}>
+                          {meal.protein || meal.carbs || meal.fats ? (
+                            <>
+                              <span
+                                className={`${styles.macroText} ${styles.textProtein}`}
+                              >
+                                Pro: {meal.protein || 0}g
+                              </span>
+                              <span
+                                className={`${styles.macroText} ${styles.textCarbs}`}
+                              >
+                                Carb: {meal.carbs || 0}g
+                              </span>
+                              <span
+                                className={`${styles.macroText} ${styles.textFats}`}
+                              >
+                                Fat: {meal.fats || 0}g
+                              </span>
+                            </>
+                          ) : (
+                            <span
+                              style={{ color: "#cbd5e1", fontSize: "13px" }}
+                            >
+                              ไม่มีข้อมูล
+                            </span>
+                          )}
+                        </td>
                         <td
                           data-label="แคลอรี่"
                           style={{
                             textAlign: "right",
                             fontWeight: "bold",
                             color: "#10b981",
+                            verticalAlign: "top",
                           }}
                         >
                           {meal.calories > 0 ? `${meal.calories}` : "0"}

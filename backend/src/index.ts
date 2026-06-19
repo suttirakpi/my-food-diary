@@ -62,21 +62,39 @@ app.get("/api/meals", async (req: Request, res: Response) => {
 // API 2: POST /api/meals
 // ----------------------------------------------------
 app.post("/api/meals", async (req: Request, res: Response) => {
-  const { mainDish, options, category, itemType, calories, date, time } =
-    req.body;
+  const {
+    mainDish,
+    options,
+    category,
+    itemType,
+    calories,
+    protein,
+    carbs,
+    fats,
+    date,
+    time,
+  } = req.body;
   const today = new Date();
-
   const mealDate = date || today.toISOString().split("T")[0];
   const mealTime = time || today.toTimeString().split(" ")[0];
 
   const connection = await pool.getConnection();
-
   try {
     await connection.beginTransaction();
-
+    // 🌟 อัปเดตให้เซิร์ฟเวอร์เซฟ protein, carbs, fats ลงตาราง meals ด้วย
     const [mealResult] = await connection.query(
-      "INSERT INTO meals (meal_date, meal_time, main_dish, category, item_type, calories) VALUES (?, ?, ?, ?, ?, ?)",
-      [mealDate, mealTime, mainDish, category, itemType, calories || 0],
+      "INSERT INTO meals (meal_date, meal_time, main_dish, category, item_type, calories, protein, carbs, fats) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [
+        mealDate,
+        mealTime,
+        mainDish,
+        category,
+        itemType,
+        calories || 0,
+        protein || 0,
+        carbs || 0,
+        fats || 0,
+      ],
     );
     const mealId = (mealResult as any).insertId;
 
@@ -101,16 +119,34 @@ app.post("/api/meals", async (req: Request, res: Response) => {
 
 app.put("/api/meals/:id", async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { mainDish, category, itemType, options, calories } = req.body;
+  const {
+    mainDish,
+    category,
+    itemType,
+    options,
+    calories,
+    protein,
+    carbs,
+    fats,
+  } = req.body;
   const connection = await pool.getConnection();
 
   try {
     await connection.beginTransaction();
+    // 🌟 อัปเดตข้อมูล Macros เวลาแก้ไขเมนู
     await connection.query(
-      "UPDATE meals SET main_dish = ?, category = ?, item_type = ?, calories = ? WHERE id = ?",
-      [mainDish, category, itemType, calories || 0, id],
+      "UPDATE meals SET main_dish = ?, category = ?, itemType = ?, calories = ?, protein = ?, carbs = ?, fats = ? WHERE id = ?",
+      [
+        mainDish,
+        category,
+        itemType,
+        calories || 0,
+        protein || 0,
+        carbs || 0,
+        fats || 0,
+        id,
+      ],
     );
-
     await connection.query("DELETE FROM meal_options WHERE meal_id = ?", [id]);
 
     if (options && options.length > 0) {
@@ -120,7 +156,6 @@ app.put("/api/meals/:id", async (req: Request, res: Response) => {
         [optionValues],
       );
     }
-
     await connection.commit();
     res.json({ message: "แก้ไขข้อมูลสำเร็จ!" });
   } catch (error) {

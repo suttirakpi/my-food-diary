@@ -235,3 +235,28 @@
   color: #475569;
   font-size: 15px;
 }
+/* 🌟 สไตล์สำหรับแสดง Macros ในตาราง */
+.macroText {
+  font-size: 13px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.textProtein {
+  color: #10b981;
+}
+.textCarbs {
+  color: #3b82f6;
+}
+.textFats {
+  color: #f59e0b;
+}
+
+.macroCell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: right;
+}
