@@ -76,32 +76,35 @@ const AddMeal = () => {
       .map((s) => s.value)
       .filter((val) => val.trim() !== "");
 
-    // 🌟 1. ข้อมูลสำหรับบันทึกชื่อเมนูและแคลอรี่
+    // 🌟 ตัวเลข Macros ที่เพิ่งกรอก (ย้ายขึ้นมาไว้ตรงนี้ก่อน)
+    const addedProtein = Number(protein) || 0;
+    const addedCarbs = Number(carbs) || 0;
+    const addedFats = Number(fats) || 0;
+
+    // 🌟 1. ข้อมูลสำหรับบันทึกชื่อเมนูและแคลอรี่ (เพิ่ม Macros เข้าไปตรงนี้แหละ!)
     const mealPayload = {
       mainDish,
       category,
       itemType,
       options: validOptions,
       calories: Number(calories) || 0,
+      protein: addedProtein, // <--- เพิ่มส่งโปรตีนเข้าตาราง meals
+      carbs: addedCarbs, // <--- เพิ่มส่งคาร์บเข้าตาราง meals
+      fats: addedFats, // <--- เพิ่มส่งไขมันเข้าตาราง meals
       date: mealDate,
       time: mealTime,
     };
 
-    // 🌟 ตัวเลข Macros ที่เพิ่งกรอก
-    const addedProtein = Number(protein) || 0;
-    const addedCarbs = Number(carbs) || 0;
-    const addedFats = Number(fats) || 0;
-
     try {
       const loadingToast = toast.loading("กำลังบันทึกข้อมูล...");
 
-      // ส่งข้อมูลมื้ออาหารไปบันทึกก่อน
+      // ส่งข้อมูลมื้ออาหารไปบันทึกก่อน (ตอนนี้มันจะเอาโปรตีน/คาร์บ/ไขมัน ไปเซฟในประวัติแล้ว!)
       await axios.post(
         "https://my-food-diary-n1tf.onrender.com/api/meals",
         mealPayload,
       );
 
-      // 🌟 2. ถ้ามีการกรอก โปรตีน/คาร์บ/ไขมัน ให้เอาไปบวกเพิ่มในหลอดหน้าหลักด้วย!
+      // 🌟 2. ถ้ามีการกรอก โปรตีน/คาร์บ/ไขมัน ให้เอาไปบวกเพิ่มในหลอดหน้าหลักด้วย
       if (addedProtein > 0 || addedCarbs > 0 || addedFats > 0) {
         // แอบไปถามเซิร์ฟเวอร์ก่อนว่าวันนี้กินไปเท่าไหร่แล้ว
         const macroRes = await axios
