@@ -160,7 +160,7 @@ const Trends: React.FC = () => {
         }
         setAllInOneTrend(allInOneData);
 
-        // คำนวณข้อมูลรายสัปดาห์
+        // คำนวณข้อมูลรายสัปดาห์ (🌟 เพิ่ม totalCal)
         const wData = [];
         for (let w = 0; w < 4; w++) {
           let sum = 0;
@@ -172,11 +172,15 @@ const Trends: React.FC = () => {
             if (meal) sum += Number(meal.total_cal) || 0;
           }
           const label = w === 0 ? "สัปดาห์นี้" : `${w} สัปดาห์ก่อน`;
-          wData.unshift({ name: label, avgCal: Math.round(sum / 7) });
+          wData.unshift({
+            name: label,
+            avgCal: Math.round(sum / 7),
+            totalCal: sum,
+          }); // เพิ่มยอดเต็ม
         }
         setWeeklyTrend(wData);
 
-        // คำนวณข้อมูลรายเดือน
+        // คำนวณข้อมูลรายเดือน (🌟 เพิ่ม totalCal)
         const monthNames = [
           "ม.ค.",
           "ก.พ.",
@@ -209,11 +213,15 @@ const Trends: React.FC = () => {
               ? Math.round(totalCal / mealsInMonth.length)
               : 0;
 
-          mData.push({ month: monthNames[d.getMonth()], avgCal: avg });
+          mData.push({
+            month: monthNames[d.getMonth()],
+            avgCal: avg,
+            totalCal: totalCal,
+          }); // เพิ่มยอดเต็ม
         }
         setMonthlyAvgTrend(mData);
 
-        // ภาพรวม 30 วัน (ของเดิม ไม่ได้ลบแล้วนะฮะ!)
+        // ภาพรวม 30 วัน (ของเดิม)
         const last30Days = [];
         for (let i = 29; i >= 0; i--) {
           const d = new Date();
@@ -501,7 +509,7 @@ const Trends: React.FC = () => {
               </ResponsiveContainer>
             </div>
 
-            {/* 🌟 ภาพรวม กิน vs เบิร์น (30 วัน) [คืนชีพของเก่า!] */}
+            {/* ภาพรวม กิน vs เบิร์น (30 วัน) */}
             <div
               className={styles.chartCard}
               style={{ gridColumn: "1 / -1", backgroundColor: "#f8fafc" }}
@@ -607,7 +615,7 @@ const Trends: React.FC = () => {
               </ResponsiveContainer>
             </div>
 
-            {/* 🌟 2. สถิติคาร์บ 7 วันล่าสุด */}
+            {/* 🌟 สถิติคาร์บ 7 วันล่าสุด */}
             <div
               className={styles.chartCard}
               style={{ backgroundColor: "#eff6ff" }}
@@ -646,7 +654,7 @@ const Trends: React.FC = () => {
               </ResponsiveContainer>
             </div>
 
-            {/* 🌟 3. สถิติไขมัน 7 วันล่าสุด */}
+            {/* 🌟 สถิติไขมัน 7 วันล่าสุด */}
             <div
               className={styles.chartCard}
               style={{ backgroundColor: "#fffbeb" }}
@@ -685,7 +693,7 @@ const Trends: React.FC = () => {
               </ResponsiveContainer>
             </div>
 
-            {/* 🌟 4. สถิติเบิร์น 7 วันล่าสุด */}
+            {/* 🌟 สถิติเบิร์น 7 วันล่าสุด */}
             <div
               className={styles.chartCard}
               style={{ backgroundColor: "#fef2f2" }}
@@ -718,7 +726,31 @@ const Trends: React.FC = () => {
               </ResponsiveContainer>
             </div>
 
-            {/* 🌟 5. แคลอรี่เฉลี่ยรายสัปดาห์ */}
+            {/* 🌟 แคลอรี่รวมรายสัปดาห์ (เพิ่มใหม่ - ยอดเต็ม) */}
+            <div className={styles.chartCard}>
+              <h3 className={styles.chartTitle}>แคลอรี่รวมรายสัปดาห์</h3>
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={weeklyTrend}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip
+                    formatter={(value) => [
+                      `${value} kcal`,
+                      "แคลรวมทั้งสัปดาห์",
+                    ]}
+                  />
+                  <Bar
+                    dataKey="totalCal"
+                    name="รวมรายสัปดาห์"
+                    fill="#14b8a6"
+                    radius={[8, 8, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* แคลอรี่เฉลี่ยรายสัปดาห์ (ของเดิม) */}
             <div className={styles.chartCard}>
               <h3 className={styles.chartTitle}>แคลอรี่เฉลี่ยรายสัปดาห์</h3>
               <ResponsiveContainer width="100%" height={250}>
@@ -739,7 +771,30 @@ const Trends: React.FC = () => {
               </ResponsiveContainer>
             </div>
 
-            {/* 🌟 6. แคลอรี่เฉลี่ยรายเดือน */}
+            {/* 🌟 แคลอรี่รวมรายเดือน (เพิ่มใหม่ - ยอดเต็ม) */}
+            <div className={styles.chartCard}>
+              <h3 className={styles.chartTitle}>
+                แคลอรี่รวมรายเดือน (6 เดือนย้อนหลัง)
+              </h3>
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={monthlyAvgTrend}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="month" />
+                  <YAxis />
+                  <Tooltip
+                    formatter={(value) => [`${value} kcal`, "แคลรวมทั้งเดือน"]}
+                  />
+                  <Bar
+                    dataKey="totalCal"
+                    name="รวมรายเดือน"
+                    fill="#8b5cf6"
+                    radius={[8, 8, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* แคลอรี่เฉลี่ยรายเดือน (ของเดิม) */}
             <div className={styles.chartCard}>
               <h3 className={styles.chartTitle}>
                 แคลอรี่เฉลี่ยรายเดือน (6 เดือนย้อนหลัง)
