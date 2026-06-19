@@ -32,15 +32,20 @@ const AddMeal = () => {
   const [category, setCategory] = useState("มื้อเช้า");
   const [itemType, setItemType] = useState("อาหาร");
   const [calories, setCalories] = useState<number | "">("");
+
+  // 🌟 State ใหม่สำหรับ Macros
+  const [protein, setProtein] = useState<number | "">("");
+  const [carbs, setCarbs] = useState<number | "">("");
+  const [fats, setFats] = useState<number | "">("");
+
   const [sideOptions, setSideOptions] = useState<SideOption[]>([
     { id: Date.now(), value: "" },
   ]);
 
-  // 🌟 จำลองการเช็คเซิร์ฟเวอร์ว่าตื่นหรือยัง (เหมือน DailyLog)
+  // 🌟 จำลองการเช็คเซิร์ฟเวอร์ว่าตื่นหรือยัง
   useEffect(() => {
     const wakeupServer = async () => {
       try {
-        // ยิง request เปล่าๆ ไปหา health-check หรือ api ใดก็ได้เพื่อปลุก render
         await axios.get(
           "https://my-food-diary-n1tf.onrender.com/api/meals?date=" + mealDate,
         );
@@ -71,12 +76,16 @@ const AddMeal = () => {
       .map((s) => s.value)
       .filter((val) => val.trim() !== "");
 
+    // 🌟 เพิ่ม Macros ลงใน Payload ด้วย
     const payload = {
       mainDish,
       category,
       itemType,
       options: validOptions,
       calories: Number(calories) || 0,
+      protein: Number(protein) || 0,
+      carbs: Number(carbs) || 0,
+      fats: Number(fats) || 0,
       date: mealDate,
       time: mealTime,
     };
@@ -97,7 +106,7 @@ const AddMeal = () => {
 
   return (
     <AppLayout>
-      {/* 🌟 หน้าจอ Loading ระหว่างรอเซิร์ฟเวอร์ */}
+      {/* หน้าจอ Loading ระหว่างรอเซิร์ฟเวอร์ */}
       {isLoading && (
         <div className="loadingOverlay">
           <div className="loadingCard">
@@ -214,6 +223,50 @@ const AddMeal = () => {
                     setCalories(
                       e.target.value === "" ? "" : Number(e.target.value),
                     )
+                  }
+                  className={styles.formInput}
+                />
+              </div>
+            </div>
+
+            {/* 🌟 Row 4: Macros */}
+            <div className={styles.macroGrid}>
+              <div>
+                <label className={styles.formLabel}>Protein (g)</label>
+                <input
+                  type="number"
+                  placeholder="e.g., 30"
+                  value={protein}
+                  onChange={(e) =>
+                    setProtein(
+                      e.target.value === "" ? "" : Number(e.target.value),
+                    )
+                  }
+                  className={styles.formInput}
+                />
+              </div>
+              <div>
+                <label className={styles.formLabel}>Carbs (g)</label>
+                <input
+                  type="number"
+                  placeholder="e.g., 50"
+                  value={carbs}
+                  onChange={(e) =>
+                    setCarbs(
+                      e.target.value === "" ? "" : Number(e.target.value),
+                    )
+                  }
+                  className={styles.formInput}
+                />
+              </div>
+              <div>
+                <label className={styles.formLabel}>Fats (g)</label>
+                <input
+                  type="number"
+                  placeholder="e.g., 15"
+                  value={fats}
+                  onChange={(e) =>
+                    setFats(e.target.value === "" ? "" : Number(e.target.value))
                   }
                   className={styles.formInput}
                 />
