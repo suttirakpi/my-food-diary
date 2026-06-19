@@ -122,7 +122,7 @@ app.put("/api/meals/:id", async (req: Request, res: Response) => {
   const {
     mainDish,
     category,
-    itemType,
+    itemType, // รับมาจากหน้าเว็บเป็น camelCase
     options,
     calories,
     protein,
@@ -133,9 +133,9 @@ app.put("/api/meals/:id", async (req: Request, res: Response) => {
 
   try {
     await connection.beginTransaction();
-    // 🌟 อัปเดตข้อมูล Macros เวลาแก้ไขเมนู
+    // 🌟 แก้ไข itemType เป็น item_type ให้ตรงกับ Database ของจริงแล้วครับ!
     await connection.query(
-      "UPDATE meals SET main_dish = ?, category = ?, itemType = ?, calories = ?, protein = ?, carbs = ?, fats = ? WHERE id = ?",
+      "UPDATE meals SET main_dish = ?, category = ?, item_type = ?, calories = ?, protein = ?, carbs = ?, fats = ? WHERE id = ?",
       [
         mainDish,
         category,
