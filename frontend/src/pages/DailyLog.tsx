@@ -17,6 +17,9 @@ interface MealEntry {
   category: string;
   item_type: string;
   calories: number;
+  protein?: number; // 🌟 เพิ่มมารองรับตอนแก้ไข
+  carbs?: number; // 🌟 เพิ่มมารองรับตอนแก้ไข
+  fats?: number; // 🌟 เพิ่มมารองรับตอนแก้ไข
   options: MealOption[];
 }
 interface ExerciseEntry {
@@ -32,7 +35,6 @@ const DailyLog: React.FC = () => {
   const [meals, setMeals] = useState<MealEntry[]>([]);
   const [waterGlasses, setWaterGlasses] = useState<number>(0);
 
-  // 🌟 States สำหรับค่าที่กินเข้าไป (Current Macros)
   const [proteinGrams, setProteinGrams] = useState<number>(0);
   const [carbsGrams, setCarbsGrams] = useState<number>(0);
   const [fatsGrams, setFatsGrams] = useState<number>(0);
@@ -43,7 +45,6 @@ const DailyLog: React.FC = () => {
   const [editingMeal, setEditingMeal] = useState<MealEntry | null>(null);
   const [exercises, setExercises] = useState<ExerciseEntry[]>([]);
 
-  // 🌟 States สำหรับเป้าหมาย (Goals)
   const [dailyCalGoal, setDailyCalGoal] = useState<number>(1400);
   const [proteinGoal, setProteinGoal] = useState<number>(140);
   const [carbsGoal, setCarbsGoal] = useState<number>(150);
@@ -57,7 +58,6 @@ const DailyLog: React.FC = () => {
     null,
   );
 
-  // 🌟 States สำหรับ Modal จัดการ Macros 3 ตัว
   const [showMacroModal, setShowMacroModal] = useState<boolean>(false);
   const [macroModalMode, setMacroModalMode] = useState<"add" | "edit">("add");
   const [macroActiveType, setMacroActiveType] = useState<MacroType>("protein");
@@ -98,12 +98,10 @@ const DailyLog: React.FC = () => {
       setWaterGlasses(waterRes.data.glasses);
       setExercises(exRes.data);
 
-      // ดึง Current Macros
       setProteinGrams(macrosRes.data.protein || 0);
       setCarbsGrams(macrosRes.data.carbs || 0);
       setFatsGrams(macrosRes.data.fats || 0);
 
-      // ดึง Goals
       if (settingsRes.data) {
         setDailyCalGoal(settingsRes.data.cal_goal || 1400);
         setProteinGoal(settingsRes.data.protein_goal || 140);
@@ -133,7 +131,6 @@ const DailyLog: React.FC = () => {
     } catch (error) {}
   };
 
-  // 🌟 ฟังก์ชันจัดการ Macros Modal
   const handleOpenMacroModal = (type: MacroType, mode: "add" | "edit") => {
     setMacroActiveType(type);
     setMacroModalMode(mode);
@@ -165,7 +162,6 @@ const DailyLog: React.FC = () => {
 
     const newTotal = macroModalMode === "add" ? currentVal + amount : amount;
 
-    // อัปเดต State ก่อนเพื่อความรวดเร็วของ UI
     let newProtein = proteinGrams;
     let newCarbs = carbsGrams;
     let newFats = fatsGrams;
@@ -260,18 +256,25 @@ const DailyLog: React.FC = () => {
 
   const handleOpenEdit = (meal: MealEntry) =>
     setEditingMeal(JSON.parse(JSON.stringify(meal)));
+
+  // 🌟 ฟังก์ชันบันทึกการแก้ไขเมนู (เพิ่มการส่ง Macros และ หมวดหมู่)
   const handleSaveEdit = async () => {
     if (!editingMeal) return;
     const validOptions = editingMeal.options
       .map((o) => o.option_name)
       .filter((val) => val.trim() !== "");
+
     const payload = {
       mainDish: editingMeal.main_dish,
       category: editingMeal.category,
       itemType: editingMeal.item_type,
       calories: Number(editingMeal.calories) || 0,
+      protein: Number(editingMeal.protein) || 0, // 🌟 เพิ่มแล้ว
+      carbs: Number(editingMeal.carbs) || 0, // 🌟 เพิ่มแล้ว
+      fats: Number(editingMeal.fats) || 0, // 🌟 เพิ่มแล้ว
       options: validOptions,
     };
+
     try {
       await axios.put(
         `https://my-food-diary-n1tf.onrender.com/api/meals/${editingMeal.id}`,
@@ -279,8 +282,10 @@ const DailyLog: React.FC = () => {
       );
       setEditingMeal(null);
       fetchData();
-      toast.success("อัปเดตสำเร็จ!");
-    } catch (error) {}
+      toast.success("อัปเดตข้อมูลสำเร็จ!");
+    } catch (error) {
+      toast.error("อัปเดตข้อมูลล้มเหลว");
+    }
   };
 
   const groupedMeals = useMemo(() => {
@@ -344,7 +349,6 @@ const DailyLog: React.FC = () => {
     mascotEmoji = "🐹✨";
   }
 
-  // 🌟 โครงสร้างข้อมูลสำหรับวนลูปสร้างหลอด Macros 3 ตัว
   const macroConfigs = [
     {
       type: "protein" as MacroType,
@@ -475,7 +479,6 @@ const DailyLog: React.FC = () => {
           </div>
         </div>
 
-        {/* 🌟 แสดงหลอดสารอาหาร 3 ช่อง (Protein, Carbs, Fats) */}
         <div
           style={{
             display: "grid",
@@ -817,11 +820,12 @@ const DailyLog: React.FC = () => {
         )}
       </div>
 
-      {/* Modal แก้ไขอาหาร & การออกกำลังกาย ... (เหมือนเดิม) */}
+      {/* 🌟 Modal แก้ไขมื้ออาหาร (อัปเกรดให้แก้ได้ทุกอย่าง) */}
       {editingMeal && (
         <div className={styles.modalOverlay}>
           <div className={styles.modalContent}>
             <h2 className={styles.modalTitle}>แก้ไขมื้ออาหาร</h2>
+
             <div className={styles.modalInputGroup}>
               <label>ชื่อเมนู</label>
               <input
@@ -832,6 +836,47 @@ const DailyLog: React.FC = () => {
                 }
               />
             </div>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: "16px",
+              }}
+            >
+              <div className={styles.modalInputGroup}>
+                <label>มื้ออาหาร</label>
+                <select
+                  value={editingMeal.category}
+                  onChange={(e) =>
+                    setEditingMeal({ ...editingMeal, category: e.target.value })
+                  }
+                >
+                  <option value="มื้อเช้า">มื้อเช้า</option>
+                  <option value="มื้อกลางวัน">มื้อกลางวัน</option>
+                  <option value="มื้อเย็น">มื้อเย็น</option>
+                  <option value="ระหว่างวัน">ระหว่างวัน</option>
+                </select>
+              </div>
+
+              <div className={styles.modalInputGroup}>
+                <label>ประเภท</label>
+                <select
+                  value={editingMeal.item_type}
+                  onChange={(e) =>
+                    setEditingMeal({
+                      ...editingMeal,
+                      item_type: e.target.value,
+                    })
+                  }
+                >
+                  <option value="อาหาร">อาหาร</option>
+                  <option value="เครื่องดื่ม">เครื่องดื่ม</option>
+                  <option value="ขนม">ขนม</option>
+                </select>
+              </div>
+            </div>
+
             <div className={styles.modalInputGroup}>
               <label>แคลอรี่ (kcal)</label>
               <input
@@ -845,6 +890,61 @@ const DailyLog: React.FC = () => {
                 }
               />
             </div>
+
+            <div className={styles.modalInputGroup}>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: "8px",
+                  fontWeight: 600,
+                  fontSize: "14px",
+                }}
+              >
+                สารอาหาร (Protein / Carbs / Fats)
+              </label>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr 1fr",
+                  gap: "8px",
+                }}
+              >
+                <input
+                  type="number"
+                  placeholder="Pro (g)"
+                  value={editingMeal.protein || ""}
+                  onChange={(e) =>
+                    setEditingMeal({
+                      ...editingMeal,
+                      protein: Number(e.target.value) || 0,
+                    })
+                  }
+                />
+                <input
+                  type="number"
+                  placeholder="Carb (g)"
+                  value={editingMeal.carbs || ""}
+                  onChange={(e) =>
+                    setEditingMeal({
+                      ...editingMeal,
+                      carbs: Number(e.target.value) || 0,
+                    })
+                  }
+                />
+                <input
+                  type="number"
+                  placeholder="Fat (g)"
+                  value={editingMeal.fats || ""}
+                  onChange={(e) =>
+                    setEditingMeal({
+                      ...editingMeal,
+                      fats: Number(e.target.value) || 0,
+                    })
+                  }
+                />
+              </div>
+            </div>
+
             <div className={styles.modalActions}>
               <button
                 className={styles.btnCancel}
@@ -860,6 +960,7 @@ const DailyLog: React.FC = () => {
         </div>
       )}
 
+      {/* Modal แก้ไขการออกกำลังกาย */}
       {editingExercise && (
         <div className={styles.modalOverlay}>
           <div className={styles.modalContent}>
@@ -908,7 +1009,6 @@ const DailyLog: React.FC = () => {
         </div>
       )}
 
-      {/* 🌟 Unified Macro Modal สำหรับ Protein, Carbs, Fats */}
       {showMacroModal && (
         <div className={styles.modalOverlay}>
           <div className={styles.modalContent} style={{ maxWidth: "400px" }}>
