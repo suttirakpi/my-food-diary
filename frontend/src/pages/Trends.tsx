@@ -130,7 +130,7 @@ const Trends: React.FC = () => {
         });
         setProteinTrend(pData);
 
-        // 🌟 สร้างข้อมูล All-In-One Trend (อัปเกรดเป็น 1 เดือน / 30 วันล่าสุด)
+        // 🌟 สร้างข้อมูล All-In-One Trend (1 เดือน / 30 วันล่าสุด)
         const allInOneData = [];
         for (let i = 29; i >= 0; i--) {
           const d = new Date();
@@ -213,7 +213,7 @@ const Trends: React.FC = () => {
         }
         setMonthlyAvgTrend(mData);
 
-        // ภาพรวม 30 วัน
+        // ภาพรวม 30 วัน (ของเดิม ไม่ได้ลบแล้วนะฮะ!)
         const last30Days = [];
         for (let i = 29; i >= 0; i--) {
           const d = new Date();
@@ -288,7 +288,7 @@ const Trends: React.FC = () => {
     return allDates.map((date) => combined[date]).slice(-7);
   }, [data]);
 
-  // 🌟 ดึงข้อมูล 7 วันล่าสุดจาก allInOneTrend ไว้สำหรับกราฟย่อย
+  // ดึงข้อมูล 7 วันล่าสุดจาก allInOneTrend ไว้สำหรับกราฟย่อย
   const last7DaysTrend = useMemo(
     () => allInOneTrend.slice(-7),
     [allInOneTrend],
@@ -351,7 +351,7 @@ const Trends: React.FC = () => {
           </div>
 
           <div className={styles.dashboardGrid}>
-            {/* 🌟 กราฟภาพรวมทั้งหมด (1 เดือนล่าสุด) */}
+            {/* 🌟 1. ภาพรวมโภชนาการแบบครบจบในที่เดียว (1 เดือนล่าสุด) */}
             <div
               className={styles.chartCard}
               style={{
@@ -501,7 +501,74 @@ const Trends: React.FC = () => {
               </ResponsiveContainer>
             </div>
 
-            {/* 🌟 กราฟโปรตีน 7 วันล่าสุด */}
+            {/* 🌟 ภาพรวม กิน vs เบิร์น (30 วัน) [คืนชีพของเก่า!] */}
+            <div
+              className={styles.chartCard}
+              style={{ gridColumn: "1 / -1", backgroundColor: "#f8fafc" }}
+            >
+              <h3 className={styles.chartTitle}>
+                ภาพรวม กิน vs เบิร์น (30 วันล่าสุด)
+              </h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <AreaChart
+                  data={monthlyData}
+                  margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                >
+                  <defs>
+                    <linearGradient id="colorCal30" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.5} />
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient
+                      id="colorBurn30"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
+                      <stop offset="5%" stopColor="#ef4444" stopOpacity={0.5} />
+                      <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fontSize: 12 }}
+                    interval="preserveStartEnd"
+                    minTickGap={20}
+                  />
+                  <YAxis />
+                  <Tooltip
+                    contentStyle={{
+                      borderRadius: "12px",
+                      border: "none",
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                    }}
+                  />
+                  <Legend wrapperStyle={{ paddingTop: "20px" }} />
+                  <Area
+                    type="monotone"
+                    dataKey="total_cal"
+                    name="กินเข้า (kcal)"
+                    stroke="#10b981"
+                    fillOpacity={1}
+                    fill="url(#colorCal30)"
+                    strokeWidth={2}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="total_burned"
+                    name="เบิร์นออก (kcal)"
+                    stroke="#ef4444"
+                    fillOpacity={1}
+                    fill="url(#colorBurn30)"
+                    strokeWidth={2}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* สถิติโปรตีน 7 วันล่าสุด */}
             <div
               className={styles.chartCard}
               style={{ backgroundColor: "#fff8e1" }}
@@ -540,7 +607,7 @@ const Trends: React.FC = () => {
               </ResponsiveContainer>
             </div>
 
-            {/* 🌟 กราฟคาร์บ 7 วันล่าสุด */}
+            {/* 🌟 2. สถิติคาร์บ 7 วันล่าสุด */}
             <div
               className={styles.chartCard}
               style={{ backgroundColor: "#eff6ff" }}
@@ -579,7 +646,7 @@ const Trends: React.FC = () => {
               </ResponsiveContainer>
             </div>
 
-            {/* 🌟 กราฟไขมัน 7 วันล่าสุด */}
+            {/* 🌟 3. สถิติไขมัน 7 วันล่าสุด */}
             <div
               className={styles.chartCard}
               style={{ backgroundColor: "#fffbeb" }}
@@ -618,7 +685,7 @@ const Trends: React.FC = () => {
               </ResponsiveContainer>
             </div>
 
-            {/* 🌟 กราฟเบิร์น 7 วันล่าสุด */}
+            {/* 🌟 4. สถิติเบิร์น 7 วันล่าสุด */}
             <div
               className={styles.chartCard}
               style={{ backgroundColor: "#fef2f2" }}
@@ -651,7 +718,7 @@ const Trends: React.FC = () => {
               </ResponsiveContainer>
             </div>
 
-            {/* แคลอรี่เฉลี่ยรายสัปดาห์ */}
+            {/* 🌟 5. แคลอรี่เฉลี่ยรายสัปดาห์ */}
             <div className={styles.chartCard}>
               <h3 className={styles.chartTitle}>แคลอรี่เฉลี่ยรายสัปดาห์</h3>
               <ResponsiveContainer width="100%" height={250}>
@@ -672,7 +739,7 @@ const Trends: React.FC = () => {
               </ResponsiveContainer>
             </div>
 
-            {/* แคลอรี่เฉลี่ยรายเดือน */}
+            {/* 🌟 6. แคลอรี่เฉลี่ยรายเดือน */}
             <div className={styles.chartCard}>
               <h3 className={styles.chartTitle}>
                 แคลอรี่เฉลี่ยรายเดือน (6 เดือนย้อนหลัง)
