@@ -76,27 +76,57 @@ const AddMeal = () => {
       .map((s) => s.value)
       .filter((val) => val.trim() !== "");
 
-    // 🌟 เพิ่ม Macros ลงใน Payload ด้วย
-    const payload = {
+    // 🌟 1. ข้อมูลสำหรับบันทึกชื่อเมนูและแคลอรี่
+    const mealPayload = {
       mainDish,
       category,
       itemType,
       options: validOptions,
       calories: Number(calories) || 0,
-      protein: Number(protein) || 0,
-      carbs: Number(carbs) || 0,
-      fats: Number(fats) || 0,
       date: mealDate,
       time: mealTime,
     };
 
+    // 🌟 ตัวเลข Macros ที่เพิ่งกรอก
+    const addedProtein = Number(protein) || 0;
+    const addedCarbs = Number(carbs) || 0;
+    const addedFats = Number(fats) || 0;
+
     try {
       const loadingToast = toast.loading("กำลังบันทึกข้อมูล...");
+
+      // ส่งข้อมูลมื้ออาหารไปบันทึกก่อน
       await axios.post(
         "https://my-food-diary-n1tf.onrender.com/api/meals",
-        payload,
+        mealPayload,
       );
-      toast.success("บันทึกมื้ออาหารเรียบร้อย!", { id: loadingToast });
+
+      // 🌟 2. ถ้ามีการกรอก โปรตีน/คาร์บ/ไขมัน ให้เอาไปบวกเพิ่มในหลอดหน้าหลักด้วย!
+      if (addedProtein > 0 || addedCarbs > 0 || addedFats > 0) {
+        // แอบไปถามเซิร์ฟเวอร์ก่อนว่าวันนี้กินไปเท่าไหร่แล้ว
+        const macroRes = await axios
+          .get(
+            `https://my-food-diary-n1tf.onrender.com/api/macros?date=${mealDate}`,
+          )
+          .catch(() => ({ data: { protein: 0, carbs: 0, fats: 0 } }));
+
+        // เอาของเก่ามาบวกของใหม่
+        const newProtein = (macroRes.data.protein || 0) + addedProtein;
+        const newCarbs = (macroRes.data.carbs || 0) + addedCarbs;
+        const newFats = (macroRes.data.fats || 0) + addedFats;
+
+        // อัปเดตหลอดสารอาหารกลับไปที่เซิร์ฟเวอร์
+        await axios.post("https://my-food-diary-n1tf.onrender.com/api/macros", {
+          date: mealDate,
+          protein: newProtein,
+          carbs: newCarbs,
+          fats: newFats,
+        });
+      }
+
+      toast.success("บันทึกมื้ออาหารและสารอาหารเรียบร้อย!", {
+        id: loadingToast,
+      });
       navigate("/");
     } catch (error) {
       console.error(error);
