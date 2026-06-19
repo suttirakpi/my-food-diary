@@ -245,13 +245,46 @@ const DailyLog: React.FC = () => {
 
   const handleDelete = async (id: number) => {
     if (!window.confirm("ลบรายการนี้?")) return;
+
+    // 1. หาข้อมูลมื้ออาหารที่จะลบ เพื่อเอาค่าโปรตีน คาร์บ ไขมัน มาเตรียมหักลบ
+    const mealToDelete = meals.find((m) => m.id === id);
+
     try {
+      // 2. ลบมื้ออาหารออกจากฐานข้อมูล
       await axios.delete(
         `https://my-food-diary-n1tf.onrender.com/api/meals/${id}`,
       );
+
+      // 3. ถ้ามื้ออาหารนั้นมีค่า Macros ให้เอาไปลบออกจากหลอดรายวันด้วย
+      if (
+        mealToDelete &&
+        (mealToDelete.protein || mealToDelete.carbs || mealToDelete.fats)
+      ) {
+        const newProtein = Math.max(
+          0,
+          proteinGrams - (mealToDelete.protein || 0),
+        );
+        const newCarbs = Math.max(0, carbsGrams - (mealToDelete.carbs || 0));
+        const newFats = Math.max(0, fatsGrams - (mealToDelete.fats || 0));
+
+        await axios.post("https://my-food-diary-n1tf.onrender.com/api/macros", {
+          date: selectedDate,
+          protein: newProtein,
+          carbs: newCarbs,
+          fats: newFats,
+        });
+
+        // อัปเดต UI ทันที
+        setProteinGrams(newProtein);
+        setCarbsGrams(newCarbs);
+        setFatsGrams(newFats);
+      }
+
       setMeals((prev) => prev.filter((meal) => meal.id !== id));
-      toast.success("ลบเรียบร้อย");
-    } catch (error) {}
+      toast.success("ลบข้อมูลและอัปเดตสารอาหารเรียบร้อย!");
+    } catch (error) {
+      toast.error("ลบข้อมูลไม่สำเร็จ");
+    }
   };
 
   const handleOpenEdit = (meal: MealEntry) =>
@@ -260,6 +293,10 @@ const DailyLog: React.FC = () => {
   // 🌟 ฟังก์ชันบันทึกการแก้ไขเมนู (เพิ่มการส่ง Macros และ หมวดหมู่)
   const handleSaveEdit = async () => {
     if (!editingMeal) return;
+
+    // 1. ดึงข้อมูลของเดิมก่อนแก้มาเปรียบเทียบ
+    const originalMeal = meals.find((m) => m.id === editingMeal.id);
+
     const validOptions = editingMeal.options
       .map((o) => o.option_name)
       .filter((val) => val.trim() !== "");
@@ -269,9 +306,9 @@ const DailyLog: React.FC = () => {
       category: editingMeal.category,
       itemType: editingMeal.item_type,
       calories: Number(editingMeal.calories) || 0,
-      protein: Number(editingMeal.protein) || 0, // 🌟 เพิ่มแล้ว
-      carbs: Number(editingMeal.carbs) || 0, // 🌟 เพิ่มแล้ว
-      fats: Number(editingMeal.fats) || 0, // 🌟 เพิ่มแล้ว
+      protein: Number(editingMeal.protein) || 0,
+      carbs: Number(editingMeal.carbs) || 0,
+      fats: Number(editingMeal.fats) || 0,
       options: validOptions,
     };
 
@@ -280,9 +317,38 @@ const DailyLog: React.FC = () => {
         `https://my-food-diary-n1tf.onrender.com/api/meals/${editingMeal.id}`,
         payload,
       );
+
+      // 2. คำนวณผลต่าง (ส่วนต่าง) ของ Macros และอัปเดตหลอดรายวัน
+      if (originalMeal) {
+        const diffProtein = payload.protein - (originalMeal.protein || 0);
+        const diffCarbs = payload.carbs - (originalMeal.carbs || 0);
+        const diffFats = payload.fats - (originalMeal.fats || 0);
+
+        if (diffProtein !== 0 || diffCarbs !== 0 || diffFats !== 0) {
+          const newProtein = Math.max(0, proteinGrams + diffProtein);
+          const newCarbs = Math.max(0, carbsGrams + diffCarbs);
+          const newFats = Math.max(0, fatsGrams + diffFats);
+
+          await axios.post(
+            "https://my-food-diary-n1tf.onrender.com/api/macros",
+            {
+              date: selectedDate,
+              protein: newProtein,
+              carbs: newCarbs,
+              fats: newFats,
+            },
+          );
+
+          // อัปเดต UI ทันที
+          setProteinGrams(newProtein);
+          setCarbsGrams(newCarbs);
+          setFatsGrams(newFats);
+        }
+      }
+
       setEditingMeal(null);
-      fetchData();
-      toast.success("อัปเดตข้อมูลสำเร็จ!");
+      fetchData(); // ดึงข้อมูลใหม่มาแสดง
+      toast.success("อัปเดตข้อมูลและสารอาหารสำเร็จ!");
     } catch (error) {
       toast.error("อัปเดตข้อมูลล้มเหลว");
     }
