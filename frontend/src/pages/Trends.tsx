@@ -130,7 +130,7 @@ const Trends: React.FC = () => {
         });
         setProteinTrend(pData);
 
-        // 🌟 สร้างข้อมูล All-In-One Trend (1 เดือน / 30 วันล่าสุด)
+        // 🌟 สร้างข้อมูล All-In-One Trend (1 เดือน / 30 วันล่าสุด) แบบเรียงวันที่ถูกต้อง
         const allInOneData = [];
         for (let i = 29; i >= 0; i--) {
           const d = new Date();
@@ -160,7 +160,7 @@ const Trends: React.FC = () => {
         }
         setAllInOneTrend(allInOneData);
 
-        // คำนวณข้อมูลรายสัปดาห์ (🌟 เพิ่ม totalCal)
+        // คำนวณข้อมูลรายสัปดาห์
         const wData = [];
         for (let w = 0; w < 4; w++) {
           let sum = 0;
@@ -176,11 +176,11 @@ const Trends: React.FC = () => {
             name: label,
             avgCal: Math.round(sum / 7),
             totalCal: sum,
-          }); // เพิ่มยอดเต็ม
+          });
         }
         setWeeklyTrend(wData);
 
-        // คำนวณข้อมูลรายเดือน (🌟 เพิ่ม totalCal)
+        // คำนวณข้อมูลรายเดือน
         const monthNames = [
           "ม.ค.",
           "ก.พ.",
@@ -217,11 +217,11 @@ const Trends: React.FC = () => {
             month: monthNames[d.getMonth()],
             avgCal: avg,
             totalCal: totalCal,
-          }); // เพิ่มยอดเต็ม
+          });
         }
         setMonthlyAvgTrend(mData);
 
-        // ภาพรวม 30 วัน (ของเดิม)
+        // ภาพรวม 30 วัน (Area Chart)
         const last30Days = [];
         for (let i = 29; i >= 0; i--) {
           const d = new Date();
@@ -253,50 +253,7 @@ const Trends: React.FC = () => {
     [],
   );
 
-  const mergedChartData = useMemo(() => {
-    if (!data) return [];
-    const combined: Record<string, any> = {};
-
-    data.calorieTrend.forEach((item) => {
-      combined[item.date] = {
-        date: item.date,
-        total_cal: Number(item.total_cal) || 0,
-        total_burned: 0,
-      };
-    });
-
-    data.exerciseTrend.forEach((item) => {
-      if (combined[item.date]) {
-        combined[item.date].total_burned = Number(item.total_burned) || 0;
-      } else {
-        combined[item.date] = {
-          date: item.date,
-          total_cal: 0,
-          total_burned: Number(item.total_burned) || 0,
-        };
-      }
-    });
-
-    const allDates = Array.from(
-      new Set([
-        ...data.calorieTrend.map((d) => d.date),
-        ...data.exerciseTrend.map((d) => d.date),
-      ]),
-    );
-
-    allDates.sort((a, b) => {
-      const numA = parseInt(a.replace(/\D/g, "")) || 0;
-      const numB = parseInt(b.replace(/\D/g, "")) || 0;
-      const today = new Date().getDate();
-      const scoreA = today < 15 && numA > 20 ? numA - 31 : numA;
-      const scoreB = today < 15 && numB > 20 ? numB - 31 : numB;
-      return scoreA - scoreB;
-    });
-
-    return allDates.map((date) => combined[date]).slice(-7);
-  }, [data]);
-
-  // ดึงข้อมูล 7 วันล่าสุดจาก allInOneTrend ไว้สำหรับกราฟย่อย
+  // 🌟 ดึงข้อมูล 7 วันล่าสุดจาก allInOneTrend ไว้สำหรับกราฟย่อย (เรียงวันที่ถูกต้อง 100%)
   const last7DaysTrend = useMemo(
     () => allInOneTrend.slice(-7),
     [allInOneTrend],
@@ -471,14 +428,14 @@ const Trends: React.FC = () => {
               </ResponsiveContainer>
             </div>
 
-            {/* เจาะลึก กิน vs เบิร์น (7 วันล่าสุด) */}
+            {/* 🌟 เจาะลึก กิน vs เบิร์น (7 วันล่าสุด) - อัปเดตใช้ข้อมูลจาก last7DaysTrend ให้วันที่ตรงเป๊ะ */}
             <div className={styles.chartCard} style={{ gridColumn: "1 / -1" }}>
               <h3 className={styles.chartTitle}>
                 เจาะลึก กิน vs เบิร์น (7 วันล่าสุด)
               </h3>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart
-                  data={mergedChartData}
+                  data={last7DaysTrend}
                   margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -494,13 +451,13 @@ const Trends: React.FC = () => {
                   />
                   <Legend wrapperStyle={{ paddingTop: "20px" }} />
                   <Bar
-                    dataKey="total_cal"
+                    dataKey="calories"
                     name="กินเข้า (kcal)"
                     fill="#10b981"
                     radius={[6, 6, 0, 0]}
                   />
                   <Bar
-                    dataKey="total_burned"
+                    dataKey="burned"
                     name="เบิร์นออก (kcal)"
                     fill="#ef4444"
                     radius={[6, 6, 0, 0]}
@@ -615,7 +572,7 @@ const Trends: React.FC = () => {
               </ResponsiveContainer>
             </div>
 
-            {/* 🌟 สถิติคาร์บ 7 วันล่าสุด */}
+            {/* สถิติคาร์บ 7 วันล่าสุด */}
             <div
               className={styles.chartCard}
               style={{ backgroundColor: "#eff6ff" }}
@@ -654,7 +611,7 @@ const Trends: React.FC = () => {
               </ResponsiveContainer>
             </div>
 
-            {/* 🌟 สถิติไขมัน 7 วันล่าสุด */}
+            {/* สถิติไขมัน 7 วันล่าสุด */}
             <div
               className={styles.chartCard}
               style={{ backgroundColor: "#fffbeb" }}
@@ -693,7 +650,7 @@ const Trends: React.FC = () => {
               </ResponsiveContainer>
             </div>
 
-            {/* 🌟 สถิติเบิร์น 7 วันล่าสุด */}
+            {/* สถิติเบิร์น 7 วันล่าสุด */}
             <div
               className={styles.chartCard}
               style={{ backgroundColor: "#fef2f2" }}
@@ -726,7 +683,7 @@ const Trends: React.FC = () => {
               </ResponsiveContainer>
             </div>
 
-            {/* 🌟 แคลอรี่รวมรายสัปดาห์ (เพิ่มใหม่ - ยอดเต็ม) */}
+            {/* แคลอรี่รวมรายสัปดาห์ */}
             <div className={styles.chartCard}>
               <h3 className={styles.chartTitle}>แคลอรี่รวมรายสัปดาห์</h3>
               <ResponsiveContainer width="100%" height={250}>
@@ -750,7 +707,7 @@ const Trends: React.FC = () => {
               </ResponsiveContainer>
             </div>
 
-            {/* แคลอรี่เฉลี่ยรายสัปดาห์ (ของเดิม) */}
+            {/* แคลอรี่เฉลี่ยรายสัปดาห์ */}
             <div className={styles.chartCard}>
               <h3 className={styles.chartTitle}>แคลอรี่เฉลี่ยรายสัปดาห์</h3>
               <ResponsiveContainer width="100%" height={250}>
@@ -771,7 +728,7 @@ const Trends: React.FC = () => {
               </ResponsiveContainer>
             </div>
 
-            {/* 🌟 แคลอรี่รวมรายเดือน (เพิ่มใหม่ - ยอดเต็ม) */}
+            {/* แคลอรี่รวมรายเดือน */}
             <div className={styles.chartCard}>
               <h3 className={styles.chartTitle}>
                 แคลอรี่รวมรายเดือน (6 เดือนย้อนหลัง)
@@ -794,7 +751,7 @@ const Trends: React.FC = () => {
               </ResponsiveContainer>
             </div>
 
-            {/* แคลอรี่เฉลี่ยรายเดือน (ของเดิม) */}
+            {/* แคลอรี่เฉลี่ยรายเดือน */}
             <div className={styles.chartCard}>
               <h3 className={styles.chartTitle}>
                 แคลอรี่เฉลี่ยรายเดือน (6 เดือนย้อนหลัง)
