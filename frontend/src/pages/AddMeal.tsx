@@ -20,20 +20,34 @@ const AddMeal = () => {
   const [mealDate, setMealDate] = useState(
     new Date().toISOString().split("T")[0],
   );
-  const [mealTime, setMealTime] = useState(
-    new Date().toLocaleTimeString("th-TH", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    }),
-  );
 
+  // 🌟 1. ดึงเวลาปัจจุบันในรูปแบบ HH:MM
+  const initialTime = new Date().toLocaleTimeString("th-TH", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+
+  // 🌟 2. ฟังก์ชันช่วยคำนวณมื้ออาหารอัตโนมัติตามช่วงเวลาที่ตูนตั้งเงื่อนไขไว้
+  const getMealCategoryByTime = (timeStr: string): string => {
+    if (!timeStr) return "มื้อเช้า";
+    const hour = parseInt(timeStr.split(":")[0], 10);
+    if (isNaN(hour)) return "มื้อเช้า";
+
+    if (hour >= 12 && hour <= 15) return "มื้อกลางวัน"; // 12:00 - 15:59
+    if (hour >= 16 && hour <= 23) return "มื้อเย็น"; // 16:00 - 23:59
+    return "มื้อเช้า"; // 00:00 - 11:59
+  };
+
+  const [mealTime, setMealTime] = useState(initialTime);
   const [mainDish, setMainDish] = useState("");
-  const [category, setCategory] = useState("มื้อเช้า");
+
+  // 🌟 3. กำหนดค่าเริ่มต้นมื้ออาหารโดยใช้ฟังก์ชันคำนวณจากเวลาปัจจุบัน
+  const [category, setCategory] = useState(getMealCategoryByTime(initialTime));
   const [itemType, setItemType] = useState("อาหาร");
   const [calories, setCalories] = useState<number | "">("");
 
-  // 🌟 State ใหม่สำหรับ Macros
+  // State สำหรับ Macros
   const [protein, setProtein] = useState<number | "">("");
   const [carbs, setCarbs] = useState<number | "">("");
   const [fats, setFats] = useState<number | "">("");
@@ -42,7 +56,7 @@ const AddMeal = () => {
     { id: Date.now(), value: "" },
   ]);
 
-  // 🌟 จำลองการเช็คเซิร์ฟเวอร์ว่าตื่นหรือยัง
+  // จำลองการเช็คเซิร์ฟเวอร์ว่าตื่นหรือยัง
   useEffect(() => {
     const wakeupServer = async () => {
       try {
@@ -76,49 +90,41 @@ const AddMeal = () => {
       .map((s) => s.value)
       .filter((val) => val.trim() !== "");
 
-    // 🌟 ตัวเลข Macros ที่เพิ่งกรอก (ย้ายขึ้นมาไว้ตรงนี้ก่อน)
     const addedProtein = Number(protein) || 0;
     const addedCarbs = Number(carbs) || 0;
     const addedFats = Number(fats) || 0;
 
-    // 🌟 1. ข้อมูลสำหรับบันทึกชื่อเมนูและแคลอรี่ (เพิ่ม Macros เข้าไปตรงนี้แหละ!)
     const mealPayload = {
       mainDish,
       category,
       itemType,
       options: validOptions,
       calories: Number(calories) || 0,
-      protein: addedProtein, // <--- เพิ่มส่งโปรตีนเข้าตาราง meals
-      carbs: addedCarbs, // <--- เพิ่มส่งคาร์บเข้าตาราง meals
-      fats: addedFats, // <--- เพิ่มส่งไขมันเข้าตาราง meals
+      protein: addedProtein,
+      carbs: addedCarbs,
+      fats: addedFats,
       date: mealDate,
       time: mealTime,
     };
 
     try {
       const loadingToast = toast.loading("กำลังบันทึกข้อมูล...");
-
-      // ส่งข้อมูลมื้ออาหารไปบันทึกก่อน (ตอนนี้มันจะเอาโปรตีน/คาร์บ/ไขมัน ไปเซฟในประวัติแล้ว!)
       await axios.post(
         "https://my-food-diary-n1tf.onrender.com/api/meals",
         mealPayload,
       );
 
-      // 🌟 2. ถ้ามีการกรอก โปรตีน/คาร์บ/ไขมัน ให้เอาไปบวกเพิ่มในหลอดหน้าหลักด้วย
       if (addedProtein > 0 || addedCarbs > 0 || addedFats > 0) {
-        // แอบไปถามเซิร์ฟเวอร์ก่อนว่าวันนี้กินไปเท่าไหร่แล้ว
         const macroRes = await axios
           .get(
             `https://my-food-diary-n1tf.onrender.com/api/macros?date=${mealDate}`,
           )
           .catch(() => ({ data: { protein: 0, carbs: 0, fats: 0 } }));
 
-        // เอาของเก่ามาบวกของใหม่
         const newProtein = (macroRes.data.protein || 0) + addedProtein;
         const newCarbs = (macroRes.data.carbs || 0) + addedCarbs;
         const newFats = (macroRes.data.fats || 0) + addedFats;
 
-        // อัปเดตหลอดสารอาหารกลับไปที่เซิร์ฟเวอร์
         await axios.post("https://my-food-diary-n1tf.onrender.com/api/macros", {
           date: mealDate,
           protein: newProtein,
@@ -139,7 +145,6 @@ const AddMeal = () => {
 
   return (
     <AppLayout>
-      {/* หน้าจอ Loading ระหว่างรอเซิร์ฟเวอร์ */}
       {isLoading && (
         <div className="loadingOverlay">
           <div className="loadingCard">
@@ -193,7 +198,12 @@ const AddMeal = () => {
                 <input
                   type="time"
                   value={mealTime}
-                  onChange={(e) => setMealTime(e.target.value)}
+                  // 🌟 เมื่อเวลามีการเปลี่ยนแปลง ให้ระบบคำนวณสลับมื้อ (Category) ให้เองอัตโนมัติด้วยเลยครับ
+                  onChange={(e) => {
+                    const newTime = e.target.value;
+                    setMealTime(newTime);
+                    setCategory(getMealCategoryByTime(newTime));
+                  }}
                   className={styles.formInput}
                   required
                 />
@@ -262,7 +272,7 @@ const AddMeal = () => {
               </div>
             </div>
 
-            {/* 🌟 Row 4: Macros */}
+            {/* Row 4: Macros */}
             <div className={styles.macroGrid}>
               <div>
                 <label className={styles.formLabel}>Protein (g)</label>
