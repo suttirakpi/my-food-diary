@@ -17,9 +17,9 @@ interface MealEntry {
   category: string;
   item_type: string;
   calories: number;
-  protein?: number; // 🌟 เพิ่มมารองรับตอนแก้ไข
-  carbs?: number; // 🌟 เพิ่มมารองรับตอนแก้ไข
-  fats?: number; // 🌟 เพิ่มมารองรับตอนแก้ไข
+  protein?: number;
+  carbs?: number;
+  fats?: number;
   options: MealOption[];
 }
 interface ExerciseEntry {
@@ -290,11 +290,9 @@ const DailyLog: React.FC = () => {
   const handleOpenEdit = (meal: MealEntry) =>
     setEditingMeal(JSON.parse(JSON.stringify(meal)));
 
-  // 🌟 ฟังก์ชันบันทึกการแก้ไขเมนู (เพิ่มการส่ง Macros และ หมวดหมู่)
   const handleSaveEdit = async () => {
     if (!editingMeal) return;
 
-    // 1. ดึงข้อมูลของเดิมก่อนแก้มาเปรียบเทียบ
     const originalMeal = meals.find((m) => m.id === editingMeal.id);
 
     const validOptions = editingMeal.options
@@ -318,7 +316,6 @@ const DailyLog: React.FC = () => {
         payload,
       );
 
-      // 2. คำนวณผลต่าง (ส่วนต่าง) ของ Macros และอัปเดตหลอดรายวัน
       if (originalMeal) {
         const diffProtein = payload.protein - (originalMeal.protein || 0);
         const diffCarbs = payload.carbs - (originalMeal.carbs || 0);
@@ -339,7 +336,6 @@ const DailyLog: React.FC = () => {
             },
           );
 
-          // อัปเดต UI ทันที
           setProteinGrams(newProtein);
           setCarbsGrams(newCarbs);
           setFatsGrams(newFats);
@@ -347,7 +343,7 @@ const DailyLog: React.FC = () => {
       }
 
       setEditingMeal(null);
-      fetchData(); // ดึงข้อมูลใหม่มาแสดง
+      fetchData();
       toast.success("อัปเดตข้อมูลและสารอาหารสำเร็จ!");
     } catch (error) {
       toast.error("อัปเดตข้อมูลล้มเหลว");
@@ -533,6 +529,7 @@ const DailyLog: React.FC = () => {
 
       <div className={styles.centerCard}>
         <div className={styles.ringContainer} style={ringStyle}>
+          {/* 🌟 อัปเดตส่วนแสดงผล แคลอรี่ที่กินได้อีก อยู่ตรงนี้ครับ! */}
           <div className={styles.ringInner}>
             <div className={styles.ringLabel}>Net Calories:</div>
             <div
@@ -542,6 +539,19 @@ const DailyLog: React.FC = () => {
               {netCalories}
             </div>
             <div className={styles.ringGoal}>/ {dailyCalGoal} kcal</div>
+
+            <div
+              style={{
+                marginTop: "8px",
+                fontSize: "14px",
+                fontWeight: "bold",
+                color: dailyCalGoal - netCalories >= 0 ? "#2563eb" : "#ef4444",
+              }}
+            >
+              {dailyCalGoal - netCalories >= 0
+                ? `กินได้อีก: ${dailyCalGoal - netCalories} kcal`
+                : `กินเกินเป้า: ${Math.abs(dailyCalGoal - netCalories)} kcal`}
+            </div>
           </div>
         </div>
 
